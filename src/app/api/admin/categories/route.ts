@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases, dbId, Query, ID } from '@/lib/appwrite-server';
+import { appwriteRest, Query } from '@/lib/appwrite-server';
 import { APPWRITE_COLLECTIONS } from '@/lib/constants';
 import { logAudit } from '@/lib/audit';
 
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    const result = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.CATEGORIES, [
+    const result = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.CATEGORIES, [
       Query.limit(limit),
       Query.orderAsc('order'),
     ]);
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const result = await databases.createDocument(dbId, APPWRITE_COLLECTIONS.CATEGORIES, ID.unique(), data);
+    const result = await appwriteRest.createDocument(APPWRITE_COLLECTIONS.CATEGORIES, '', data);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'CREATE_CATEGORY', 'categories', result.$id, data);
@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest) {
     const { categoryId, ...updates } = data;
     if (!categoryId) return NextResponse.json({ error: 'Category ID required' }, { status: 400 });
 
-    const result = await databases.updateDocument(dbId, APPWRITE_COLLECTIONS.CATEGORIES, categoryId, updates);
+    const result = await appwriteRest.updateDocument(APPWRITE_COLLECTIONS.CATEGORIES, categoryId, updates);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'UPDATE_CATEGORY', 'categories', categoryId, updates);
@@ -59,7 +59,7 @@ export async function DELETE(req: NextRequest) {
     const categoryId = searchParams.get('id');
     if (!categoryId) return NextResponse.json({ error: 'Category ID required' }, { status: 400 });
 
-    await databases.deleteDocument(dbId, APPWRITE_COLLECTIONS.CATEGORIES, categoryId);
+    await appwriteRest.deleteDocument(APPWRITE_COLLECTIONS.CATEGORIES, categoryId);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'DELETE_CATEGORY', 'categories', categoryId);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases, dbId, Query } from '@/lib/appwrite-server';
+import { appwriteRest, Query } from '@/lib/appwrite-server';
 import { APPWRITE_COLLECTIONS } from '@/lib/constants';
 import { logAudit } from '@/lib/audit';
 
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const role = searchParams.get('role') || '';
     const status = searchParams.get('status') || '';
 
-    const queries: unknown[] = [];
+    const queries: string[] = [];
     if (search) queries.push(Query.search('fullName', search));
     if (role) queries.push(Query.equal('role', role));
     if (status === 'active') queries.push(Query.equal('isActive', true));
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     queries.push(Query.offset((page - 1) * limit));
     queries.push(Query.orderDesc('$createdAt'));
 
-    const result = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.USERS, queries);
+    const result = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.USERS, queries);
 
     return NextResponse.json({ documents: result.documents, total: result.total });
   } catch (error: unknown) {
@@ -36,7 +36,7 @@ export async function PUT(req: NextRequest) {
     const data = await req.json();
     const { userId, ...updates } = data;
 
-    const result = await databases.updateDocument(dbId, APPWRITE_COLLECTIONS.USERS, userId, updates);
+    const result = await appwriteRest.updateDocument(APPWRITE_COLLECTIONS.USERS, userId, updates);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'UPDATE_USER', 'users', userId, updates);
@@ -55,7 +55,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!userId) return NextResponse.json({ error: 'User ID required' }, { status: 400 });
 
-    await databases.deleteDocument(dbId, APPWRITE_COLLECTIONS.USERS, userId);
+    await appwriteRest.deleteDocument(APPWRITE_COLLECTIONS.USERS, userId);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'DELETE_USER', 'users', userId);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { databases, dbId, Query } from '@/lib/appwrite-server';
+import { appwriteRest } from '@/lib/appwrite-server';
 import { checkR2Bucket } from '@/lib/r2';
 import { R2_BUCKETS } from '@/lib/constants';
 import { db } from '@/lib/db';
@@ -10,8 +10,8 @@ export async function GET() {
     const status: Record<string, unknown> = {};
 
     try {
-      await databases.listDocuments(dbId, 'users', [Query.limit(1)]);
-      status.appwrite = 'connected';
+      const healthy = await appwriteRest.healthCheck();
+      status.appwrite = healthy ? 'connected' : 'error';
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Unknown error';
       status.appwrite = `error: ${message}`;

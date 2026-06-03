@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases, dbId, Query, ID } from '@/lib/appwrite-server';
+import { appwriteRest, Query } from '@/lib/appwrite-server';
 import { APPWRITE_COLLECTIONS } from '@/lib/constants';
 import { logAudit } from '@/lib/audit';
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const published = searchParams.get('published') || '';
     const featured = searchParams.get('featured') || '';
 
-    const queries: unknown[] = [];
+    const queries: string[] = [];
     if (search) queries.push(Query.search('title', search));
     if (level) queries.push(Query.equal('level', level));
     if (published === 'true') queries.push(Query.equal('isPublished', true));
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     queries.push(Query.offset((page - 1) * limit));
     queries.push(Query.orderDesc('$createdAt'));
 
-    const result = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.COURSES, queries);
+    const result = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.COURSES, queries);
 
     return NextResponse.json({ documents: result.documents, total: result.total });
   } catch (error: unknown) {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
-    const result = await databases.createDocument(dbId, APPWRITE_COLLECTIONS.COURSES, ID.unique(), data);
+    const result = await appwriteRest.createDocument(APPWRITE_COLLECTIONS.COURSES, '', data);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'CREATE_COURSE', 'courses', result.$id, data);
@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest) {
 
     if (!courseId) return NextResponse.json({ error: 'Course ID required' }, { status: 400 });
 
-    const result = await databases.updateDocument(dbId, APPWRITE_COLLECTIONS.COURSES, courseId, updates);
+    const result = await appwriteRest.updateDocument(APPWRITE_COLLECTIONS.COURSES, courseId, updates);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'UPDATE_COURSE', 'courses', courseId, updates);
@@ -75,7 +75,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!courseId) return NextResponse.json({ error: 'Course ID required' }, { status: 400 });
 
-    await databases.deleteDocument(dbId, APPWRITE_COLLECTIONS.COURSES, courseId);
+    await appwriteRest.deleteDocument(APPWRITE_COLLECTIONS.COURSES, courseId);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'DELETE_COURSE', 'courses', courseId);

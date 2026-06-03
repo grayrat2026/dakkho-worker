@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases, dbId, Query, ID } from '@/lib/appwrite-server';
+import { appwriteRest, Query } from '@/lib/appwrite-server';
 import { APPWRITE_COLLECTIONS } from '@/lib/constants';
 import { logAudit } from '@/lib/audit';
 
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const courseId = searchParams.get('courseId') || '';
     const published = searchParams.get('published') || '';
 
-    const queries: unknown[] = [];
+    const queries: string[] = [];
     if (courseId) queries.push(Query.equal('courseId', courseId));
     if (published === 'true') queries.push(Query.equal('isPublished', true));
     if (published === 'false') queries.push(Query.equal('isPublished', false));
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     queries.push(Query.offset((page - 1) * limit));
     queries.push(Query.orderAsc('order'));
 
-    const result = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.VIDEOS, queries);
+    const result = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.VIDEOS, queries);
 
     return NextResponse.json({ documents: result.documents, total: result.total });
   } catch (error: unknown) {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
-    const result = await databases.createDocument(dbId, APPWRITE_COLLECTIONS.VIDEOS, ID.unique(), data);
+    const result = await appwriteRest.createDocument(APPWRITE_COLLECTIONS.VIDEOS, '', data);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'CREATE_VIDEO', 'videos', result.$id, data);
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest) {
 
     if (!videoId) return NextResponse.json({ error: 'Video ID required' }, { status: 400 });
 
-    const result = await databases.updateDocument(dbId, APPWRITE_COLLECTIONS.VIDEOS, videoId, updates);
+    const result = await appwriteRest.updateDocument(APPWRITE_COLLECTIONS.VIDEOS, videoId, updates);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'UPDATE_VIDEO', 'videos', videoId, updates);
@@ -71,7 +71,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!videoId) return NextResponse.json({ error: 'Video ID required' }, { status: 400 });
 
-    await databases.deleteDocument(dbId, APPWRITE_COLLECTIONS.VIDEOS, videoId);
+    await appwriteRest.deleteDocument(APPWRITE_COLLECTIONS.VIDEOS, videoId);
 
     const adminId = req.cookies.get('dakkho-admin-session')?.value || 'unknown';
     await logAudit(adminId, 'DELETE_VIDEO', 'videos', videoId);

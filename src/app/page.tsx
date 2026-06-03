@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAdminStore } from '@/lib/store';
 import { Loader2 } from 'lucide-react';
 import LoginForm from '@/components/admin/login-form';
@@ -100,17 +100,14 @@ export default function Home() {
         className="pt-16 min-h-screen"
       >
         <div className="p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
-              <PageComponent />
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            key={currentPage}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <PageComponent />
+          </motion.div>
         </div>
       </motion.main>
     </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databases, dbId, Query, ID } from '@/lib/appwrite-server';
+import { appwriteRest, Query } from '@/lib/appwrite-server';
 import { APPWRITE_COLLECTIONS } from '@/lib/constants';
 import { logAudit } from '@/lib/audit';
 
@@ -10,10 +10,10 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const userId = searchParams.get('userId') || '';
 
-    const queries: unknown[] = [Query.limit(limit), Query.offset((page - 1) * limit), Query.orderDesc('$createdAt')];
+    const queries: string[] = [Query.limit(limit), Query.offset((page - 1) * limit), Query.orderDesc('$createdAt')];
     if (userId) queries.push(Query.equal('userId', userId));
 
-    const result = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.NOTIFICATIONS, queries);
+    const result = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.NOTIFICATIONS, queries);
 
     return NextResponse.json({ documents: result.documents, total: result.total });
   } catch (error: unknown) {
@@ -35,13 +35,13 @@ export async function POST(req: NextRequest) {
       let hasMore = true;
 
       while (hasMore) {
-        const usersResult = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.USERS, [
+        const usersResult = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.USERS, [
           Query.limit(limit),
           Query.offset(offset),
         ]);
 
         for (const user of usersResult.documents) {
-          const doc = await databases.createDocument(dbId, APPWRITE_COLLECTIONS.NOTIFICATIONS, ID.unique(), {
+          const doc = await appwriteRest.createDocument(APPWRITE_COLLECTIONS.NOTIFICATIONS, '', {
             ...notificationData,
             userId: user.$id,
           });
@@ -52,20 +52,20 @@ export async function POST(req: NextRequest) {
         hasMore = usersResult.documents.length === limit;
       }
     } else if (targetInstitute) {
-      const usersResult = await databases.listDocuments(dbId, APPWRITE_COLLECTIONS.USERS, [
+      const usersResult = await appwriteRest.listDocuments(APPWRITE_COLLECTIONS.USERS, [
         Query.equal('institute', targetInstitute),
         Query.limit(500),
       ]);
 
       for (const user of usersResult.documents) {
-        const doc = await databases.createDocument(dbId, APPWRITE_COLLECTIONS.NOTIFICATIONS, ID.unique(), {
+        const doc = await appwriteRest.createDocument(APPWRITE_COLLECTIONS.NOTIFICATIONS, '', {
           ...notificationData,
           userId: user.$id,
         });
         created.push(doc);
       }
     } else if (targetUserId) {
-      const doc = await databases.createDocument(dbId, APPWRITE_COLLECTIONS.NOTIFICATIONS, ID.unique(), {
+      const doc = await appwriteRest.createDocument(APPWRITE_COLLECTIONS.NOTIFICATIONS, '', {
         ...notificationData,
         userId: targetUserId,
       });
