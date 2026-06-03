@@ -28,13 +28,13 @@ bucket_name = "dakkho-resources"
 # Workers KV — for config/cache (alternative to MQTT broadcast)
 [[kv_namespaces]]
 binding = "KV_CONFIG"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "f61a482ba88a45bebb35dfd600cd742d"
 
 # D1 Database — for audit logs and sessions
 [[d1_databases]]
 binding = "DB"
 database_name = "dakkho-admin-db"
-database_id = "YOUR_D1_DATABASE_ID"
+database_id = "2e3dabbe-1e5d-44c7-a7d1-eba001aa0a4a"
 
 # Environment Variables (secrets should use `wrangler secret put`)
 [vars]
