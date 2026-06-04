@@ -292,16 +292,16 @@ function SidebarContent() {
         })}
 
         {/* Departments section */}
-        {isSidebarSectionVisible('dept') && renderCollapsibleSection('dept', 'Departments', deptItems, 0.3)}
+        {isSidebarSectionVisible('departments') && renderCollapsibleSection('dept', 'Departments', deptItems, 0.3)}
 
         {/* Semester section */}
-        {isSidebarSectionVisible('semester') && renderCollapsibleSection('semester', 'Semesters', semesterItems, 0.4)}
+        {isSidebarSectionVisible('semesters') && renderCollapsibleSection('semester', 'Semesters', semesterItems, 0.4)}
 
         {/* Exam section */}
-        {isSidebarSectionVisible('exam') && renderCollapsibleSection('exam', 'Exams', examItems, 0.5)}
+        {isSidebarSectionVisible('exams') && renderCollapsibleSection('exam', 'Exams', examItems, 0.5)}
 
         {/* Social section */}
-        {isSidebarSectionVisible('social') && renderCollapsibleSection('social', 'Community', filteredSocialItems, 0.6)}
+        {isSidebarSectionVisible('community') && renderCollapsibleSection('social', 'Community', filteredSocialItems, 0.6)}
 
         <p className="px-3 py-2 mt-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">General</p>
         {generalItems.map((item, i) => {

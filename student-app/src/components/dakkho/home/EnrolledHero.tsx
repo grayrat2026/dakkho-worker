@@ -7,7 +7,10 @@ import {
   Calendar, ChevronRight, Zap, Star, CheckCircle2, BarChart3
 } from 'lucide-react';
 import { useNavigationStore, useAuthStore } from '@/lib/store';
-import { COURSES, getInstructor } from '@/lib/mock-data';
+import { COURSES, getInstructor, INSTRUCTORS } from '@/lib/mock-data';
+import { courseApi, instructorApi } from '@/lib/api-client';
+import { mapApiCourses, mapApiInstructors } from '../shared/apiMappers';
+import type { Course, Instructor } from '@/lib/mock-data';
 import { GlassCard } from '../shared/GlassCard';
 import { AnimatedCounter } from '../shared/AnimatedCounter';
 
@@ -39,6 +42,8 @@ export function EnrolledHero() {
   const navigate = useNavigationStore((s) => s.navigate);
   const user = useAuthStore((s) => s.user);
   const [currentTime, setCurrentTime] = useState('');
+  const [courses, setCourses] = useState<Course[]>(COURSES);
+  const [instructors, setInstructors] = useState<Instructor[]>(INSTRUCTORS);
 
   useEffect(() => {
     const updateTime = () => {
@@ -55,15 +60,50 @@ export function EnrolledHero() {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch courses from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await courseApi.list({ limit: 30 });
+        if (!cancelled && result.courses?.length) {
+          setCourses(mapApiCourses(result.courses));
+        }
+      } catch {
+        // Keep mock fallback already set in useState
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch instructors from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await instructorApi.list({ limit: 20 });
+        if (!cancelled && result.instructors?.length) {
+          setInstructors(mapApiInstructors(result.instructors));
+        }
+      } catch {
+        // Keep mock fallback already set in useState
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const firstName = user?.fullName?.split(' ')[0] || 'Student';
   const completedGoals = DAILY_GOALS.filter((g) => g.done).length;
   const totalGoals = DAILY_GOALS.length;
   const goalProgress = (completedGoals / totalGoals) * 100;
 
+  // Helper to find instructor by id
+  const findInstructor = (id: string) => instructors.find((i) => i.id === id);
+
   // Get the most pressing "continue watching" course
   const primaryCourse = ENROLLED_COURSES[0];
-  const courseData = primaryCourse ? COURSES.find((c) => c.id === primaryCourse.id) : null;
-  const instructor = courseData ? getInstructor(courseData.instructorId) : null;
+  const courseData = primaryCourse ? courses.find((c) => c.id === primaryCourse.id) : null;
+  const instructor = courseData ? findInstructor(courseData.instructorId) : null;
 
   return (
     <div className="mb-8 space-y-4">
@@ -311,9 +351,9 @@ export function EnrolledHero() {
 
           <div className="space-y-2.5">
             {ENROLLED_COURSES.map((enrolled, i) => {
-              const course = COURSES.find((c) => c.id === enrolled.id);
+              const course = courses.find((c) => c.id === enrolled.id);
               if (!course) return null;
-              const inst = getInstructor(course.instructorId);
+              const inst = findInstructor(course.instructorId);
               return (
                 <motion.div
                   key={enrolled.id}

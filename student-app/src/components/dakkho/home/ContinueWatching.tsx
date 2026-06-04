@@ -1,17 +1,101 @@
 'use client';
 
-import { useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Play, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useNavigationStore, useWatchProgressStore } from '@/lib/store';
-import { COURSES, VIDEOS, getInstructor, formatDuration } from '@/lib/mock-data';
+import { COURSES, VIDEOS, getInstructor, formatDuration, INSTRUCTORS } from '@/lib/mock-data';
+import { courseApi, instructorApi } from '@/lib/api-client';
+import { mapApiCourses, mapApiInstructors, mapApiVideos } from '../shared/apiMappers';
+import type { Course, Video, Instructor } from '@/lib/mock-data';
 import { ProgressBar } from '../shared/ProgressBar';
 import { GlassCard } from '../shared/GlassCard';
+import { LoadingSkeleton } from '../shared/LoadingSkeleton';
 
 export function ContinueWatching() {
   const navigate = useNavigationStore((s) => s.navigate);
   const progressStore = useWatchProgressStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [courses, setCourses] = useState<Course[]>(COURSES);
+  const [videos, setVideos] = useState<Video[]>(VIDEOS);
+  const [instructors, setInstructors] = useState<Instructor[]>(INSTRUCTORS);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch courses from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await courseApi.list({ limit: 30 });
+        if (!cancelled && result.courses?.length) {
+          setCourses(mapApiCourses(result.courses));
+        }
+      } catch {
+        // Keep mock fallback
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch instructors from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await instructorApi.list({ limit: 20 });
+        if (!cancelled && result.instructors?.length) {
+          setInstructors(mapApiInstructors(result.instructors));
+        }
+      } catch {
+        // Keep mock fallback
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch videos for courses that have watch progress
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // Get course IDs from progress store that have progress
+        const courseIdsWithProgress = Object.values(progressStore.progress)
+          .filter((p) => p.progress > 0 && !p.completed)
+          .map((p) => {
+            const video = VIDEOS.find((v) => v.id === p.videoId);
+            return video?.courseId;
+          })
+          .filter(Boolean);
+
+        // Fetch videos for each course with progress
+        const uniqueCourseIds = [...new Set(courseIdsWithProgress)] as string[];
+        if (uniqueCourseIds.length > 0) {
+          const videoPromises = uniqueCourseIds.map(async (courseId) => {
+            try {
+              const result = await courseApi.videos(courseId);
+              return result.videos || [];
+            } catch {
+              return [];
+            }
+          });
+          const videoResults = await Promise.all(videoPromises);
+          const apiVideos = videoResults.flat();
+          if (!cancelled && apiVideos.length > 0) {
+            setVideos(mapApiVideos(apiVideos));
+          }
+        }
+      } catch {
+        // Keep mock fallback
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [progressStore.progress]);
+
+  // Helper to find instructor by id
+  const findInstructor = (id: string) => instructors.find((i) => i.id === id);
 
   // Get videos with watch progress
   const continueWatching = Object.values(progressStore.progress)
@@ -19,12 +103,25 @@ export function ContinueWatching() {
     .sort((a, b) => b.lastWatched - a.lastWatched)
     .slice(0, 10)
     .map((p) => {
-      const video = VIDEOS.find((v) => v.id === p.videoId);
-      const course = video ? COURSES.find((c) => c.id === video.courseId) : undefined;
-      const instructor = course ? getInstructor(course.instructorId) : undefined;
+      const video = videos.find((v) => v.id === p.videoId);
+      const course = video ? courses.find((c) => c.id === video.courseId) : undefined;
+      const instructor = course ? findInstructor(course.instructorId) : undefined;
       return { ...p, video, course, instructor };
     })
     .filter((item) => item.video && item.course);
+
+  if (loading && continueWatching.length === 0) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-extrabold text-foreground">Continue Watching</h2>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+          <LoadingSkeleton type="video" count={3} className="w-64 flex-shrink-0 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   if (continueWatching.length === 0) return null;
 

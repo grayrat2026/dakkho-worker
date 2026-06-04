@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
-  "name": "nextjs-tailwind-shadcn-ts",
+  "name": "dakkho-student",
   "compatibility_date": "2026-06-04",
   "compatibility_flags": [
     "nodejs_compat"
@@ -13,7 +13,7 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "nextjs-tailwind-shadcn-ts"
+      "service": "dakkho-student"
     }
   ],
   "images": {

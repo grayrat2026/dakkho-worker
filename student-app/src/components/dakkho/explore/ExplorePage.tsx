@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 import { CATEGORIES, COURSES, getCategory } from '@/lib/mock-data';
+import { courseApi, technologyApi } from '@/lib/api-client';
+import { mapApiCourses, mapTechnologiesToCategories } from '../shared/apiMappers';
+import type { Course, Category } from '@/lib/mock-data';
 import { CourseCardGrid } from '../shared/CourseCardGrid';
-import type { Course } from '@/lib/mock-data';
+import { CourseCardSkeleton } from '../shared/LoadingSkeleton';
 
 export function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -13,12 +16,50 @@ export function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [courses, setCourses] = useState<Course[]>(COURSES);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch categories (technologies) from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await technologyApi.list();
+        if (!cancelled && result.technologies?.length) {
+          setCategories(mapTechnologiesToCategories(result.technologies));
+        }
+      } catch {
+        // Keep mock fallback
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch courses from API
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await courseApi.list({ limit: 50 });
+        if (!cancelled && result.courses?.length) {
+          setCourses(mapApiCourses(result.courses));
+        }
+      } catch {
+        // Keep mock fallback
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const levels = ['beginner', 'intermediate', 'advanced', 'expert'];
 
-  const filteredCourses = COURSES.filter((c) => {
+  const filteredCourses = courses.filter((c) => {
     const matchesCategory = !selectedCategory || c.categoryId === selectedCategory;
     const matchesLevel = !selectedLevel || c.level === selectedLevel;
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesLevel && matchesSearch;
@@ -78,7 +119,7 @@ export function ExplorePage() {
           >
             All
           </motion.button>
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <motion.button
               key={cat.id}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
@@ -133,12 +174,24 @@ export function ExplorePage() {
       {/* Results count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          <span className="font-bold text-foreground">{filteredCourses.length}</span> courses found
+          {loading ? (
+            'Loading courses...'
+          ) : (
+            <>
+              <span className="font-bold text-foreground">{filteredCourses.length}</span> courses found
+            </>
+          )}
         </p>
       </div>
 
       {/* Course grid */}
-      {filteredCourses.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <CourseCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredCourses.length > 0 ? (
         <CourseCardGrid courses={filteredCourses} />
       ) : (
         <div className="text-center py-16">

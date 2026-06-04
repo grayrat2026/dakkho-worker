@@ -1,10 +1,14 @@
 'use client';
 
-import { useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Star, Users, BookOpen, ArrowRight } from 'lucide-react';
 import { useNavigationStore } from '@/lib/store';
 import { INSTRUCTORS } from '@/lib/mock-data';
+import { instructorApi } from '@/lib/api-client';
+import { mapApiInstructors } from '../shared/apiMappers';
+import type { Instructor } from '@/lib/mock-data';
+import { LoadingSkeleton } from '../shared/LoadingSkeleton';
 import { GlassCard } from '../shared/GlassCard';
 
 const AVATAR_GRADIENTS = [
@@ -19,12 +23,45 @@ const AVATAR_GRADIENTS = [
 export function FeaturedInstructors() {
   const navigate = useNavigationStore((s) => s.navigate);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const featured = INSTRUCTORS.slice(0, 6);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await instructorApi.list({ limit: 6 });
+        if (!cancelled && result.instructors?.length) {
+          setInstructors(mapApiInstructors(result.instructors).slice(0, 6));
+        } else if (!cancelled) {
+          setInstructors(INSTRUCTORS.slice(0, 6));
+        }
+      } catch {
+        if (!cancelled) setInstructors(INSTRUCTORS.slice(0, 6));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const scroll = (dir: 'left' | 'right') => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
   };
+
+  if (loading) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-extrabold text-foreground">Featured Instructors</h2>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+          <LoadingSkeleton type="card" count={3} className="w-60 h-56 flex-shrink-0" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
@@ -55,7 +92,7 @@ export function FeaturedInstructors() {
         className="flex gap-4 overflow-x-auto pb-2"
         style={{ scrollbarWidth: 'none' }}
       >
-        {featured.map((instructor, i) => {
+        {instructors.map((instructor, i) => {
           const gradient = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
           return (
             <motion.div

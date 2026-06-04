@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Camera, Mail, Phone, MapPin, Building, BookOpen,
@@ -8,33 +8,13 @@ import {
   Upload, Shield, GraduationCap,
 } from 'lucide-react';
 import { useNavigationStore, useAuthStore } from '@/lib/store';
-import { POLYTECHNIC_INSTITUTES } from '@/lib/mock-data';
+import { instituteApi, technologyApi, type Institute, type Technology } from '@/lib/api-client';
 import { GlassCard } from '../shared/GlassCard';
 import { AnimatedPage } from '../shared/AnimatedPage';
 import { GradientButton } from '../shared/GradientButton';
 
-const TECHNOLOGIES = [
-  'Computer Science & Technology (CSE)',
-  'Electronics & Telecommunication (ETE)',
-  'Electrical Engineering (EEE)',
-  'Mechanical Engineering (ME)',
-  'Civil Engineering (CE)',
-  'Architecture & Interior Design',
-  'Textile Engineering',
-  'Chemical Engineering',
-  'Automobile Engineering',
-  'Refrigeration & Air Conditioning',
-  'Glass & Ceramic Engineering',
-  'Printing Engineering',
-  'Surveying Engineering',
-  'Mechatronics Engineering',
-  'Mining Engineering',
-  'Metallurgical Engineering',
-  'Power Engineering',
-  'Instrumentation & Process Control',
-  'Food Engineering',
-  'Leather Engineering',
-];
+// Technologies now fetched from Worker API
+// Institutes now fetched from Worker API
 
 export function EditProfilePage() {
   const { goBack, navigate } = useNavigationStore();
@@ -46,6 +26,28 @@ export function EditProfilePage() {
   const [phone, setPhone] = useState('');
   const [institute, setInstitute] = useState(user?.institute || '');
   const [technology, setTechnology] = useState(user?.technology || '');
+  const [apiInstitutes, setApiInstitutes] = useState<Institute[]>([]);
+  const [apiTechnologies, setApiTechnologies] = useState<Technology[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Fetch institutes and technologies from Worker API
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [instRes, techRes] = await Promise.all([
+          instituteApi.list({ limit: 100 }),
+          technologyApi.list(),
+        ]);
+        setApiInstitutes(instRes.institutes);
+        setApiTechnologies(techRes.technologies);
+      } catch (err) {
+        console.error('Failed to fetch institutes/technologies:', err);
+      } finally {
+        setDataLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
   const [bio, setBio] = useState('');
   const [semester, setSemester] = useState('3');
   const [isSaving, setIsSaving] = useState(false);
@@ -199,9 +201,13 @@ export function EditProfilePage() {
                   }`}
                 >
                   <option value="">Select your institute</option>
-                  {POLYTECHNIC_INSTITUTES.map((inst) => (
-                    <option key={inst} value={inst}>{inst}</option>
-                  ))}
+                  {dataLoading ? (
+                    <option disabled>Loading institutes...</option>
+                  ) : (
+                    apiInstitutes.map((inst) => (
+                      <option key={inst.id} value={inst.name}>{inst.name}</option>
+                    ))
+                  )}
                 </select>
               </div>
               {errors.institute && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.institute}</p>}
@@ -222,9 +228,13 @@ export function EditProfilePage() {
                   }`}
                 >
                   <option value="">Select your technology</option>
-                  {TECHNOLOGIES.map((tech) => (
-                    <option key={tech} value={tech}>{tech}</option>
-                  ))}
+                  {dataLoading ? (
+                    <option disabled>Loading technologies...</option>
+                  ) : (
+                    apiTechnologies.map((tech) => (
+                      <option key={tech.id} value={tech.short_code}>{tech.name} ({tech.short_code})</option>
+                    ))
+                  )}
                 </select>
               </div>
               {errors.technology && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.technology}</p>}

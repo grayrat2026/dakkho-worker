@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Globe, Smartphone, Cpu, Zap, Wrench, Building2, Ruler,
@@ -8,6 +8,10 @@ import {
 } from 'lucide-react';
 import { useNavigationStore } from '@/lib/store';
 import { CATEGORIES } from '@/lib/mock-data';
+import { technologyApi } from '@/lib/api-client';
+import { mapTechnologiesToCategories } from '../shared/apiMappers';
+import type { Category } from '@/lib/mock-data';
+import { LoadingSkeleton } from '../shared/LoadingSkeleton';
 
 const lucideIconMap: Record<string, React.ElementType> = {
   Globe, Smartphone, Cpu, Zap, Wrench, Building2, Ruler,
@@ -17,6 +21,38 @@ const lucideIconMap: Record<string, React.ElementType> = {
 export function CategoryPills() {
   const navigate = useNavigationStore((s) => s.navigate);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await technologyApi.list();
+        if (!cancelled && result.technologies?.length) {
+          setCategories(mapTechnologiesToCategories(result.technologies));
+        } else if (!cancelled) {
+          setCategories(CATEGORIES);
+        }
+      } catch {
+        if (!cancelled) setCategories(CATEGORIES);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mb-8">
+        <h2 className="text-lg font-extrabold text-foreground mb-4">Browse Categories</h2>
+        <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+          <LoadingSkeleton type="line" count={6} className="h-10 w-32 rounded-full flex-shrink-0" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
@@ -26,7 +62,7 @@ export function CategoryPills() {
         className="flex gap-2 overflow-x-auto pb-2 scroll-smooth"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {CATEGORIES.map((cat, i) => {
+        {categories.map((cat, i) => {
           const IconComponent = lucideIconMap[cat.icon];
           return (
             <motion.button
@@ -54,7 +90,7 @@ export function CategoryPills() {
           onClick={() => navigate('explore')}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: CATEGORIES.length * 0.03 }}
+          transition={{ delay: categories.length * 0.03 }}
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
         >

@@ -1,69 +1,18 @@
-import type { AppNotification } from './store';
+// DAKKHO Student App — Data Layer (Fallback + Utilities)
+//
+// INSTITUTES and TECHNOLOGIES are now fetched from Worker API (see api-client.ts).
+// MOCK_NOTIFICATIONS removed — OneSignal handles push notifications.
+//
+// Course/Video/Instructor data is kept here as fallback until Worker API
+// course endpoints are fully implemented. These will be migrated to
+// Appwrite/Worker API calls in a future update.
+//
+// Data sources:
+//   - Worker API: institutes, technologies, packages, payments, events, live classes, sessions
+//   - Appwrite: courses, videos, instructors, enrollments, bookmarks, watch progress (via courseApi)
+//   - R2 via Worker: video streaming, file storage
 
-// ============ INSTITUTES ============
-export const POLYTECHNIC_INSTITUTES = [
-  'Dhaka Polytechnic Institute',
-  'Chittagong Polytechnic Institute',
-  'Rajshahi Polytechnic Institute',
-  'Khulna Polytechnic Institute',
-  'Sylhet Polytechnic Institute',
-  'Barishal Polytechnic Institute',
-  'Rangpur Polytechnic Institute',
-  'Mymensingh Polytechnic Institute',
-  'Comilla Polytechnic Institute',
-  'Dinajpur Polytechnic Institute',
-  'Faridpur Polytechnic Institute',
-  'Pabna Polytechnic Institute',
-  'Jessore Polytechnic Institute',
-  'Bogra Polytechnic Institute',
-  'Kushtia Polytechnic Institute',
-  'Tangail Polytechnic Institute',
-  'Narsingdi Polytechnic Institute',
-  'Gazipur Polytechnic Institute',
-  'Narayanganj Polytechnic Institute',
-  'Cox\'s Bazar Polytechnic Institute',
-  'Habiganj Polytechnic Institute',
-  'Jamalpur Polytechnic Institute',
-  'Sherpur Polytechnic Institute',
-  'Netrokona Polytechnic Institute',
-  'Kishoreganj Polytechnic Institute',
-  'Brahmanbaria Polytechnic Institute',
-  'Chandpur Polytechnic Institute',
-  'Noakhali Polytechnic Institute',
-  'Feni Polytechnic Institute',
-  'Lakshmipur Polytechnic Institute',
-  'Gopalganj Polytechnic Institute',
-  'Madaripur Polytechnic Institute',
-  'Shariatpur Polytechnic Institute',
-  'Munshiganj Polytechnic Institute',
-  'Manikganj Polytechnic Institute',
-  'Chapainawabganj Polytechnic Institute',
-  'Naogaon Polytechnic Institute',
-  'Natore Polytechnic Institute',
-  'Sirajganj Polytechnic Institute',
-  'Joypurhat Polytechnic Institute',
-  'Satkhira Polytechnic Institute',
-  'Meherpur Polytechnic Institute',
-  'Magura Polytechnic Institute',
-  'Jhenaidah Polytechnic Institute',
-  'Chuadanga Polytechnic Institute',
-  'Bagerhat Polytechnic Institute',
-  'Patuakhali Polytechnic Institute',
-  'Barguna Polytechnic Institute',
-  'Jhalokathi Polytechnic Institute',
-  'Pirojpur Polytechnic Institute',
-  'Bandarban Polytechnic Institute',
-  'Rangamati Polytechnic Institute',
-  'Khagrachhari Polytechnic Institute',
-  'Sunamganj Polytechnic Institute',
-  'Moulvibazar Polytechnic Institute',
-  'Kurigram Polytechnic Institute',
-  'Lalmonirhat Polytechnic Institute',
-  'Nilphamari Polytechnic Institute',
-  'Gaibandha Polytechnic Institute',
-  'Thakurgaon Polytechnic Institute',
-  'Panchagarh Polytechnic Institute',
-];
+import type { AppNotification } from './store';
 
 // ============ CATEGORIES ============
 export interface Category {
@@ -105,38 +54,16 @@ export interface Instructor {
 }
 
 export const INSTRUCTORS: Instructor[] = [
-  {
-    id: 'ins1', name: 'Engr. Karim Uddin', bio: 'Senior Instructor at Dhaka Polytechnic with 15+ years of teaching experience in CSE. Passionate about making programming accessible to all students.', avatarUrl: '', coverUrl: '', specialization: 'Programming & Web Development', rating: 4.8, totalStudents: 3450, totalCourses: 8,
-    socialLinks: [{ platform: 'linkedin', url: '#' }, { platform: 'youtube', url: '#' }],
-  },
-  {
-    id: 'ins2', name: 'Fatema Begum', bio: 'Electronics expert and curriculum developer for BTEB. Specializing in digital electronics and microcontroller programming.', avatarUrl: '', coverUrl: '', specialization: 'Electronics & Telecommunication', rating: 4.9, totalStudents: 2890, totalCourses: 6,
-    socialLinks: [{ platform: 'linkedin', url: '#' }],
-  },
-  {
-    id: 'ins3', name: 'Rafiqul Islam', bio: 'Mechanical engineer turned educator. Brings real-world industry experience to the classroom with hands-on projects.', avatarUrl: '', coverUrl: '', specialization: 'Mechanical Engineering', rating: 4.7, totalStudents: 1920, totalCourses: 5,
-  },
-  {
-    id: 'ins4', name: 'Nasreen Akter', bio: 'Award-winning architecture instructor. Expert in CAD software and sustainable design principles.', avatarUrl: '', coverUrl: '', specialization: 'Architecture & Design', rating: 4.6, totalStudents: 1540, totalCourses: 4,
-  },
-  {
-    id: 'ins5', name: 'Dr. Shahid Hossain', bio: 'PhD in Electrical Engineering. Specializing in power systems and renewable energy solutions for Bangladesh.', avatarUrl: '', coverUrl: '', specialization: 'Electrical Engineering', rating: 4.9, totalStudents: 4200, totalCourses: 9,
-  },
-  {
-    id: 'ins6', name: 'Taslima Khatun', bio: 'Full-stack developer and tech lead. Building the next generation of web developers in Bangladesh.', avatarUrl: '', coverUrl: '', specialization: 'Web Development', rating: 4.8, totalStudents: 3100, totalCourses: 7,
-  },
-  {
-    id: 'ins7', name: 'Mizanur Rahman', bio: 'Civil engineering veteran with 20+ years in construction management and structural design.', avatarUrl: '', coverUrl: '', specialization: 'Civil Engineering', rating: 4.5, totalStudents: 1750, totalCourses: 4,
-  },
-  {
-    id: 'ins8', name: 'Sharmin Sultana', bio: 'Data scientist and AI researcher. Making machine learning accessible to polytechnic students across Bangladesh.', avatarUrl: '', coverUrl: '', specialization: 'Data Science & AI', rating: 4.7, totalStudents: 2300, totalCourses: 5,
-  },
-  {
-    id: 'ins9', name: 'Jahangir Alam', bio: 'Networking specialist with Cisco and Huawei certifications. Building skilled network engineers for the digital age.', avatarUrl: '', coverUrl: '', specialization: 'Networking & Security', rating: 4.6, totalStudents: 1600, totalCourses: 4,
-  },
-  {
-    id: 'ins10', name: 'Roksana Parvin', bio: 'Textile engineer focusing on modern fabric technology and sustainable manufacturing processes.', avatarUrl: '', coverUrl: '', specialization: 'Textile Engineering', rating: 4.4, totalStudents: 980, totalCourses: 3,
-  },
+  { id: 'ins1', name: 'Engr. Karim Uddin', bio: 'Senior Instructor at Dhaka Polytechnic with 15+ years of teaching experience in CSE.', avatarUrl: '', coverUrl: '', specialization: 'Programming & Web Development', rating: 4.8, totalStudents: 3450, totalCourses: 8, socialLinks: [{ platform: 'linkedin', url: '#' }, { platform: 'youtube', url: '#' }] },
+  { id: 'ins2', name: 'Fatema Begum', bio: 'Electronics expert and curriculum developer for BTEB.', avatarUrl: '', coverUrl: '', specialization: 'Electronics & Telecommunication', rating: 4.9, totalStudents: 2890, totalCourses: 6, socialLinks: [{ platform: 'linkedin', url: '#' }] },
+  { id: 'ins3', name: 'Rafiqul Islam', bio: 'Mechanical engineer turned educator with industry experience.', avatarUrl: '', coverUrl: '', specialization: 'Mechanical Engineering', rating: 4.7, totalStudents: 1920, totalCourses: 5 },
+  { id: 'ins4', name: 'Nasreen Akter', bio: 'Award-winning architecture instructor. Expert in CAD and sustainable design.', avatarUrl: '', coverUrl: '', specialization: 'Architecture & Design', rating: 4.6, totalStudents: 1540, totalCourses: 4 },
+  { id: 'ins5', name: 'Dr. Shahid Hossain', bio: 'PhD in Electrical Engineering. Power systems and renewable energy specialist.', avatarUrl: '', coverUrl: '', specialization: 'Electrical Engineering', rating: 4.9, totalStudents: 4200, totalCourses: 9 },
+  { id: 'ins6', name: 'Taslima Khatun', bio: 'Full-stack developer and tech lead. Building next-gen web developers.', avatarUrl: '', coverUrl: '', specialization: 'Web Development', rating: 4.8, totalStudents: 3100, totalCourses: 7 },
+  { id: 'ins7', name: 'Mizanur Rahman', bio: 'Civil engineering veteran with 20+ years in construction management.', avatarUrl: '', coverUrl: '', specialization: 'Civil Engineering', rating: 4.5, totalStudents: 1750, totalCourses: 4 },
+  { id: 'ins8', name: 'Sharmin Sultana', bio: 'Data scientist and AI researcher.', avatarUrl: '', coverUrl: '', specialization: 'Data Science & AI', rating: 4.7, totalStudents: 2300, totalCourses: 5 },
+  { id: 'ins9', name: 'Jahangir Alam', bio: 'Networking specialist with Cisco and Huawei certifications.', avatarUrl: '', coverUrl: '', specialization: 'Networking & Security', rating: 4.6, totalStudents: 1600, totalCourses: 4 },
+  { id: 'ins10', name: 'Roksana Parvin', bio: 'Textile engineer focusing on modern fabric technology.', avatarUrl: '', coverUrl: '', specialization: 'Textile Engineering', rating: 4.4, totalStudents: 980, totalCourses: 3 },
 ];
 
 // ============ COURSES ============
@@ -161,30 +88,30 @@ export interface Course {
 }
 
 export const COURSES: Course[] = [
-  { id: 'c1', title: 'Complete Web Development with HTML, CSS & JavaScript', slug: 'complete-web-dev', description: 'Learn web development from scratch. Master HTML5, CSS3, and modern JavaScript to build responsive websites and web applications. Perfect for CSE students starting their programming journey.', thumbnailUrl: '', categoryId: 'cat1', instructorId: 'ins1', level: 'beginner', language: 'Bangla', duration: 2400, totalVideos: 48, rating: 4.8, totalReviews: 234, totalStudents: 1250, isFeatured: true, tags: ['HTML', 'CSS', 'JavaScript'], price: 0 },
-  { id: 'c2', title: 'React.js & Next.js - Modern Frontend Development', slug: 'react-nextjs', description: 'Build modern web applications with React.js and Next.js. Learn hooks, state management, SSR, and deployment strategies.', thumbnailUrl: '', categoryId: 'cat1', instructorId: 'ins6', level: 'intermediate', language: 'Bangla', duration: 1800, totalVideos: 36, rating: 4.9, totalReviews: 189, totalStudents: 890, isFeatured: true, tags: ['React', 'Next.js', 'Frontend'], price: 499 },
-  { id: 'c3', title: 'Digital Electronics Fundamentals', slug: 'digital-electronics', description: 'Understand digital logic gates, combinational and sequential circuits, flip-flops, counters, and registers. Essential for ETE students.', thumbnailUrl: '', categoryId: 'cat3', instructorId: 'ins2', level: 'beginner', language: 'Bangla', duration: 1200, totalVideos: 24, rating: 4.9, totalReviews: 312, totalStudents: 1580, isFeatured: true, tags: ['Digital', 'Logic', 'Circuits'], price: 0 },
-  { id: 'c4', title: 'Microcontroller Programming with Arduino', slug: 'arduino-programming', description: 'Hands-on Arduino programming for polytechnic students. Build real projects including home automation, robotics, and IoT devices.', thumbnailUrl: '', categoryId: 'cat3', instructorId: 'ins2', level: 'intermediate', language: 'Bangla', duration: 1500, totalVideos: 30, rating: 4.7, totalReviews: 167, totalStudents: 720, isFeatured: false, tags: ['Arduino', 'Microcontroller', 'IoT'], price: 399 },
-  { id: 'c5', title: 'Electrical Circuit Analysis', slug: 'circuit-analysis', description: 'Master AC/DC circuit analysis, network theorems, and electrical measurements. Complete preparation for BTEB exams.', thumbnailUrl: '', categoryId: 'cat4', instructorId: 'ins5', level: 'beginner', language: 'Bangla', duration: 2000, totalVideos: 40, rating: 4.9, totalReviews: 278, totalStudents: 2100, isFeatured: true, tags: ['Circuits', 'AC', 'DC', 'BTEB'], price: 0 },
-  { id: 'c6', title: 'Power Systems & Renewable Energy', slug: 'power-systems', description: 'Learn power generation, transmission, distribution, and renewable energy technologies. Essential for EEE diploma students.', thumbnailUrl: '', categoryId: 'cat4', instructorId: 'ins5', level: 'advanced', language: 'Bangla', duration: 1600, totalVideos: 32, rating: 4.8, totalReviews: 145, totalStudents: 680, isFeatured: false, tags: ['Power', 'Solar', 'Renewable'], price: 599 },
-  { id: 'c7', title: 'Engineering Drawing & AutoCAD', slug: 'engineering-drawing-autocad', description: 'From hand drawing to AutoCAD. Master engineering drawing fundamentals and 2D/3D CAD modeling for mechanical engineering students.', thumbnailUrl: '', categoryId: 'cat5', instructorId: 'ins3', level: 'beginner', language: 'Bangla', duration: 1400, totalVideos: 28, rating: 4.7, totalReviews: 198, totalStudents: 940, isFeatured: true, tags: ['AutoCAD', 'Drawing', 'Mechanical'], price: 349 },
-  { id: 'c8', title: 'Thermodynamics & Heat Transfer', slug: 'thermodynamics', description: 'Comprehensive thermodynamics course covering laws of thermodynamics, heat transfer, and their applications in mechanical systems.', thumbnailUrl: '', categoryId: 'cat5', instructorId: 'ins3', level: 'intermediate', language: 'Bangla', duration: 1100, totalVideos: 22, rating: 4.5, totalReviews: 87, totalStudents: 420, isFeatured: false, tags: ['Thermodynamics', 'Heat', 'ME'], price: 299 },
-  { id: 'c9', title: 'Structural Analysis & Design', slug: 'structural-analysis', description: 'Learn structural analysis, RCC design, and steel structure design. Complete BTEB syllabus coverage with practical examples.', thumbnailUrl: '', categoryId: 'cat6', instructorId: 'ins7', level: 'intermediate', language: 'Bangla', duration: 1800, totalVideos: 36, rating: 4.6, totalReviews: 156, totalStudents: 850, isFeatured: false, tags: ['Structure', 'RCC', 'Steel'], price: 449 },
-  { id: 'c10', title: 'Surveying & Estimation', slug: 'surveying-estimation', description: 'Master surveying techniques, equipment handling, and cost estimation for construction projects. Field practice included.', thumbnailUrl: '', categoryId: 'cat6', instructorId: 'ins7', level: 'beginner', language: 'Bangla', duration: 1000, totalVideos: 20, rating: 4.5, totalReviews: 92, totalStudents: 560, isFeatured: false, tags: ['Surveying', 'Estimation', 'Civil'], price: 0 },
-  { id: 'c11', title: 'Architectural Design with Revit', slug: 'architectural-revit', description: 'Create professional architectural designs using Autodesk Revit. From floor plans to 3D rendering and walkthrough animations.', thumbnailUrl: '', categoryId: 'cat7', instructorId: 'ins4', level: 'intermediate', language: 'Bangla', duration: 1600, totalVideos: 32, rating: 4.6, totalReviews: 78, totalStudents: 380, isFeatured: true, tags: ['Revit', 'Architecture', '3D'], price: 549 },
-  { id: 'c12', title: 'Interior Design Principles', slug: 'interior-design', description: 'Learn interior design fundamentals, space planning, color theory, and material selection for creating beautiful living and work spaces.', thumbnailUrl: '', categoryId: 'cat7', instructorId: 'ins4', level: 'beginner', language: 'Bangla', duration: 800, totalVideos: 16, rating: 4.4, totalReviews: 56, totalStudents: 290, isFeatured: false, tags: ['Interior', 'Design', 'Space'], price: 249 },
-  { id: 'c13', title: 'Python Programming for Beginners', slug: 'python-beginners', description: 'Start your programming journey with Python. Learn variables, loops, functions, OOP, and build real projects. No prior experience needed.', thumbnailUrl: '', categoryId: 'cat8', instructorId: 'ins1', level: 'beginner', language: 'Bangla', duration: 1200, totalVideos: 24, rating: 4.8, totalReviews: 345, totalStudents: 1890, isFeatured: true, tags: ['Python', 'Programming', 'OOP'], price: 0 },
-  { id: 'c14', title: 'C Programming & Data Structures', slug: 'c-programming-ds', description: 'Master C programming and data structures. Essential for BTEB CSE students covering arrays, pointers, linked lists, trees, and graphs.', thumbnailUrl: '', categoryId: 'cat8', instructorId: 'ins1', level: 'intermediate', language: 'Bangla', duration: 1500, totalVideos: 30, rating: 4.7, totalReviews: 267, totalStudents: 1340, isFeatured: false, tags: ['C', 'Data Structures', 'Algorithms'], price: 399 },
-  { id: 'c15', title: 'Machine Learning with Python', slug: 'ml-python', description: 'Introduction to machine learning algorithms, model training, and evaluation using scikit-learn and TensorFlow. Build real ML projects.', thumbnailUrl: '', categoryId: 'cat9', instructorId: 'ins8', level: 'advanced', language: 'Bangla', duration: 2000, totalVideos: 40, rating: 4.7, totalReviews: 123, totalStudents: 560, isFeatured: true, tags: ['ML', 'AI', 'Python'], price: 699 },
-  { id: 'c16', title: 'Data Visualization & Analytics', slug: 'data-visualization', description: 'Learn data visualization with Python, Tableau, and Excel. Turn raw data into actionable insights with beautiful charts and dashboards.', thumbnailUrl: '', categoryId: 'cat9', instructorId: 'ins8', level: 'intermediate', language: 'Bangla', duration: 900, totalVideos: 18, rating: 4.6, totalReviews: 89, totalStudents: 430, isFeatured: false, tags: ['Data', 'Visualization', 'Analytics'], price: 349 },
-  { id: 'c17', title: 'Computer Networking & CCNA', slug: 'networking-ccna', description: 'Complete networking fundamentals and CCNA preparation. Learn OSI model, TCP/IP, routing, switching, and network security.', thumbnailUrl: '', categoryId: 'cat10', instructorId: 'ins9', level: 'intermediate', language: 'Bangla', duration: 1800, totalVideos: 36, rating: 4.6, totalReviews: 134, totalStudents: 670, isFeatured: false, tags: ['Networking', 'CCNA', 'Security'], price: 499 },
-  { id: 'c18', title: 'Cybersecurity Fundamentals', slug: 'cybersecurity', description: 'Learn ethical hacking, vulnerability assessment, and cybersecurity best practices. Protect systems and networks from threats.', thumbnailUrl: '', categoryId: 'cat10', instructorId: 'ins9', level: 'advanced', language: 'Bangla', duration: 1400, totalVideos: 28, rating: 4.5, totalReviews: 67, totalStudents: 340, isFeatured: false, tags: ['Security', 'Hacking', 'Protection'], price: 599 },
-  { id: 'c19', title: 'Flutter Mobile App Development', slug: 'flutter-mobile', description: 'Build cross-platform mobile apps with Flutter and Dart. From UI design to API integration and Play Store deployment.', thumbnailUrl: '', categoryId: 'cat2', instructorId: 'ins6', level: 'intermediate', language: 'Bangla', duration: 1600, totalVideos: 32, rating: 4.8, totalReviews: 112, totalStudents: 580, isFeatured: true, tags: ['Flutter', 'Dart', 'Mobile'], price: 499 },
-  { id: 'c20', title: 'Android Development with Kotlin', slug: 'android-kotlin', description: 'Native Android app development using Kotlin. Learn activities, fragments, Room database, and Material Design.', thumbnailUrl: '', categoryId: 'cat2', instructorId: 'ins1', level: 'intermediate', language: 'Bangla', duration: 1400, totalVideos: 28, rating: 4.6, totalReviews: 89, totalStudents: 460, isFeatured: false, tags: ['Android', 'Kotlin', 'Mobile'], price: 449 },
-  { id: 'c21', title: 'Graphic Design with Adobe Illustrator', slug: 'graphic-design-illustrator', description: 'Master vector graphic design with Adobe Illustrator. Create logos, icons, illustrations, and brand identity materials.', thumbnailUrl: '', categoryId: 'cat11', instructorId: 'ins4', level: 'beginner', language: 'Bangla', duration: 1000, totalVideos: 20, rating: 4.5, totalReviews: 78, totalStudents: 350, isFeatured: false, tags: ['Illustrator', 'Design', 'Vector'], price: 349 },
-  { id: 'c22', title: 'Textile Manufacturing Processes', slug: 'textile-manufacturing', description: 'Comprehensive textile manufacturing course covering spinning, weaving, knitting, dyeing, and finishing processes.', thumbnailUrl: '', categoryId: 'cat12', instructorId: 'ins10', level: 'intermediate', language: 'Bangla', duration: 1200, totalVideos: 24, rating: 4.4, totalReviews: 45, totalStudents: 230, isFeatured: false, tags: ['Textile', 'Manufacturing', 'Dyeing'], price: 299 },
-  { id: 'c23', title: 'Node.js & Express Backend Development', slug: 'nodejs-express', description: 'Build scalable backend APIs with Node.js and Express. Learn REST API design, MongoDB, authentication, and deployment.', thumbnailUrl: '', categoryId: 'cat1', instructorId: 'ins6', level: 'intermediate', language: 'Bangla', duration: 1500, totalVideos: 30, rating: 4.7, totalReviews: 145, totalStudents: 720, isFeatured: false, tags: ['Node.js', 'Express', 'Backend'], price: 449 },
-  { id: 'c24', title: 'Database Management with SQL', slug: 'database-sql', description: 'Learn SQL and database management. Master MySQL, database design, normalization, and query optimization for CSE students.', thumbnailUrl: '', categoryId: 'cat8', instructorId: 'ins1', level: 'beginner', language: 'Bangla', duration: 1000, totalVideos: 20, rating: 4.6, totalReviews: 189, totalStudents: 980, isFeatured: false, tags: ['SQL', 'MySQL', 'Database'], price: 0 },
+  { id: 'c1', title: 'Complete Web Development with HTML, CSS & JavaScript', slug: 'complete-web-dev', description: 'Learn web development from scratch.', thumbnailUrl: '', categoryId: 'cat1', instructorId: 'ins1', level: 'beginner', language: 'Bangla', duration: 2400, totalVideos: 48, rating: 4.8, totalReviews: 234, totalStudents: 1250, isFeatured: true, tags: ['HTML', 'CSS', 'JavaScript'], price: 0 },
+  { id: 'c2', title: 'React.js & Next.js - Modern Frontend Development', slug: 'react-nextjs', description: 'Build modern web applications with React.js and Next.js.', thumbnailUrl: '', categoryId: 'cat1', instructorId: 'ins6', level: 'intermediate', language: 'Bangla', duration: 1800, totalVideos: 36, rating: 4.9, totalReviews: 189, totalStudents: 890, isFeatured: true, tags: ['React', 'Next.js', 'Frontend'], price: 499 },
+  { id: 'c3', title: 'Digital Electronics Fundamentals', slug: 'digital-electronics', description: 'Understand digital logic gates, combinational and sequential circuits.', thumbnailUrl: '', categoryId: 'cat3', instructorId: 'ins2', level: 'beginner', language: 'Bangla', duration: 1200, totalVideos: 24, rating: 4.9, totalReviews: 312, totalStudents: 1580, isFeatured: true, tags: ['Digital', 'Logic', 'Circuits'], price: 0 },
+  { id: 'c4', title: 'Microcontroller Programming with Arduino', slug: 'arduino-programming', description: 'Hands-on Arduino programming for polytechnic students.', thumbnailUrl: '', categoryId: 'cat3', instructorId: 'ins2', level: 'intermediate', language: 'Bangla', duration: 1500, totalVideos: 30, rating: 4.7, totalReviews: 167, totalStudents: 720, isFeatured: false, tags: ['Arduino', 'Microcontroller', 'IoT'], price: 399 },
+  { id: 'c5', title: 'Electrical Circuit Analysis', slug: 'circuit-analysis', description: 'Master AC/DC circuit analysis, network theorems.', thumbnailUrl: '', categoryId: 'cat4', instructorId: 'ins5', level: 'beginner', language: 'Bangla', duration: 2000, totalVideos: 40, rating: 4.9, totalReviews: 278, totalStudents: 2100, isFeatured: true, tags: ['Circuits', 'AC', 'DC', 'BTEB'], price: 0 },
+  { id: 'c6', title: 'Power Systems & Renewable Energy', slug: 'power-systems', description: 'Learn power generation, transmission, and renewable energy.', thumbnailUrl: '', categoryId: 'cat4', instructorId: 'ins5', level: 'advanced', language: 'Bangla', duration: 1600, totalVideos: 32, rating: 4.8, totalReviews: 145, totalStudents: 680, isFeatured: false, tags: ['Power', 'Solar', 'Renewable'], price: 599 },
+  { id: 'c7', title: 'Engineering Drawing & AutoCAD', slug: 'engineering-drawing-autocad', description: 'From hand drawing to AutoCAD.', thumbnailUrl: '', categoryId: 'cat5', instructorId: 'ins3', level: 'beginner', language: 'Bangla', duration: 1400, totalVideos: 28, rating: 4.7, totalReviews: 198, totalStudents: 940, isFeatured: true, tags: ['AutoCAD', 'Drawing', 'Mechanical'], price: 349 },
+  { id: 'c8', title: 'Thermodynamics & Heat Transfer', slug: 'thermodynamics', description: 'Comprehensive thermodynamics course.', thumbnailUrl: '', categoryId: 'cat5', instructorId: 'ins3', level: 'intermediate', language: 'Bangla', duration: 1100, totalVideos: 22, rating: 4.5, totalReviews: 87, totalStudents: 420, isFeatured: false, tags: ['Thermodynamics', 'Heat', 'ME'], price: 299 },
+  { id: 'c9', title: 'Structural Analysis & Design', slug: 'structural-analysis', description: 'Learn structural analysis, RCC design.', thumbnailUrl: '', categoryId: 'cat6', instructorId: 'ins7', level: 'intermediate', language: 'Bangla', duration: 1800, totalVideos: 36, rating: 4.6, totalReviews: 156, totalStudents: 850, isFeatured: false, tags: ['Structure', 'RCC', 'Steel'], price: 449 },
+  { id: 'c10', title: 'Surveying & Estimation', slug: 'surveying-estimation', description: 'Master surveying techniques and cost estimation.', thumbnailUrl: '', categoryId: 'cat6', instructorId: 'ins7', level: 'beginner', language: 'Bangla', duration: 1000, totalVideos: 20, rating: 4.5, totalReviews: 92, totalStudents: 560, isFeatured: false, tags: ['Surveying', 'Estimation', 'Civil'], price: 0 },
+  { id: 'c11', title: 'Architectural Design with Revit', slug: 'architectural-revit', description: 'Create professional architectural designs using Autodesk Revit.', thumbnailUrl: '', categoryId: 'cat7', instructorId: 'ins4', level: 'intermediate', language: 'Bangla', duration: 1600, totalVideos: 32, rating: 4.6, totalReviews: 78, totalStudents: 380, isFeatured: true, tags: ['Revit', 'Architecture', '3D'], price: 549 },
+  { id: 'c12', title: 'Interior Design Principles', slug: 'interior-design', description: 'Learn interior design fundamentals.', thumbnailUrl: '', categoryId: 'cat7', instructorId: 'ins4', level: 'beginner', language: 'Bangla', duration: 800, totalVideos: 16, rating: 4.4, totalReviews: 56, totalStudents: 290, isFeatured: false, tags: ['Interior', 'Design', 'Space'], price: 249 },
+  { id: 'c13', title: 'Python Programming for Beginners', slug: 'python-beginners', description: 'Start your programming journey with Python.', thumbnailUrl: '', categoryId: 'cat8', instructorId: 'ins1', level: 'beginner', language: 'Bangla', duration: 1200, totalVideos: 24, rating: 4.8, totalReviews: 345, totalStudents: 1890, isFeatured: true, tags: ['Python', 'Programming', 'OOP'], price: 0 },
+  { id: 'c14', title: 'C Programming & Data Structures', slug: 'c-programming-ds', description: 'Master C programming and data structures.', thumbnailUrl: '', categoryId: 'cat8', instructorId: 'ins1', level: 'intermediate', language: 'Bangla', duration: 1500, totalVideos: 30, rating: 4.7, totalReviews: 267, totalStudents: 1340, isFeatured: false, tags: ['C', 'Data Structures', 'Algorithms'], price: 399 },
+  { id: 'c15', title: 'Machine Learning with Python', slug: 'ml-python', description: 'Introduction to machine learning algorithms.', thumbnailUrl: '', categoryId: 'cat9', instructorId: 'ins8', level: 'advanced', language: 'Bangla', duration: 2000, totalVideos: 40, rating: 4.7, totalReviews: 123, totalStudents: 560, isFeatured: true, tags: ['ML', 'AI', 'Python'], price: 699 },
+  { id: 'c16', title: 'Data Visualization & Analytics', slug: 'data-visualization', description: 'Learn data visualization with Python, Tableau, and Excel.', thumbnailUrl: '', categoryId: 'cat9', instructorId: 'ins8', level: 'intermediate', language: 'Bangla', duration: 900, totalVideos: 18, rating: 4.6, totalReviews: 89, totalStudents: 430, isFeatured: false, tags: ['Data', 'Visualization', 'Analytics'], price: 349 },
+  { id: 'c17', title: 'Computer Networking & CCNA', slug: 'networking-ccna', description: 'Complete networking fundamentals and CCNA preparation.', thumbnailUrl: '', categoryId: 'cat10', instructorId: 'ins9', level: 'intermediate', language: 'Bangla', duration: 1800, totalVideos: 36, rating: 4.6, totalReviews: 134, totalStudents: 670, isFeatured: false, tags: ['Networking', 'CCNA', 'Security'], price: 499 },
+  { id: 'c18', title: 'Cybersecurity Fundamentals', slug: 'cybersecurity', description: 'Learn ethical hacking and cybersecurity.', thumbnailUrl: '', categoryId: 'cat10', instructorId: 'ins9', level: 'advanced', language: 'Bangla', duration: 1400, totalVideos: 28, rating: 4.5, totalReviews: 67, totalStudents: 340, isFeatured: false, tags: ['Security', 'Hacking', 'Protection'], price: 599 },
+  { id: 'c19', title: 'Flutter Mobile App Development', slug: 'flutter-mobile', description: 'Build cross-platform mobile apps with Flutter.', thumbnailUrl: '', categoryId: 'cat2', instructorId: 'ins6', level: 'intermediate', language: 'Bangla', duration: 1600, totalVideos: 32, rating: 4.8, totalReviews: 112, totalStudents: 580, isFeatured: true, tags: ['Flutter', 'Dart', 'Mobile'], price: 499 },
+  { id: 'c20', title: 'Android Development with Kotlin', slug: 'android-kotlin', description: 'Native Android app development using Kotlin.', thumbnailUrl: '', categoryId: 'cat2', instructorId: 'ins1', level: 'intermediate', language: 'Bangla', duration: 1400, totalVideos: 28, rating: 4.6, totalReviews: 89, totalStudents: 460, isFeatured: false, tags: ['Android', 'Kotlin', 'Mobile'], price: 449 },
+  { id: 'c21', title: 'Graphic Design with Adobe Illustrator', slug: 'graphic-design-illustrator', description: 'Master vector graphic design with Adobe Illustrator.', thumbnailUrl: '', categoryId: 'cat11', instructorId: 'ins4', level: 'beginner', language: 'Bangla', duration: 1000, totalVideos: 20, rating: 4.5, totalReviews: 78, totalStudents: 350, isFeatured: false, tags: ['Illustrator', 'Design', 'Vector'], price: 349 },
+  { id: 'c22', title: 'Textile Manufacturing Processes', slug: 'textile-manufacturing', description: 'Comprehensive textile manufacturing course.', thumbnailUrl: '', categoryId: 'cat12', instructorId: 'ins10', level: 'intermediate', language: 'Bangla', duration: 1200, totalVideos: 24, rating: 4.4, totalReviews: 45, totalStudents: 230, isFeatured: false, tags: ['Textile', 'Manufacturing', 'Dyeing'], price: 299 },
+  { id: 'c23', title: 'Node.js & Express Backend Development', slug: 'nodejs-express', description: 'Build scalable backend APIs with Node.js and Express.', thumbnailUrl: '', categoryId: 'cat1', instructorId: 'ins6', level: 'intermediate', language: 'Bangla', duration: 1500, totalVideos: 30, rating: 4.7, totalReviews: 145, totalStudents: 720, isFeatured: false, tags: ['Node.js', 'Express', 'Backend'], price: 449 },
+  { id: 'c24', title: 'Database Management with SQL', slug: 'database-sql', description: 'Learn SQL and database management.', thumbnailUrl: '', categoryId: 'cat8', instructorId: 'ins1', level: 'beginner', language: 'Bangla', duration: 1000, totalVideos: 20, rating: 4.6, totalReviews: 189, totalStudents: 980, isFeatured: false, tags: ['SQL', 'MySQL', 'Database'], price: 0 },
 ];
 
 // ============ VIDEOS ============
@@ -208,10 +135,7 @@ const generateVideos = (courseId: string, courseTitle: string, count: number, st
     'Assignment Walkthrough', 'Project Setup', 'Building the Solution', 'Testing & Debugging',
     'Performance Optimization', 'Security Considerations', 'Deployment Guide', 'Next Steps',
   ];
-
-  // Deterministic pseudo-random based on courseId to avoid SSR/client hydration mismatch
   const seed = courseId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-
   return Array.from({ length: count }, (_, i) => ({
     id: `v-${courseId}-${i + 1}`,
     title: `${topics[i % topics.length]} — ${courseTitle.split(' ').slice(0, 3).join(' ')}`,
@@ -235,21 +159,8 @@ export const VIDEOS: Video[] = [
   ...generateVideos('c19', 'Flutter Mobile App Development', 32, 1),
 ];
 
-// ============ NOTIFICATIONS ============
-export const MOCK_NOTIFICATIONS: AppNotification[] = [
-  { id: 'n1', title: 'New Course Available!', message: 'Machine Learning with Python is now live. Enroll now and get 20% off!', type: 'announcement', isRead: false, createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
-  { id: 'n2', title: 'Course Completed! 🎉', message: 'Congratulations! You have completed Digital Electronics Fundamentals.', type: 'success', isRead: false, createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-  { id: 'n3', title: 'New Video Uploaded', message: 'Engr. Karim Uddin uploaded a new video: "React Hooks Deep Dive"', type: 'info', isRead: false, createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
-  { id: 'n4', title: 'Assignment Due Tomorrow', message: 'Your JavaScript project assignment is due tomorrow at 11:59 PM.', type: 'warning', isRead: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString() },
-  { id: 'n5', title: 'Live Session Reminder', message: 'Dr. Shahid Hossain is going live in 30 minutes: "Power Systems Q&A"', type: 'info', isRead: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
-  { id: 'n6', title: 'Certificate Ready!', message: 'Your certificate for Python Programming for Beginners is ready to download.', type: 'success', isRead: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
-  { id: 'n7', title: 'Weekly Progress Report', message: 'You watched 12 hours this week! Keep up the great work.', type: 'info', isRead: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() },
-  { id: 'n8', title: 'New Feature: Bookmarks!', message: 'You can now bookmark courses to watch later. Try it out!', type: 'announcement', isRead: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString() },
-  { id: 'n9', title: 'Subscription Renewal', message: 'Your premium subscription will renew in 5 days. Update your payment method.', type: 'warning', isRead: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString() },
-  { id: 'n10', title: 'Instructor Replied', message: 'Engr. Karim Uddin replied to your question in Web Development course.', type: 'info', isRead: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString() },
-];
-
 // ============ HELPER FUNCTIONS ============
+
 export function getInstructor(id: string): Instructor | undefined {
   return INSTRUCTORS.find((i) => i.id === id);
 }

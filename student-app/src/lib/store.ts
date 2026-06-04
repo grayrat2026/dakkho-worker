@@ -726,6 +726,9 @@ export const useContentProtectionStore = create<ContentProtectionState>((set) =>
 }));
 
 // ============ SERVER CONFIG STORE ============
+// This type must match the Worker's transformConfigForStudent() output exactly.
+// Worker transforms its internal ServerConfig before sending to students.
+
 export interface ContentProtectionConfig {
   enabled: boolean;
   noCopy: boolean;
@@ -737,7 +740,7 @@ export interface ContentProtectionConfig {
   dragProtection: boolean;
 }
 
-export interface FeaturesConfig {
+export interface FeatureToggles {
   downloads: boolean;
   bookmarks: boolean;
   certificates: boolean;
@@ -754,23 +757,30 @@ export interface FeaturesConfig {
   referral: boolean;
 }
 
-export interface UIConfig {
-  homeSections: string[];
-  sidebarSections: Record<string, boolean>;
-  bottomNavTabs: string[];
-  topBarElements: {
-    search: boolean;
-    notifications: boolean;
-    avatar: boolean;
-    hamburger: boolean;
-  };
-  cardStyle: 'glass' | 'flat' | 'rounded';
+export interface SidebarVisibility {
+  menu: boolean;
+  departments: boolean;
+  semesters: boolean;
+  exams: boolean;
+  community: boolean;
+  general: boolean;
+}
+
+export interface TopBarElements {
+  search: boolean;
+  notifications: boolean;
+  avatar: boolean;
+  hamburger: boolean;
 }
 
 export interface ServerConfig {
+  featureToggles: FeatureToggles;
+  homePageSections: string[];
+  sidebarVisibility: SidebarVisibility;
+  bottomNavTabs: string[];
+  topBarElements: TopBarElements;
+  cardStyle: 'glass' | 'flat' | 'rounded';
   contentProtection: ContentProtectionConfig;
-  features: FeaturesConfig;
-  ui: UIConfig;
 }
 
 interface ServerConfigState {
@@ -783,27 +793,26 @@ interface ServerConfigState {
   isSidebarSectionVisible: (section: string) => boolean;
   isBottomNavTabVisible: (tab: string) => boolean;
   isTopBarElementVisible: (element: string) => boolean;
+  getCardStyle: () => 'glass' | 'flat' | 'rounded';
 }
 
 const DEFAULT_CONFIG: ServerConfig = {
-  contentProtection: {
-    enabled: true, noCopy: true, noRightClick: true,
-    noScreenshot: true, noPrint: true, customContextMenu: true,
-    watermark: false, dragProtection: true,
-  },
-  features: {
+  featureToggles: {
     downloads: true, bookmarks: true, certificates: true,
     liveSessions: true, achievements: true, assignments: true,
     discussions: true, community: true, leaderboard: true,
     studyGroups: true, peerConnections: true, feedback: true,
     pricing: true, referral: true,
   },
-  ui: {
-    homeSections: ['hero', 'continue-watching', 'categories', 'new-releases', 'live', 'trending', 'instructors', 'leaderboard', 'recommended'],
-    sidebarSections: { menu: true, departments: true, semesters: true, exams: true, community: true, general: true },
-    bottomNavTabs: ['home', 'explore', 'my-courses', 'watch-history', 'profile'],
-    topBarElements: { search: true, notifications: true, avatar: true, hamburger: true },
-    cardStyle: 'glass',
+  homePageSections: ['hero', 'continue-watching', 'categories', 'new-releases', 'live', 'trending', 'instructors', 'leaderboard', 'recommended'],
+  sidebarVisibility: { menu: true, departments: true, semesters: true, exams: true, community: true, general: true },
+  bottomNavTabs: ['home', 'explore', 'my-courses', 'watch-history', 'profile'],
+  topBarElements: { search: true, notifications: true, avatar: true, hamburger: true },
+  cardStyle: 'glass',
+  contentProtection: {
+    enabled: true, noCopy: true, noRightClick: true,
+    noScreenshot: true, noPrint: true, customContextMenu: true,
+    watermark: false, dragProtection: true,
   },
 };
 
@@ -828,26 +837,31 @@ export const useServerConfigStore = create<ServerConfigState>((set, get) => ({
 
   isFeatureEnabled: (feature: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return (config.features as Record<string, boolean>)[feature] ?? true;
+    return (config.featureToggles as Record<string, boolean>)[feature] ?? true;
   },
 
   isHomeSectionVisible: (section: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return config.ui.homeSections.includes(section);
+    return config.homePageSections.includes(section);
   },
 
   isSidebarSectionVisible: (section: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return config.ui.sidebarSections[section] ?? true;
+    return (config.sidebarVisibility as Record<string, boolean>)[section] ?? true;
   },
 
   isBottomNavTabVisible: (tab: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return config.ui.bottomNavTabs.includes(tab);
+    return config.bottomNavTabs.includes(tab);
   },
 
   isTopBarElementVisible: (element: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return (config.ui.topBarElements as Record<string, boolean>)[element] ?? true;
+    return (config.topBarElements as Record<string, boolean>)[element] ?? true;
+  },
+
+  getCardStyle: () => {
+    const config = get().config || DEFAULT_CONFIG;
+    return config.cardStyle;
   },
 }));

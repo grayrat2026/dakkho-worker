@@ -1,11 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, SlidersHorizontal, Star, Users, BookOpen, ArrowRight, Filter } from 'lucide-react';
 import { INSTRUCTORS } from '@/lib/mock-data';
+import { instructorApi } from '@/lib/api-client';
+import { mapApiInstructors } from '../shared/apiMappers';
+import type { Instructor } from '@/lib/mock-data';
 import { useNavigationStore } from '@/lib/store';
 import { GlassCard } from '../shared/GlassCard';
+import { LoadingSkeleton } from '../shared/LoadingSkeleton';
 
 const AVATAR_GRADIENTS = [
   'from-sky-400 to-blue-600',
@@ -20,8 +24,6 @@ const AVATAR_GRADIENTS = [
   'from-teal-400 to-cyan-600',
 ];
 
-const SPECIALIZATIONS = Array.from(new Set(INSTRUCTORS.map((i) => i.specialization)));
-
 export function InstructorsPage() {
   const navigate = useNavigationStore((s) => s.navigate);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,7 +31,29 @@ export function InstructorsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const filteredInstructors = INSTRUCTORS.filter((instructor) => {
+  const [instructors, setInstructors] = useState<Instructor[]>(INSTRUCTORS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await instructorApi.list();
+        if (!cancelled && result.instructors?.length) {
+          setInstructors(mapApiInstructors(result.instructors));
+        }
+      } catch {
+        // Keep mock fallback
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const SPECIALIZATIONS = Array.from(new Set(instructors.map((i) => i.specialization)));
+
+  const filteredInstructors = instructors.filter((instructor) => {
     const matchesSearch = !searchQuery ||
       instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       instructor.specialization.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -162,12 +186,24 @@ export function InstructorsPage() {
       {/* Results count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          <span className="font-bold text-foreground">{filteredInstructors.length}</span> instructors found
+          {loading ? (
+            'Loading instructors...'
+          ) : (
+            <>
+              <span className="font-bold text-foreground">{filteredInstructors.length}</span> instructors found
+            </>
+          )}
         </p>
       </div>
 
       {/* Instructor Grid / List */}
-      {filteredInstructors.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <LoadingSkeleton key={i} type="card" className="h-56" />
+          ))}
+        </div>
+      ) : filteredInstructors.length > 0 ? (
         viewMode === 'grid' ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredInstructors.map((instructor, i) => {

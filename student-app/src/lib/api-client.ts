@@ -268,6 +268,20 @@ export const courseApi = {
     api.get<{ videos: any[]; total: number }>(`/api/courses/${id}/videos`),
 };
 
+// Instructors (from Appwrite via Worker)
+export const instructorApi = {
+  list: (params?: { search?: string; limit?: number; offset?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.offset) query.set('offset', String(params.offset));
+    const qs = query.toString();
+    return api.get<{ instructors: any[]; total: number }>(`/api/instructors${qs ? `?${qs}` : ''}`);
+  },
+  get: (id: string) =>
+    api.get<{ instructor: any }>(`/api/instructors/${id}`),
+};
+
 // Video Streaming
 export const videoApi = {
   streamUrl: (key: string, bucket?: string) =>

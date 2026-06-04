@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -25,9 +25,13 @@ import {
   Reply,
   Send,
   X,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { useNavigationStore, useWatchProgressStore } from '@/lib/store';
-import { getCourse, getCourseVideos, getInstructor, formatDuration } from '@/lib/mock-data';
+import { formatDuration } from '@/lib/mock-data';
+import { courseApi, videoApi } from '@/lib/api-client';
+import { DatabaseService, COLLECTION_IDS, Query } from '@/lib/appwrite';
 import { GlassCard } from '../shared/GlassCard';
 import { GradientButton } from '../shared/GradientButton';
 import { ProgressBar } from '../shared/ProgressBar';
@@ -61,6 +65,14 @@ interface ReplyItem {
 interface ChapterMarker {
   time: number;
   label: string;
+}
+
+interface InstructorData {
+  id: string;
+  name: string;
+  title?: string;
+  avatar_url?: string;
+  [key: string]: unknown;
 }
 
 // --- Helpers ---
@@ -118,15 +130,25 @@ export function VideoPlayerPage() {
   const { pageParams, navigate, goBack } = useNavigationStore();
   const { updateProgress, getProgress } = useWatchProgressStore();
 
-  // --- Data ---
+  // --- Route params ---
   const videoId = pageParams.videoId as string;
   const courseId = pageParams.courseId as string;
-  const course = getCourse(courseId);
-  const videos = getCourseVideos(courseId);
-  const currentVideo = videos.find((v) => v.id === videoId);
-  const instructor = course ? getInstructor(course.instructorId) : undefined;
-  const watchProgress = getProgress(videoId);
 
+  // --- API-fetched data ---
+  const [course, setCourse] = useState<any>(null);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [instructor, setInstructor] = useState<InstructorData | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  // --- Stream URL ---
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamLoading, setStreamLoading] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
+
+  // --- Derived data (depends on fetched videos/course) ---
+  const currentVideo = videos.find((v) => v.id === videoId);
+  const watchProgress = getProgress(videoId);
   const currentIndex = videos.findIndex((v) => v.id === videoId);
   const nextVideo = currentIndex < videos.length - 1 ? videos[currentIndex + 1] : null;
 
@@ -184,6 +206,80 @@ export function VideoPlayerPage() {
     { time: videoDuration * 0.75, label: 'Summary' },
   ] : [];
 
+  // --- Fetch course + videos + instructor on mount ---
+  useEffect(() => {
+    if (!courseId) {
+      setDataError('No course ID provided.');
+      setDataLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchData() {
+      setDataLoading(true);
+      setDataError(null);
+
+      try {
+        // Fetch course and videos in parallel
+        const [courseRes, videosRes] = await Promise.all([
+          courseApi.get(courseId),
+          courseApi.videos(courseId),
+        ]);
+
+        if (cancelled) return;
+
+        const courseData = courseRes.course;
+        const videoList = videosRes.videos || [];
+
+        setCourse(courseData);
+        setVideos(videoList);
+
+        // Fetch instructor if course has instructorId
+        if (courseData?.instructorId) {
+          try {
+            const instructorRes = await DatabaseService.listDocuments(
+              COLLECTION_IDS.INSTRUCTORS,
+              [Query.equal('$id', courseData.instructorId)],
+            );
+            if (!cancelled && instructorRes.success && instructorRes.data.documents.length > 0) {
+              const doc = instructorRes.data.documents[0] as unknown as InstructorData;
+              setInstructor(doc);
+            }
+          } catch {
+            // Instructor fetch is non-critical; silently fail
+          }
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setDataError(err?.message || 'Failed to load course data. Please try again.');
+        }
+      } finally {
+        if (!cancelled) {
+          setDataLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+    return () => { cancelled = true; };
+  }, [courseId]);
+
+  // --- Fetch stream URL when play is pressed ---
+  const fetchStreamUrl = useCallback(async (videoKey: string) => {
+    if (streamUrl || streamLoading) return;
+    setStreamLoading(true);
+    setStreamError(null);
+    try {
+      const res = await videoApi.streamUrl(videoKey);
+      setStreamUrl(res.url);
+    } catch (err: any) {
+      setStreamError(err?.message || 'Failed to load video stream.');
+    } finally {
+      setStreamLoading(false);
+    }
+  }, [streamUrl, streamLoading]);
+
   // Keep simulatedTimeRef in sync with currentTime via effect
   useEffect(() => {
     simulatedTimeRef.current = currentTime;
@@ -191,6 +287,10 @@ export function VideoPlayerPage() {
 
   // --- Handlers ---
   const togglePlay = () => {
+    if (!isPlaying && currentVideo?.videoKey && !streamUrl) {
+      // Try to get stream URL on first play
+      fetchStreamUrl(currentVideo.videoKey);
+    }
     setIsPlaying((prev) => !prev);
   };
 
@@ -238,6 +338,9 @@ export function VideoPlayerPage() {
   const handlePlayNext = () => {
     setIsPlaying(false);
     setShowNextEpisode(false);
+    // Reset stream state for new video
+    setStreamUrl(null);
+    setStreamError(null);
     if (countdownRef.current) {
       clearInterval(countdownRef.current);
       countdownRef.current = null;
@@ -261,6 +364,9 @@ export function VideoPlayerPage() {
   const handleResume = () => {
     setResumeDialogDismissed(true);
     setIsPlaying(true);
+    if (currentVideo?.videoKey && !streamUrl) {
+      fetchStreamUrl(currentVideo.videoKey);
+    }
   };
 
   const handleStartOver = () => {
@@ -268,6 +374,9 @@ export function VideoPlayerPage() {
     setCurrentTime(0);
     setResumeDialogDismissed(true);
     setIsPlaying(true);
+    if (currentVideo?.videoKey && !streamUrl) {
+      fetchStreamUrl(currentVideo.videoKey);
+    }
   };
 
   // --- Notes ---
@@ -409,7 +518,7 @@ export function VideoPlayerPage() {
       switch (e.key) {
         case ' ':
           e.preventDefault();
-          setIsPlaying((prev) => !prev);
+          togglePlay();
           break;
         case 'ArrowLeft':
           e.preventDefault();
@@ -471,7 +580,7 @@ export function VideoPlayerPage() {
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [videoDuration]);
+  }, [videoDuration, streamUrl, streamLoading, currentVideo]);
 
   // --- Fullscreen change listener ---
   useEffect(() => {
@@ -490,11 +599,28 @@ export function VideoPlayerPage() {
 
   const VolumeIcon = effectiveVolume === 0 ? VolumeX : effectiveVolume < 50 ? Volume1 : Volume2;
 
-  if (!course || !currentVideo) {
+  // --- Loading state ---
+  if (dataLoading) {
     return (
-      <div className="text-center py-16">
-        <p className="text-lg font-bold">Video not found</p>
-        <GradientButton onClick={goBack} className="mt-4">
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
+        <p className="text-sm text-muted-foreground font-semibold">Loading video...</p>
+      </div>
+    );
+  }
+
+  // --- Error / not-found state ---
+  if (dataError || !course || !currentVideo) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <AlertCircle className="w-12 h-12 text-red-400" />
+        <p className="text-lg font-bold">
+          {dataError || 'Video not found'}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The course or video you are looking for could not be loaded.
+        </p>
+        <GradientButton onClick={goBack} className="mt-2">
           Go Back
         </GradientButton>
       </div>
@@ -540,9 +666,37 @@ export function VideoPlayerPage() {
                   <Play className="w-16 h-16 text-white/20" />
                 </div>
 
+                {/* Stream loading indicator */}
+                {streamLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/30">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                      <span className="text-white/80 text-xs font-semibold">Loading stream...</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stream error indicator */}
+                {streamError && !streamLoading && (
+                  <div className="absolute top-3 left-3 z-30 bg-red-500/80 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-2">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{streamError}</span>
+                    <button
+                      className="ml-1 underline hover:no-underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStreamError(null);
+                        if (currentVideo?.videoKey) fetchStreamUrl(currentVideo.videoKey);
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
                 {/* Center play/pause overlay */}
                 <AnimatePresence>
-                  {!isPlaying && (
+                  {!isPlaying && !streamLoading && (
                     <motion.div
                       className="absolute inset-0 flex items-center justify-center z-10"
                       initial={{ opacity: 0 }}
