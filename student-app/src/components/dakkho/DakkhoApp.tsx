@@ -6,6 +6,7 @@ import { useNavigationStore, useAuthStore, useNotificationStore, useServerConfig
 // Notifications now come from OneSignal push notifications
 import { ContentProtection } from './ContentProtection';
 import { AppShell } from './AppShell';
+import NotificationPermissionModal from './notifications/NotificationPermissionModal';
 
 // Auth pages
 import { LoginPage } from './auth/LoginPage';
@@ -361,6 +362,7 @@ export function DakkhoApp() {
   return (
     <ContentProtection>
       <AppShell>
+        <NotificationPermissionModal />
         <PageRouter />
       </AppShell>
     </ContentProtection>

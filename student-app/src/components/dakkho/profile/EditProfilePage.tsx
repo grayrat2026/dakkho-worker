@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Camera, Mail, Phone, MapPin, Building, BookOpen,
   Save, X, CheckCircle, AlertCircle, ChevronLeft, Eye, EyeOff,
-  Upload, Shield, GraduationCap,
+  Upload, Shield, GraduationCap, Loader2,
 } from 'lucide-react';
 import { useNavigationStore, useAuthStore } from '@/lib/store';
-import { instituteApi, technologyApi, type Institute, type Technology } from '@/lib/api-client';
+import { instituteApi, technologyApi, studentProfileApi, type Institute, type Technology } from '@/lib/api-client';
 import { GlassCard } from '../shared/GlassCard';
 import { AnimatedPage } from '../shared/AnimatedPage';
 import { GradientButton } from '../shared/GradientButton';
-
-// Technologies now fetched from Worker API
-// Institutes now fetched from Worker API
 
 export function EditProfilePage() {
   const { goBack, navigate } = useNavigationStore();
@@ -29,17 +26,42 @@ export function EditProfilePage() {
   const [apiInstitutes, setApiInstitutes] = useState<Institute[]>([]);
   const [apiTechnologies, setApiTechnologies] = useState<Technology[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [bio, setBio] = useState('');
+  const [semester, setSemester] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch institutes and technologies from Worker API
+  // Keep a ref to user so the mount effect doesn't need it as a dependency
+  const userRef = useRef(user);
+  userRef.current = user;
+
+  // Fetch institutes, technologies, and profile data from Worker API
   useEffect(() => {
     async function fetchData() {
       try {
-        const [instRes, techRes] = await Promise.all([
+        const [instRes, techRes, profileRes] = await Promise.all([
           instituteApi.list({ limit: 100 }),
           technologyApi.list(),
+          studentProfileApi.stats().catch(() => null),
         ]);
         setApiInstitutes(instRes.institutes);
         setApiTechnologies(techRes.technologies);
+
+        // Pre-fill profile fields from API
+        if (profileRes?.profile) {
+          if (profileRes.profile.phone) setPhone(profileRes.profile.phone);
+          if (profileRes.profile.bio) setBio(profileRes.profile.bio);
+          if (profileRes.profile.semester) setSemester(profileRes.profile.semester);
+          // Update avatarUrl in store if available
+          const currentUser = userRef.current;
+          if (profileRes.profile.avatarUrl && currentUser && !currentUser.avatarUrl) {
+            setUser({ ...currentUser, avatarUrl: profileRes.profile.avatarUrl });
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch institutes/technologies:', err);
       } finally {
@@ -47,12 +69,7 @@ export function EditProfilePage() {
       }
     }
     fetchData();
-  }, []);
-  const [bio, setBio] = useState('');
-  const [semester, setSemester] = useState('3');
-  const [isSaving, setIsSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  }, [setUser]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -68,13 +85,54 @@ export function EditProfilePage() {
   const handleSave = async () => {
     if (!validate()) return;
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    if (user) {
-      setUser({ ...user, fullName, email, institute, technology });
+    setSaveError(null);
+    try {
+      // Find the instituteId from the selected institute name
+      const selectedInstitute = apiInstitutes.find((inst) => inst.name === institute);
+      const instituteId = selectedInstitute ? String(selectedInstitute.id) : undefined;
+
+      await studentProfileApi.update({
+        name: fullName,
+        phone,
+        bio,
+        semester,
+        technology,
+        instituteId,
+      });
+
+      if (user) {
+        setUser({ ...user, fullName, email, institute, technology });
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      console.error('Failed to save profile:', err);
+      setSaveError(err?.message || 'Failed to save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const result = await studentProfileApi.uploadAvatar(file);
+      // Update the user in the store with new avatarUrl
+      if (user) {
+        setUser({ ...user, avatarUrl: result.avatarUrl });
+      }
+    } catch (err: any) {
+      console.error('Avatar upload failed:', err);
+      setSaveError(err?.message || 'Failed to upload avatar');
+    } finally {
+      setUploading(false);
+      // Reset the file input so the same file can be selected again
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
+    }
   };
 
   return (
@@ -94,22 +152,49 @@ export function EditProfilePage() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <motion.div
-                className="w-20 h-20 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-3xl font-extrabold shadow-lg"
+                className="w-20 h-20 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-3xl font-extrabold shadow-lg overflow-hidden"
                 whileHover={{ scale: 1.05 }}
               >
-                {fullName.charAt(0) || 'U'}
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                ) : (
+                  fullName.charAt(0) || 'U'
+                )}
               </motion.div>
               <motion.button
                 className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-md"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploading}
               >
-                <Camera className="w-4 h-4" />
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </motion.button>
+              {/* Hidden file input for avatar upload */}
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-foreground">Edit Profile</h1>
               <p className="text-sm text-muted-foreground">Update your personal information</p>
+              {uploading && (
+                <motion.div
+                  className="flex items-center gap-1 mt-1 text-sky-500 text-xs font-semibold"
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Loader2 className="w-3 h-3 animate-spin" /> Uploading avatar...
+                </motion.div>
+              )}
               {saved && (
                 <motion.div
                   className="flex items-center gap-1 mt-1 text-emerald-500 text-xs font-semibold"
@@ -117,6 +202,15 @@ export function EditProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <CheckCircle className="w-3 h-3" /> Changes saved successfully!
+                </motion.div>
+              )}
+              {saveError && (
+                <motion.div
+                  className="flex items-center gap-1 mt-1 text-red-500 text-xs font-semibold"
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <AlertCircle className="w-3 h-3" /> {saveError}
                 </motion.div>
               )}
             </div>

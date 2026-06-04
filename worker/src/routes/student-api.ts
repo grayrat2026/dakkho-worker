@@ -481,14 +481,13 @@ studentApiRoutes.post('/auth/signup', async (c) => {
     // Step 2: Create user document in Appwrite users collection
     try {
       await createDocument(c.env, APPWRITE_COLLECTIONS.USERS, {
-        name: fullName,
+        fullName,
         email,
         instituteId: instituteId || null,
         technology: technology || null,
         role: 'student',
         emailVerified: false,
         avatarUrl: '',
-        enrolledCourseIds: [],
       }, userId);
     } catch (docErr) {
       // Non-fatal — the account exists even if document creation fails
@@ -643,7 +642,7 @@ studentApiRoutes.get('/auth/me', async (c) => {
     return c.json({
       user: {
         id: auth.userId,
-        name: (userDoc as any)?.name || auth.name || '',
+        name: (userDoc as any)?.fullName || (userDoc as any)?.name || auth.name || '',
         email: auth.email || (userDoc as any)?.email || '',
         instituteId: (userDoc as any)?.instituteId || null,
         technology: (userDoc as any)?.technology || null,
@@ -1160,7 +1159,7 @@ studentAuthenticated.get('/leaderboard', async (c) => {
 
       try {
         const userDoc = await getStudentUserDoc(c.env, row.user_id);
-        userName = (userDoc as any)?.name || 'Student';
+        userName = (userDoc as any)?.fullName || (userDoc as any)?.name || 'Student';
         userTechnology = (userDoc as any)?.technology || '';
       } catch {}
 
@@ -1309,8 +1308,8 @@ studentAuthenticated.get('/activity', async (c) => {
 
 // ─── Profile Update ───
 
-// PUT /student/profile — Update user profile
-studentAuthenticated.put('/student/profile', async (c) => {
+// PUT /profile — Update user profile
+studentAuthenticated.put('/profile', async (c) => {
   try {
     const userId = c.get('studentId');
     const body = await c.req.json();
@@ -1324,11 +1323,40 @@ studentAuthenticated.put('/student/profile', async (c) => {
       }
     }
 
+    // Map 'name' to 'fullName' for Appwrite collection
+    const appwriteUpdates: Record<string, unknown> = { ...updates };
+    if (updates.name) {
+      appwriteUpdates.fullName = updates.name;
+      delete appwriteUpdates.name;
+    }
+
     if (Object.keys(updates).length === 0) {
       return c.json({ error: 'No valid fields to update' }, 400);
     }
 
-    await updateDocument(c.env, APPWRITE_COLLECTIONS.USERS, userId, updates);
+    // Try to update, if doc doesn't exist, create it
+    try {
+      await updateDocument(c.env, APPWRITE_COLLECTIONS.USERS, userId, appwriteUpdates);
+    } catch (updateErr) {
+      // Document doesn't exist yet — create it
+      try {
+        const studentEmail = c.get('studentEmail');
+        const studentName = c.get('studentName');
+        // Remove 'name' from updates since Appwrite uses 'fullName'
+        const createData = { ...appwriteUpdates };
+        delete createData.name;
+        await createDocument(c.env, APPWRITE_COLLECTIONS.USERS, {
+          fullName: updates.name || studentName || '',
+          email: studentEmail || '',
+          ...createData,
+          role: 'student',
+          emailVerified: false,
+          avatarUrl: '',
+        }, userId);
+      } catch (createErr) {
+        return c.json({ error: getErrorMessage(createErr) }, 500);
+      }
+    }
 
     // Log activity for profile update
     await c.env.DB.prepare(`
@@ -1344,8 +1372,8 @@ studentAuthenticated.put('/student/profile', async (c) => {
 
 // ─── Avatar Upload ───
 
-// POST /student/upload-avatar — Upload profile picture to R2
-studentAuthenticated.post('/student/upload-avatar', async (c) => {
+// POST /upload-avatar — Upload profile picture to R2
+studentAuthenticated.post('/upload-avatar', async (c) => {
   try {
     const userId = c.get('studentId');
     const formData = await c.req.formData();

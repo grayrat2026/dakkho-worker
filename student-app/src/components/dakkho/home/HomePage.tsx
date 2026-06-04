@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Play, Radio, Trophy, Flame, Clock, Star, Users } from 'lucide-react';
 import { HeroSection } from './HeroSection';
@@ -18,6 +18,7 @@ import { GlassCard } from '../shared/GlassCard';
 import { AnimatedCounter } from '../shared/AnimatedCounter';
 import { LoadingSkeleton } from '../shared/LoadingSkeleton';
 import { useNavigationStore, useServerConfigStore, useAuthStore } from '@/lib/store';
+import { leaderboardApi } from '@/lib/api-client';
 
 // ============ NEW RELEASES ============
 
@@ -299,15 +300,17 @@ function LiveNow() {
   );
 }
 
-// ============ WEEKLY LEADERBOARD (stays as mock) ============
+// ============ WEEKLY LEADERBOARD ============
 
-const LEADERBOARD = [
-  { rank: 1, name: 'Rahim Ahmed', xp: 12450, initials: 'RA' },
-  { rank: 2, name: 'Fatima Khan', xp: 11200, initials: 'FK' },
-  { rank: 3, name: 'Kamal Hossain', xp: 9870, initials: 'KH' },
-  { rank: 4, name: 'Nusrat Jahan', xp: 8540, initials: 'NJ' },
-  { rank: 5, name: 'Tanvir Islam', xp: 7320, initials: 'TI' },
-];
+interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  technology: string;
+  xp: number;
+  breakdown: { video: number; quiz: number; assignment: number; streak: number };
+  activeDays: number;
+}
 
 const RANK_STYLES: Record<number, { bg: string; icon: string; border: string }> = {
   1: { bg: 'from-amber-400 to-yellow-500', icon: 'text-amber-500', border: 'border-amber-400/50' },
@@ -316,6 +319,35 @@ const RANK_STYLES: Record<number, { bg: string; icon: string; border: string }> 
 };
 
 function WeeklyLeaderboard() {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    leaderboardApi.get({ limit: 5, period: 'week' })
+      .then((res) => {
+        if (!cancelled && res.entries) {
+          setEntries(res.entries);
+        }
+      })
+      .catch(() => {
+        // Silently fail — leaderboard is non-critical
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Hide section entirely when there's no data and not loading
+  if (!loading && entries.length === 0) return null;
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-4">
@@ -323,51 +355,70 @@ function WeeklyLeaderboard() {
         <h2 className="text-lg font-extrabold text-foreground">Weekly Leaderboard</h2>
       </div>
 
-      <GlassCard className="p-4 space-y-2">
-        {LEADERBOARD.map((student, i) => {
-          const style = RANK_STYLES[student.rank];
-          return (
-            <motion.div
-              key={student.rank}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.06 }}
-              className={`flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-white/40 dark:hover:bg-slate-800/40 ${
-                style ? style.border : ''
-              }`}
-            >
-              {/* Rank */}
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-sm ${
-                style
-                  ? `bg-gradient-to-br ${style.bg} text-white`
-                  : 'bg-muted/50 text-muted-foreground'
-              }`}>
-                {student.rank}
+      {loading ? (
+        <GlassCard className="p-4 space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-3 rounded-xl">
+              <div className="w-8 h-8 rounded-lg bg-muted/50 animate-pulse" />
+              <div className="w-9 h-9 rounded-full bg-muted/50 animate-pulse" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 w-24 rounded bg-muted/50 animate-pulse" />
+                <div className="h-2 w-16 rounded bg-muted/50 animate-pulse" />
               </div>
+              <div className="space-y-1.5 text-right">
+                <div className="h-3 w-12 rounded bg-muted/50 animate-pulse ml-auto" />
+                <div className="h-2 w-6 rounded bg-muted/50 animate-pulse ml-auto" />
+              </div>
+            </div>
+          ))}
+        </GlassCard>
+      ) : (
+        <GlassCard className="p-4 space-y-2">
+          {entries.map((student, i) => {
+            const style = RANK_STYLES[student.rank];
+            return (
+              <motion.div
+                key={student.rank}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className={`flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-white/40 dark:hover:bg-slate-800/40 ${
+                  style ? style.border : ''
+                }`}
+              >
+                {/* Rank */}
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-sm ${
+                  style
+                    ? `bg-gradient-to-br ${style.bg} text-white`
+                    : 'bg-muted/50 text-muted-foreground'
+                }`}>
+                  {student.rank}
+                </div>
 
-              {/* Avatar */}
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                {student.initials}
-              </div>
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                  {getInitials(student.name)}
+                </div>
 
-              {/* Name */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground line-clamp-1">{student.name}</p>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Flame className="w-3 h-3 text-orange-400" />
-                  {student.rank <= 3 ? 'Top Performer' : 'Rising Star'}
-                </p>
-              </div>
+                {/* Name */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground line-clamp-1">{student.name}</p>
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-orange-400" />
+                    {student.rank <= 3 ? 'Top Performer' : 'Rising Star'}
+                  </p>
+                </div>
 
-              {/* XP */}
-              <div className="text-right">
-                <AnimatedCounter target={student.xp} className="text-sm font-extrabold text-sky-500" />
-                <p className="text-[10px] text-muted-foreground">XP</p>
-              </div>
-            </motion.div>
-          );
-        })}
-      </GlassCard>
+                {/* XP */}
+                <div className="text-right">
+                  <AnimatedCounter target={student.xp} className="text-sm font-extrabold text-sky-500" />
+                  <p className="text-[10px] text-muted-foreground">XP</p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </GlassCard>
+      )}
     </div>
   );
 }

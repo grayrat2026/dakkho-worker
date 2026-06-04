@@ -601,11 +601,29 @@ export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'announcement';
+  type: 'info' | 'success' | 'warning' | 'error' | 'announcement' | 'course-update';
   isRead: boolean;
   createdAt: string;
   actionUrl?: string;
 }
+
+// ── localStorage persistence helpers ──
+const NOTIF_STORAGE_KEY = 'dakkho_notifications';
+
+const saveNotifToStorage = (notifs: AppNotification[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifs));
+  } catch {}
+};
+
+const loadNotifFromStorage = (): AppNotification[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(NOTIF_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+};
 
 interface NotificationState {
   notifications: AppNotification[];
@@ -613,33 +631,63 @@ interface NotificationState {
   markAllAsRead: () => void;
   unreadCount: () => number;
   addNotification: (notification: AppNotification) => void;
+  addNotifications: (notifications: AppNotification[]) => void;
   removeNotification: (id: string) => void;
+  hydrateFromStorage: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: [],
+  notifications: loadNotifFromStorage(),
   markAsRead: (id) => {
-    set((s) => ({
-      notifications: s.notifications.map((n) =>
+    set((s) => {
+      const updated = s.notifications.map((n) =>
         n.id === id ? { ...n, isRead: true } : n
-      ),
-    }));
+      );
+      saveNotifToStorage(updated);
+      return { notifications: updated };
+    });
   },
   markAllAsRead: () => {
-    set((s) => ({
-      notifications: s.notifications.map((n) => ({ ...n, isRead: true })),
-    }));
+    set((s) => {
+      const updated = s.notifications.map((n) => ({ ...n, isRead: true }));
+      saveNotifToStorage(updated);
+      return { notifications: updated };
+    });
   },
   unreadCount: () => get().notifications.filter((n) => !n.isRead).length,
   addNotification: (notification) => {
-    set((s) => ({
-      notifications: [notification, ...s.notifications],
-    }));
+    set((s) => {
+      // Avoid duplicates by ID
+      if (s.notifications.some((n) => n.id === notification.id)) {
+        return s;
+      }
+      const updated = [notification, ...s.notifications];
+      saveNotifToStorage(updated);
+      return { notifications: updated };
+    });
+  },
+  addNotifications: (newNotifs) => {
+    set((s) => {
+      const existingIds = new Set(s.notifications.map((n) => n.id));
+      const unique = newNotifs.filter((n) => !existingIds.has(n.id));
+      if (unique.length === 0) return s;
+      const updated = [...unique, ...s.notifications];
+      saveNotifToStorage(updated);
+      return { notifications: updated };
+    });
   },
   removeNotification: (id) => {
-    set((s) => ({
-      notifications: s.notifications.filter((n) => n.id !== id),
-    }));
+    set((s) => {
+      const updated = s.notifications.filter((n) => n.id !== id);
+      saveNotifToStorage(updated);
+      return { notifications: updated };
+    });
+  },
+  hydrateFromStorage: () => {
+    const stored = loadNotifFromStorage();
+    if (stored.length > 0) {
+      set({ notifications: stored });
+    }
   },
 }));
 

@@ -7,7 +7,7 @@ import {
   AlertCircle, Megaphone, BookOpen, BellRing, Shield, ShieldCheck,
 } from 'lucide-react';
 import { useNotificationStore, type AppNotification } from '@/lib/store';
-import { pushApi } from '@/lib/api-client';
+import { pushApi, studentNotificationsApi } from '@/lib/api-client';
 import { GlassCard } from '../shared/GlassCard';
 
 // ============ LOCAL UTILITY ============
@@ -294,8 +294,38 @@ export function NotificationsPage() {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [pushPermission, setPushPermission] = useState<PushPermissionStatus>('checking');
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [isFetchingApi, setIsFetchingApi] = useState(true);
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
 
-  const { notifications, markAsRead, markAllAsRead, addNotification } = useNotificationStore();
+  const { notifications, markAsRead, markAllAsRead, addNotification, addNotifications } = useNotificationStore();
+
+  // ---- Fetch notifications from API on mount ----
+  useEffect(() => {
+    let cancelled = false;
+    setIsFetchingApi(true);
+    studentNotificationsApi.list({ limit: 50 })
+      .then((res) => {
+        if (!cancelled && res.notifications) {
+          const mapped: AppNotification[] = res.notifications.map((n) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            type: (n.type as AppNotification['type']) || 'info',
+            isRead: n.read,
+            createdAt: n.createdAt,
+            actionUrl: n.actionUrl || undefined,
+          }));
+          addNotifications(mapped);
+        }
+      })
+      .catch(() => {
+        // Silently fail — cached/local notifications still available
+      })
+      .finally(() => {
+        if (!cancelled) setIsFetchingApi(false);
+      });
+    return () => { cancelled = true; };
+  }, [addNotifications]);
 
   // ---- OneSignal: Check permission & register listener ----
   useEffect(() => {
@@ -402,6 +432,30 @@ export function NotificationsPage() {
     };
   }, [addNotification]);
 
+  // ---- Mark single notification as read (local + API) ----
+  const handleMarkRead = useCallback(async (id: string) => {
+    markAsRead(id);
+    try {
+      await studentNotificationsApi.markRead(id);
+    } catch {
+      // Silently fail — local state already updated
+    }
+  }, [markAsRead]);
+
+  // ---- Mark all notifications as read (local + API) ----
+  const handleMarkAllRead = useCallback(async () => {
+    if (isMarkingAllRead) return;
+    setIsMarkingAllRead(true);
+    markAllAsRead();
+    try {
+      await studentNotificationsApi.markAllRead();
+    } catch {
+      // Silently fail — local state already updated
+    } finally {
+      setIsMarkingAllRead(false);
+    }
+  }, [markAllAsRead, isMarkingAllRead]);
+
   // ---- Request push permission ----
   const handleRequestPermission = useCallback(async () => {
     setIsRequestingPermission(true);
@@ -451,15 +505,11 @@ export function NotificationsPage() {
     if (dismissedIds.has(n.id)) return false;
     if (activeTab === 'unread') return !n.isRead;
     if (activeTab === 'announcements') return n.type === 'announcement';
-    if (activeTab === 'course-updates') return n.type === 'info';
+    if (activeTab === 'course-updates') return n.type === 'course-update';
     return true;
   });
 
   const unreadCount = displayNotifications.filter((n) => !n.isRead && !dismissedIds.has(n.id)).length;
-
-  const handleMarkAllRead = () => {
-    markAllAsRead();
-  };
 
   const handleDismiss = (id: string) => {
     setDismissedIds((prev) => new Set(prev).add(id));
@@ -492,8 +542,17 @@ export function NotificationsPage() {
               onClick={handleMarkAllRead}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              disabled={isMarkingAllRead}
             >
-              <CheckCheck className="w-4 h-4" />
+              {isMarkingAllRead ? (
+                <motion.div
+                  className="w-4 h-4 border-2 border-sky-400/30 border-t-sky-600 rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                />
+              ) : (
+                <CheckCheck className="w-4 h-4" />
+              )}
               <span className="hidden sm:inline">Mark all read</span>
               <span className="sm:hidden">Read</span>
             </motion.button>
@@ -539,7 +598,7 @@ export function NotificationsPage() {
               key={notification.id}
               notification={notification}
               onDismiss={handleDismiss}
-              onMarkRead={markAsRead}
+              onMarkRead={handleMarkRead}
               index={i}
             />
           ))}
