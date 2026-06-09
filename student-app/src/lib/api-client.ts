@@ -151,6 +151,7 @@ export interface AuthResponse {
     instituteId: number | null;
     technology: string | null;
     emailVerified: boolean;
+    themeMode?: 'light' | 'dark' | 'system';
     packages: UserPackage[];
   };
   message?: string;
@@ -163,6 +164,7 @@ export interface UserProfile {
   instituteId: number | null;
   technology: string | null;
   emailVerified: boolean;
+  themeMode?: 'light' | 'dark' | 'system';
   packages: UserPackage[];
 }
 
@@ -257,7 +259,7 @@ export const pushApi = {
     api.delete<{ success: boolean }>('/api/push/unregister', data),
 };
 
-// Courses (from Appwrite via Worker)
+// Courses
 export const courseApi = {
   list: (params?: { technology?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
@@ -273,7 +275,7 @@ export const courseApi = {
     api.get<{ videos: any[]; total: number }>(`/api/courses/${id}/videos`),
 };
 
-// Instructors (from Appwrite via Worker)
+// Instructors
 export const instructorApi = {
   list: (params?: { search?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();

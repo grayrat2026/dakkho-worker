@@ -383,6 +383,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         };
         set({ user, isAuthenticated: true, isLoading: false });
         saveAuthSession(user, true);
+
+        // Apply theme preference from D1 (persisted on server)
+        const themeModeFromServer = res.user?.themeMode;
+        if (themeModeFromServer && typeof window !== 'undefined') {
+          localStorage.setItem('dakkho_theme_mode', themeModeFromServer);
+          const effectiveTheme = themeModeFromServer === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : themeModeFromServer;
+          if (effectiveTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
       } else {
         throw new Error(res.message || 'Login failed');
       }
@@ -488,6 +502,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         };
         set({ user });
         saveAuthSession(user, true);
+
+        // Apply theme preference from D1 (persisted on server)
+        const themeModeFromServer = res.user.themeMode;
+        if (themeModeFromServer && typeof window !== 'undefined') {
+          localStorage.setItem('dakkho_theme_mode', themeModeFromServer);
+          const effectiveTheme = themeModeFromServer === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : themeModeFromServer;
+          if (effectiveTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
       }
     } catch {}
   },

@@ -477,6 +477,12 @@ studentApiRoutes.post('/auth/signup', async (c) => {
       VALUES (?, ?, ?, ?, ?, 'student', 0, 1, '[]', ?)
     `).bind(userId, email, fullName, instituteId || null, technology || null, passwordHash).run();
 
+    // Create default user preferences
+    await c.env.DB.prepare(`
+      INSERT OR IGNORE INTO user_preferences (user_id, theme_mode, accent_color, font_size, border_radius, compact_mode)
+      VALUES (?, 'system', '#0ea5e9', 16, 16, 0)
+    `).bind(userId).run();
+
     // Create D1 student session
     const token = await createStudentSession(c.env, userId, email);
 
@@ -492,6 +498,7 @@ studentApiRoutes.post('/auth/signup', async (c) => {
         technology: technology || null,
         emailVerified: false,
         packages: [],
+        themeMode: 'system',
       },
     });
   } catch (error) {
@@ -537,6 +544,17 @@ studentApiRoutes.post('/auth/login', async (c) => {
       userPackages = pkgResult.results as any[];
     } catch {}
 
+    // Get user theme preference from D1
+    let themeMode = 'system';
+    try {
+      const prefs = await c.env.DB.prepare(
+        'SELECT theme_mode FROM user_preferences WHERE user_id = ?'
+      ).bind(user.id).first();
+      if (prefs && (prefs as any).theme_mode) {
+        themeMode = (prefs as any).theme_mode;
+      }
+    } catch {}
+
     // Delete any existing D1 sessions and create new one
     await c.env.DB.prepare('DELETE FROM student_sessions WHERE user_id = ?').bind(user.id).run();
     const token = await createStudentSession(c.env, user.id, user.email);
@@ -553,6 +571,7 @@ studentApiRoutes.post('/auth/login', async (c) => {
         technology: user.technology || null,
         emailVerified: !!user.email_verified,
         packages: userPackages,
+        themeMode,
       },
     });
   } catch (error) {
@@ -600,6 +619,18 @@ studentApiRoutes.get('/auth/me', async (c) => {
     } catch {}
 
     const u = userDoc as any;
+
+    // Get user theme preference from D1
+    let themeMode = 'system';
+    try {
+      const prefs = await c.env.DB.prepare(
+        'SELECT theme_mode FROM user_preferences WHERE user_id = ?'
+      ).bind(auth.userId!).first();
+      if (prefs && (prefs as any).theme_mode) {
+        themeMode = (prefs as any).theme_mode;
+      }
+    } catch {}
+
     return c.json({
       user: {
         id: auth.userId,
@@ -610,6 +641,7 @@ studentApiRoutes.get('/auth/me', async (c) => {
         emailVerified: !!u?.email_verified,
         avatarUrl: u?.avatar_url || '',
         packages: userPackages,
+        themeMode,
       },
     });
   } catch (error) {

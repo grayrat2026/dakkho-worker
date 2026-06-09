@@ -30,8 +30,7 @@ import {
 } from 'lucide-react';
 import { useNavigationStore, useWatchProgressStore } from '@/lib/store';
 import { formatDuration } from '@/lib/mock-data';
-import { courseApi, videoApi } from '@/lib/api-client';
-import { DatabaseService, COLLECTION_IDS, Query } from '@/lib/appwrite';
+import { courseApi, videoApi, instructorApi } from '@/lib/api-client';
 import { GlassCard } from '../shared/GlassCard';
 import { GradientButton } from '../shared/GradientButton';
 import { ProgressBar } from '../shared/ProgressBar';
@@ -238,13 +237,9 @@ export function VideoPlayerPage() {
         // Fetch instructor if course has instructorId
         if (courseData?.instructorId) {
           try {
-            const instructorRes = await DatabaseService.listDocuments(
-              COLLECTION_IDS.INSTRUCTORS,
-              [Query.equal('$id', courseData.instructorId)],
-            );
-            if (!cancelled && instructorRes.success && instructorRes.data.documents.length > 0) {
-              const doc = instructorRes.data.documents[0] as unknown as InstructorData;
-              setInstructor(doc);
+            const instructorRes = await instructorApi.get(courseData.instructorId);
+            if (!cancelled && instructorRes.instructor) {
+              setInstructor(instructorRes.instructor as InstructorData);
             }
           } catch {
             // Instructor fetch is non-critical; silently fail

@@ -1,7 +1,7 @@
 // DAKKHO Student App — Type Definitions & Utility Functions
 //
 // ALL mock/demo data has been REMOVED.
-// All data now comes from the Worker API (D1, Appwrite, R2).
+// All data now comes from the Worker API (D1, R2).
 // See data-hooks.ts for React hooks that fetch from the API.
 // See api-client.ts for direct API calls.
 // See shared/apiMappers.ts for API→type mapping.

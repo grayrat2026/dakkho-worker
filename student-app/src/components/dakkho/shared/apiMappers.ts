@@ -1,5 +1,5 @@
 // API Mapper Utilities
-// Maps API responses (from Appwrite/Worker) to the app's expected data types
+// Maps API responses (from Worker API) to the app's expected data types
 // These types are defined in @/lib/mock-data.ts
 
 import type { Technology } from '@/lib/api-client';

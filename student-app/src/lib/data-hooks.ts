@@ -2,7 +2,7 @@
  * DAKKHO Student App — Data Hooks
  *
  * React hooks for fetching data from the Worker API.
- * All data comes from real sources: D1, Appwrite, R2 via the Worker API.
+ * All data comes from real sources: D1, R2 via the Worker API.
  * NO mock data, NO demo data, NO hardcoded data.
  */
 

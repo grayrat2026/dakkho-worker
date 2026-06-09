@@ -10,7 +10,7 @@ import type { AuthVariables } from '../lib/auth';
 import { adminAuthMiddleware } from '../lib/auth';
 import { logAudit } from '../lib/audit';
 import { getErrorMessage } from '../lib/utils';
-import { sendPushNotification, getUserPushTokens, checkUserNotifPrefs } from '../lib/onesignal';
+import { sendPushNotification, getUserPushTokens, getBatchUserPushTokens, checkUserNotifPrefs } from '../lib/onesignal';
 
 const notificationRoutes = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
@@ -205,13 +205,30 @@ notificationRoutes.post('/', async (c) => {
           }
         }
       } else if (targetInstitute) {
-        await sendPushNotification(c.env, {
-          title,
-          message,
-          targetSegment: 'All',
-          url: actionUrl || undefined,
-          data: { institute: targetInstitute },
-        });
+        // Check individual notification preferences for each user in the institute
+        const instituteUsersResult = await c.env.DB.prepare(
+          'SELECT id FROM users WHERE institute_id = ? AND is_active = 1 LIMIT 500'
+        ).bind(targetInstitute).all();
+
+        const allowedUserIds: string[] = [];
+        for (const user of instituteUsersResult.results as { id: string }[]) {
+          const prefs = await checkUserNotifPrefs(c.env, user.id, type);
+          if (prefs.push) {
+            allowedUserIds.push(user.id);
+          }
+        }
+
+        if (allowedUserIds.length > 0) {
+          const pushTokens = await getBatchUserPushTokens(c.env, allowedUserIds);
+          if (pushTokens.length > 0) {
+            await sendPushNotification(c.env, {
+              title,
+              message,
+              targetPlayerIds: pushTokens,
+              url: actionUrl || undefined,
+            });
+          }
+        }
       }
     } catch (pushErr) {
       console.error('Push notification failed:', getErrorMessage(pushErr));
