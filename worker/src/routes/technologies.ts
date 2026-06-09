@@ -52,7 +52,7 @@ techRoutes.post('/', async (c) => {
     `).bind(name, name_bn || null, short_code || null, description || null).run();
 
     const user = c.get('user');
-    await logAudit(c.env, user.id, 'CREATE_TECHNOLOGY', 'technologies', null, data);
+    await logAudit(c.env, user.id, 'CREATE_TECHNOLOGY', 'technologies', undefined, data);
 
     return c.json({ success: true, message: 'Technology created' });
   } catch (error) {

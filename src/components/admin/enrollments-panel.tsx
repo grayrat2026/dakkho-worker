@@ -51,7 +51,7 @@ export default function EnrollmentsPanel() {
   const fetchCourses = useCallback(async () => {
     try {
       const data = await apiGet('/courses?page=1&limit=500') as any;
-      setCourses(data.courses || []);
+      setCourses(data.documents || []);
     } catch {
       // silently fail
     }

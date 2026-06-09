@@ -314,6 +314,7 @@ export interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isSignupPending: boolean;  // true after signup, before OTP verification
   isHydrated: boolean;  // true once we've read localStorage on the client
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -331,29 +332,29 @@ interface AuthState {
 // ============ AUTH PERSISTENCE ============
 const AUTH_STORAGE_KEY = 'dakkho-auth-session';
 
-const loadAuthSession = (): { user: User | null; isAuthenticated: boolean } => {
-  if (typeof window === 'undefined') return { user: null, isAuthenticated: false };
+const loadAuthSession = (): { user: User | null; isAuthenticated: boolean; isSignupPending: boolean } => {
+  if (typeof window === 'undefined') return { user: null, isAuthenticated: false, isSignupPending: false };
   try {
     const stored = localStorage.getItem(AUTH_STORAGE_KEY);
     const token = localStorage.getItem('dakkho_student_token');
     if (stored && token) {
       const parsed = JSON.parse(stored);
       if (parsed.expiresAt && Date.now() < parsed.expiresAt) {
-        return { user: parsed.user, isAuthenticated: parsed.isAuthenticated };
+        return { user: parsed.user, isAuthenticated: parsed.isAuthenticated, isSignupPending: parsed.isSignupPending || false };
       }
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem('dakkho_student_token');
     }
   } catch {}
-  return { user: null, isAuthenticated: false };
+  return { user: null, isAuthenticated: false, isSignupPending: false };
 };
 
-const saveAuthSession = (user: User | null, isAuthenticated: boolean) => {
+const saveAuthSession = (user: User | null, isAuthenticated: boolean, isSignupPending: boolean = false) => {
   if (typeof window === 'undefined') return;
   try {
-    if (isAuthenticated && user) {
+    if ((isAuthenticated || isSignupPending) && user) {
       const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user, isAuthenticated, expiresAt }));
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user, isAuthenticated, isSignupPending, expiresAt }));
     } else {
       localStorage.removeItem(AUTH_STORAGE_KEY);
     }
@@ -367,6 +368,7 @@ const saveAuthSession = (user: User | null, isAuthenticated: boolean) => {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
+  isSignupPending: false,
   isHydrated: false,
   isLoading: false,
   login: async (email, password) => {
@@ -382,13 +384,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           instituteId: res.user?.instituteId || undefined,
           technology: res.user?.technology || undefined,
           emailVerified: res.user?.emailVerified || false,
-          avatarUrl: '',
+          avatarUrl: res.user?.avatarUrl || '',
           role: 'student',
           isNewUser: false,
           enrolledCourseIds: [],
         };
         set({ user, isAuthenticated: true, isLoading: false });
         saveAuthSession(user, true);
+
+        // Resolve institute name from ID
+        if (user.instituteId) {
+          try {
+            const instRes = await instituteApi.list({ limit: 100 });
+            const inst = instRes.institutes?.find((i: any) => i.id === user.instituteId);
+            if (inst) {
+              user.institute = inst.name;
+              set({ user });
+              saveAuthSession(user, true);
+            }
+          } catch {}
+        }
 
         // Apply theme preference from D1 (persisted on server)
         const themeModeFromServer = res.user?.themeMode;
@@ -429,14 +444,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email: data.email,
           instituteId: data.instituteId,
           technology: data.technology,
-          avatarUrl: '',
+          avatarUrl: res.user?.avatarUrl || '',
           role: 'student',
           isNewUser: true,
           emailVerified: false,
           enrolledCourseIds: [],
         };
-        set({ user, isAuthenticated: true, isLoading: false });
-        saveAuthSession(user, true);
+        set({ user, isSignupPending: true, isAuthenticated: false, isLoading: false });
+        saveAuthSession(user, false, true);
         return { token: res.token, userId: res.userId || '' };
       } else {
         throw new Error(res.message || 'Signup failed');
@@ -451,8 +466,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await authApi.logout();
     } catch {}
     clearAuthToken();
-    set({ user: null, isAuthenticated: false });
-    saveAuthSession(null, false);
+    set({ user: null, isAuthenticated: false, isSignupPending: false });
+    saveAuthSession(null, false, false);
   },
   forgotPassword: async (email) => {
     set({ isLoading: true });
@@ -485,8 +500,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const user = get().user;
         if (user) {
           const updatedUser = { ...user, emailVerified: true };
-          set({ user: updatedUser });
-          saveAuthSession(updatedUser, true);
+          set({ user: updatedUser, isSignupPending: false, isAuthenticated: true });
+          saveAuthSession(updatedUser, true, false);
         }
         return true;
       }
@@ -509,6 +524,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       user: session.user,
       isAuthenticated: session.isAuthenticated,
+      isSignupPending: session.isSignupPending,
       isHydrated: true,
     });
   },
@@ -525,11 +541,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           instituteId: res.user.instituteId || undefined,
           technology: res.user.technology || undefined,
           emailVerified: res.user.emailVerified,
-          avatarUrl: '',
+          avatarUrl: res.user?.avatarUrl || '',
           role: 'student',
         };
         set({ user });
         saveAuthSession(user, true);
+
+        // Resolve institute name from ID
+        if (user.instituteId) {
+          try {
+            const instRes = await instituteApi.list({ limit: 100 });
+            const inst = instRes.institutes?.find((i: any) => i.id === user.instituteId);
+            if (inst) {
+              user.institute = inst.name;
+              set({ user });
+              saveAuthSession(user, true);
+            }
+          } catch {}
+        }
 
         // Apply theme preference from D1 (persisted on server)
         const themeModeFromServer = res.user.themeMode;
@@ -988,7 +1017,7 @@ export const useServerConfigStore = create<ServerConfigState>((set, get) => ({
 
   isFeatureEnabled: (feature: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return (config.featureToggles as Record<string, boolean>)[feature] ?? true;
+    return (config.featureToggles as unknown as Record<string, boolean>)[feature] ?? true;
   },
 
   isHomeSectionVisible: (section: string) => {
@@ -998,7 +1027,7 @@ export const useServerConfigStore = create<ServerConfigState>((set, get) => ({
 
   isSidebarSectionVisible: (section: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return (config.sidebarVisibility as Record<string, boolean>)[section] ?? true;
+    return (config.sidebarVisibility as unknown as Record<string, boolean>)[section] ?? true;
   },
 
   isBottomNavTabVisible: (tab: string) => {
@@ -1008,7 +1037,7 @@ export const useServerConfigStore = create<ServerConfigState>((set, get) => ({
 
   isTopBarElementVisible: (element: string) => {
     const config = get().config || DEFAULT_CONFIG;
-    return (config.topBarElements as Record<string, boolean>)[element] ?? true;
+    return (config.topBarElements as unknown as Record<string, boolean>)[element] ?? true;
   },
 
   getCardStyle: () => {

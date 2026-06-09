@@ -348,6 +348,16 @@ studentApiRoutes.get('/courses/:id/videos', async (c) => {
     const limit = parseInt(c.req.query('limit') || '100');
     const offset = parseInt(c.req.query('offset') || '0');
 
+    // Check if user is enrolled (optional auth)
+    const auth = await getStudentAuth(c);
+    let isEnrolled = false;
+    if (auth.authorized && auth.userId) {
+      const enrollment = await c.env.DB.prepare(
+        'SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?'
+      ).bind(auth.userId, id).first();
+      isEnrolled = !!enrollment;
+    }
+
     const countResult = await c.env.DB.prepare(
       'SELECT COUNT(*) as total FROM videos WHERE course_id = ?'
     ).bind(id).first();
@@ -357,7 +367,20 @@ studentApiRoutes.get('/courses/:id/videos', async (c) => {
       'SELECT * FROM videos WHERE course_id = ? ORDER BY sort_order ASC LIMIT ? OFFSET ?'
     ).bind(id, limit, offset).all();
 
-    return c.json({ videos: result.results, total });
+    // Filter out unpublished videos for non-enrolled users
+    const videos = (result.results as any[]).map(video => {
+      if (!isEnrolled && !video.is_preview) {
+        // Return limited info for non-enrolled non-preview videos
+        return {
+          ...video,
+          stream_url: null,
+          is_locked: true,
+        };
+      }
+      return { ...video, is_locked: false };
+    });
+
+    return c.json({ videos, total });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
@@ -433,6 +456,24 @@ studentApiRoutes.get('/video/stream-url', async (c) => {
       return c.json({ error: 'Video not found' }, 404);
     }
 
+    // Check enrollment for video access
+    if (auth.userId) {
+      // Look up the video record to get the course_id
+      const video = await c.env.DB.prepare(
+        'SELECT course_id, is_preview FROM videos WHERE storage_key = ? OR id = ? LIMIT 1'
+      ).bind(key, key).first<{ course_id: string; is_preview: number }>();
+
+      if (video) {
+        const enrollment = await c.env.DB.prepare(
+          'SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?'
+        ).bind(auth.userId, video.course_id).first();
+
+        if (!enrollment && !video.is_preview) {
+          return c.json({ error: 'Not enrolled in this course' }, 403);
+        }
+      }
+    }
+
     const url = getPublicUrl(c.env, bucket, key);
 
     return c.json({ url });
@@ -482,6 +523,35 @@ studentApiRoutes.post('/auth/signup', async (c) => {
       INSERT OR IGNORE INTO user_preferences (user_id, theme_mode, accent_color, font_size, border_radius, compact_mode)
       VALUES (?, 'system', '#0ea5e9', 16, 16, 0)
     `).bind(userId).run();
+
+    // Create default notification preferences
+    await c.env.DB.prepare(
+      'INSERT OR IGNORE INTO notification_preferences (user_id) VALUES (?)'
+    ).bind(userId).run();
+
+    // Generate and send email verification OTP
+    const verifyOtp = String(Math.floor(100000 + Math.random() * 900000));
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+    await c.env.DB.prepare(
+      'INSERT INTO password_reset_otps (email, otp, expires_at, used) VALUES (?, ?, ?, 0)'
+    ).bind(email, verifyOtp, otpExpiresAt).run();
+
+    // Send verification email
+    try {
+      const { sendEmail } = await import('../lib/resend');
+      await sendEmail(c.env, email, 'DAKKHO - Email Verification Code', `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #0ea5e9;">Welcome to DAKKHO!</h2>
+          <p>Your email verification code is:</p>
+          <div style="font-size: 32px; font-weight: bold; color: #0ea5e9; text-align: center; padding: 20px; background: #f0f9ff; border-radius: 8px; letter-spacing: 4px;">${verifyOtp}</div>
+          <p style="color: #666; font-size: 14px;">This code expires in 10 minutes.</p>
+        </div>
+      `);
+    } catch (emailError: any) {
+      console.error('Failed to send verification email:', emailError.message);
+      // Don't fail signup if email fails, but log it
+    }
 
     // Create D1 student session
     const token = await createStudentSession(c.env, userId, email);
@@ -658,22 +728,37 @@ studentApiRoutes.post('/auth/verify-otp', async (c) => {
       return c.json({ error: 'email and otp are required' }, 400);
     }
 
-    // For MVP: accept any 6-digit OTP and mark email as verified
-    if (otp.length === 6) {
-      const session = await c.env.DB.prepare(
-        "SELECT user_id FROM student_sessions WHERE email = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1"
-      ).bind(email).first<{ user_id: string }>();
+    // Validate OTP against stored codes
+    const otpRecord = await c.env.DB.prepare(
+      'SELECT * FROM password_reset_otps WHERE email = ? AND otp = ? AND expires_at > datetime("now") AND used = 0 ORDER BY created_at DESC LIMIT 1'
+    ).bind(email, otp).first();
 
-      if (session?.user_id) {
-        await c.env.DB.prepare(
-          'UPDATE users SET email_verified = 1 WHERE id = ?'
-        ).bind(session.user_id).run();
-
-        return c.json({ success: true, message: 'Email verified successfully' });
-      }
+    if (!otpRecord) {
+      return c.json({ success: false, message: 'Invalid or expired OTP' }, 400);
     }
 
-    return c.json({ success: false, message: 'Invalid OTP' }, 400);
+    // Mark OTP as used
+    await c.env.DB.prepare(
+      'UPDATE password_reset_otps SET used = 1 WHERE id = ?'
+    ).bind((otpRecord as any).id).run();
+
+    // Mark email as verified
+    const session = await c.env.DB.prepare(
+      "SELECT user_id FROM student_sessions WHERE email = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1"
+    ).bind(email).first<{ user_id: string }>();
+
+    if (session?.user_id) {
+      await c.env.DB.prepare(
+        'UPDATE users SET email_verified = 1 WHERE id = ?'
+      ).bind(session.user_id).run();
+    } else {
+      // Fallback: verify by email directly
+      await c.env.DB.prepare(
+        'UPDATE users SET email_verified = 1 WHERE email = ?'
+      ).bind(email).run();
+    }
+
+    return c.json({ success: true, message: 'Email verified successfully' });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
@@ -908,7 +993,7 @@ studentApiRoutes.post('/institutes/requests', async (c) => {
     await c.env.DB.prepare(`
       INSERT INTO institute_requests (user_id, user_email, user_name, institute_name, institute_name_bn, division, district, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
-    `).bind(auth.userId, auth.email, null, institute_name, institute_name_bn || null, division || null, district || null).run();
+    `).bind(auth.userId, auth.email, auth.name || null, institute_name, institute_name_bn || null, division || null, district || null).run();
 
     return c.json({ success: true, message: 'Institute request submitted' });
   } catch (error) {
@@ -1462,7 +1547,8 @@ studentAuthenticated.post('/upload-avatar', async (c) => {
       httpMetadata: { contentType: file.type },
     });
 
-    const avatarUrl = `https://dakkho-assets.dakkho.workers.dev/avatars/${key}`;
+    const baseUrl = new URL(c.req.url).origin;
+    const avatarUrl = `${baseUrl}/upload/avatars/${key}`;
 
     // Update user in D1
     await c.env.DB.prepare(

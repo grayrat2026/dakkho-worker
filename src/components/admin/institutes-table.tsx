@@ -17,18 +17,18 @@ import { apiGet, apiPost, apiPut, apiDelete, ApiError } from '@/lib/api-client';
 interface Institute {
   id: number;
   name: string;
-  name_bn: string | null;
+  nameBn: string | null;
   division: string | null;
   district: string | null;
-  eiin_number: string | null;
+  eiinNumber: string | null;
   type: string;
-  is_requested: number;
-  requested_by: string | null;
-  approved_by: string | null;
-  approved_at: string | null;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
+  isRequested: number;
+  requestedBy: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function InstitutesTable() {
@@ -80,11 +80,11 @@ export default function InstitutesTable() {
     setEditInstitute(inst);
     setForm({
       name: inst.name || '',
-      name_bn: inst.name_bn || '',
+      name_bn: inst.nameBn || '',
       division: inst.division || '',
       district: inst.district || '',
       type: inst.type || 'polytechnic',
-      eiin_number: inst.eiin_number || '',
+      eiin_number: inst.eiinNumber || '',
     });
     setDialogOpen(true);
   };
@@ -245,14 +245,14 @@ export default function InstitutesTable() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span>{inst.name}</span>
-                              {inst.is_requested === 1 && (
+                              {inst.isRequested === 1 && (
                                 <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-[10px] px-1.5 py-0">
                                   NEW
                                 </Badge>
                               )}
                             </div>
-                            {inst.name_bn && (
-                              <span className="text-xs text-muted-foreground">{inst.name_bn}</span>
+                            {inst.nameBn && (
+                              <span className="text-xs text-muted-foreground">{inst.nameBn}</span>
                             )}
                           </div>
                         </div>
@@ -272,7 +272,7 @@ export default function InstitutesTable() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {inst.is_active ? (
+                        {inst.isActive ? (
                           <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-xs">
                             <BadgeCheck className="h-3 w-3 mr-1" /> Active
                           </Badge>
@@ -326,14 +326,14 @@ export default function InstitutesTable() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-medium truncate">{inst.name}</p>
-                            {inst.is_requested === 1 && (
+                            {inst.isRequested === 1 && (
                               <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-[9px] px-1 py-0">
                                 NEW
                               </Badge>
                             )}
                           </div>
-                          {inst.name_bn && (
-                            <p className="text-xs text-muted-foreground truncate">{inst.name_bn}</p>
+                          {inst.nameBn && (
+                            <p className="text-xs text-muted-foreground truncate">{inst.nameBn}</p>
                           )}
                         </div>
                       </div>

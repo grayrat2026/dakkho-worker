@@ -307,12 +307,12 @@ export default function SettingsPanel() {
                         {log.action}
                       </Badge>
                       <span className="text-sm text-muted-foreground truncate">
-                        {log.resource_type}{log.resource_id ? `/${log.resource_id.slice(0, 8)}` : ''}
+                        {log.resourceType}{log.resourceId ? `/${log.resourceId.slice(0, 8)}` : ''}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="truncate max-w-[120px]">{log.user_email || 'System'}</span>
-                      <span className="flex-shrink-0">{formatTime(log.created_at)}</span>
+                      <span className="truncate max-w-[120px]">{log.userEmail || 'System'}</span>
+                      <span className="flex-shrink-0">{formatTime(log.createdAt)}</span>
                     </div>
                   </div>
                 ))}
@@ -342,14 +342,14 @@ export default function SettingsPanel() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               {[
-                { label: 'App URL', value: 'https://dakkho.pro.bd' },
-                { label: 'API Backend', value: 'Cloudflare Workers (Hono)' },
-                { label: 'Primary Database', value: 'Cloudflare D1' },
-                { label: 'D1 Database', value: 'dakkho-admin-db' },
-                { label: 'KV Namespace', value: 'dakkho-admin-kv' },
-                { label: 'Object Storage', value: 'Cloudflare R2' },
-                { label: 'Email Provider', value: 'Resend' },
-                { label: 'Push Notifications', value: 'OneSignal' },
+                { label: 'App URL', value: 'N/A' },
+                { label: 'API Backend', value: 'N/A' },
+                { label: 'Primary Database', value: 'N/A' },
+                { label: 'D1 Database', value: 'N/A' },
+                { label: 'KV Namespace', value: 'N/A' },
+                { label: 'Object Storage', value: 'N/A' },
+                { label: 'Email Provider', value: 'N/A' },
+                { label: 'Push Notifications', value: 'N/A' },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <span className="text-muted-foreground">{item.label}</span>

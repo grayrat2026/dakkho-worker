@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useNavigationStore, useAuthStore, useServerConfigStore } from '@/lib/store';
 import type { Page } from '@/lib/store';
+import { TECHNOLOGY_SHORT_NAMES } from '@/lib/constants';
 import Image from 'next/image';
 
 interface SidebarItem {
@@ -240,8 +241,8 @@ function SidebarContent() {
             </motion.div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-foreground truncate">{user.fullName}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.technology}</p>
-              <p className="text-xs text-sky-500 truncate">{user.institute}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.technology ? (TECHNOLOGY_SHORT_NAMES[user.technology] || user.technology) : 'No technology set'}</p>
+              <p className="text-xs text-sky-500 truncate">{user.institute || 'No institute set'}</p>
             </div>
           </div>
         </motion.div>

@@ -24,17 +24,17 @@ import { apiGet, apiPost, apiDelete, ApiError } from '@/lib/api-client';
 interface Coupon {
   id: number;
   code: string;
-  discount_type: string;
-  discount_value: number;
-  max_discount: number | null;
-  min_purchase: number;
-  usage_limit: number | null;
-  usage_count: number;
-  per_user_limit: number;
-  valid_from: string;
-  valid_until: string;
-  is_active: number;
-  created_at: string;
+  discountType: string;
+  discountValue: number;
+  maxDiscount: number | null;
+  minPurchase: number;
+  usageLimit: number | null;
+  usageCount: number;
+  perUserLimit: number;
+  validFrom: string;
+  validUntil: string;
+  isActive: number;
+  createdAt: string;
 }
 
 export default function CouponsPanel() {
@@ -253,32 +253,32 @@ export default function CouponsPanel() {
                   >
                     <td className="font-mono font-semibold text-dakkho-blue">{c.code}</td>
                     <td>
-                      {c.discount_type === 'percentage' ? `${c.discount_value}%` : `৳${c.discount_value}`}
-                      {c.max_discount ? (
-                        <span className="text-xs text-muted-foreground"> (max ৳{c.max_discount})</span>
+                      {c.discountType === 'percentage' ? `${c.discountValue}%` : `৳${c.discountValue}`}
+                      {c.maxDiscount ? (
+                        <span className="text-xs text-muted-foreground"> (max ৳{c.maxDiscount})</span>
                       ) : null}
                     </td>
                     <td className="text-sm">
-                      {c.usage_count}
-                      {c.usage_limit ? `/${c.usage_limit}` : ''}
+                      {c.usageCount}
+                      {c.usageLimit ? `/${c.usageLimit}` : ''}
                     </td>
                     <td className="text-xs text-muted-foreground">
-                      {new Date(c.valid_from).toLocaleDateString()} —{' '}
-                      {new Date(c.valid_until).toLocaleDateString()}
+                      {new Date(c.validFrom).toLocaleDateString()} —{' '}
+                      {new Date(c.validUntil).toLocaleDateString()}
                     </td>
                     <td>
                       <span
-                        className={`status-badge ${c.is_active ? 'status-badge-active' : 'status-badge-inactive'}`}
+                        className={`status-badge ${c.isActive ? 'status-badge-active' : 'status-badge-inactive'}`}
                       >
                         <span className="relative flex h-1.5 w-1.5">
-                          {c.is_active && (
+                          {c.isActive && (
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                           )}
                           <span
-                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${c.is_active ? 'bg-emerald-500' : 'bg-red-500'}`}
+                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${c.isActive ? 'bg-emerald-500' : 'bg-red-500'}`}
                           />
                         </span>
-                        {c.is_active ? 'Active' : 'Inactive'}
+                        {c.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="text-right">
@@ -335,17 +335,17 @@ export default function CouponsPanel() {
                     <div>
                       <p className="font-mono font-semibold text-dakkho-blue">{c.code}</p>
                       <p className="text-sm">
-                        {c.discount_type === 'percentage' ? `${c.discount_value}%` : `৳${c.discount_value}`} off
+                        {c.discountType === 'percentage' ? `${c.discountValue}%` : `৳${c.discountValue}`} off
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {c.usage_count}
-                        {c.usage_limit ? `/${c.usage_limit}` : ''} used
+                        {c.usageCount}
+                        {c.usageLimit ? `/${c.usageLimit}` : ''} used
                       </p>
                     </div>
                     <span
-                      className={`status-badge ${c.is_active ? 'status-badge-active' : 'status-badge-inactive'}`}
+                      className={`status-badge ${c.isActive ? 'status-badge-active' : 'status-badge-inactive'}`}
                     >
-                      {c.is_active ? 'Active' : 'Inactive'}
+                      {c.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <div className="flex justify-end mt-2">

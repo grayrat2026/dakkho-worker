@@ -41,13 +41,13 @@ interface NotifHistoryItem {
   title: string;
   message: string;
   type: string;
-  target_type: string;
-  target_id: string;
-  sent_count: number;
-  failed_count: number;
-  created_at: string;
+  targetType: string;
+  targetId: string;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
   source: string;
-  user_id?: string;
+  userId?: string;
   read?: boolean;
 }
 
@@ -173,14 +173,14 @@ export default function NotificationsPanel() {
   ];
 
   const getStatusBadge = (notif: NotifHistoryItem) => {
-    if (notif.failed_count > 0 && notif.sent_count > 0) {
+    if (notif.failedCount > 0 && notif.sentCount > 0) {
       return (
         <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">
           <Clock className="h-3 w-3 mr-1" />Partial
         </Badge>
       );
     }
-    if (notif.sent_count > 0) {
+    if (notif.sentCount > 0) {
       return (
         <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">
           <CheckCircle2 className="h-3 w-3 mr-1" />Delivered
@@ -444,25 +444,25 @@ export default function NotificationsPanel() {
                             </td>
                             <td>
                               <span className="text-xs text-muted-foreground">
-                                {targetLabels[notif.target_type as keyof typeof targetLabels] || notif.target_type || '\u2014'}
-                                {notif.target_id && notif.target_id !== 'all' && (
-                                  <span className="ml-1 font-mono">{notif.target_id.slice(0, 8)}...</span>
+                                {targetLabels[notif.targetType as keyof typeof targetLabels] || notif.targetType || '\u2014'}
+                                {notif.targetId && notif.targetId !== 'all' && (
+                                  <span className="ml-1 font-mono">{notif.targetId.slice(0, 8)}...</span>
                                 )}
                               </span>
                             </td>
                             <td>
                               <div className="flex items-center gap-1.5">
                                 {getStatusBadge(notif)}
-                                {notif.sent_count > 0 && (
+                                {notif.sentCount > 0 && (
                                   <span className="text-[10px] text-muted-foreground">
-                                    {notif.sent_count} sent
+                                    {notif.sentCount} sent
                                   </span>
                                 )}
                               </div>
                             </td>
                             <td>
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {notif.created_at ? new Date(notif.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                               </span>
                             </td>
                           </tr>

@@ -26,18 +26,18 @@ import { apiGet, apiPut, ApiError } from '@/lib/api-client';
 
 interface InstituteRequest {
   id: number;
-  user_id: string;
-  user_email: string | null;
-  user_name: string | null;
-  institute_name: string;
-  institute_name_bn: string | null;
+  userId: string;
+  userEmail: string | null;
+  userName: string | null;
+  instituteName: string;
+  instituteNameBn: string | null;
   division: string | null;
   district: string | null;
   status: string;
-  admin_note: string | null;
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-  created_at: string;
+  adminNote: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
 }
 
 export default function InstituteRequests() {
@@ -106,10 +106,10 @@ export default function InstituteRequests() {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      req.institute_name.toLowerCase().includes(q) ||
-      (req.institute_name_bn && req.institute_name_bn.toLowerCase().includes(q)) ||
-      (req.user_name && req.user_name.toLowerCase().includes(q)) ||
-      (req.user_email && req.user_email.toLowerCase().includes(q)) ||
+      req.instituteName.toLowerCase().includes(q) ||
+      (req.instituteNameBn && req.instituteNameBn.toLowerCase().includes(q)) ||
+      (req.userName && req.userName.toLowerCase().includes(q)) ||
+      (req.userEmail && req.userEmail.toLowerCase().includes(q)) ||
       (req.division && req.division.toLowerCase().includes(q))
     );
   });
@@ -290,14 +290,14 @@ export default function InstituteRequests() {
                     transition={{ delay: idx * 0.03, duration: 0.2 }}
                   >
                     <td className="font-medium">
-                      <div>{req.institute_name}</div>
-                      {req.institute_name_bn && (
-                        <div className="text-xs text-muted-foreground">{req.institute_name_bn}</div>
+                      <div>{req.instituteName}</div>
+                      {req.instituteNameBn && (
+                        <div className="text-xs text-muted-foreground">{req.instituteNameBn}</div>
                       )}
                     </td>
                     <td className="text-sm text-muted-foreground">
-                      <div>{req.user_name || 'Unknown'}</div>
-                      <div className="text-xs">{req.user_email || ''}</div>
+                      <div>{req.userName || 'Unknown'}</div>
+                      <div className="text-xs">{req.userEmail || ''}</div>
                     </td>
                     <td className="text-sm">{req.division || 'N/A'}</td>
                     <td>
@@ -307,7 +307,7 @@ export default function InstituteRequests() {
                       </span>
                     </td>
                     <td className="text-xs text-muted-foreground">
-                      {new Date(req.created_at).toLocaleDateString()}
+                      {new Date(req.createdAt).toLocaleDateString()}
                     </td>
                     <td className="text-right">
                       {req.status === 'pending' && (
@@ -329,10 +329,10 @@ export default function InstituteRequests() {
                           </Button>
                         </div>
                       )}
-                      {req.admin_note && (
+                      {req.adminNote && (
                         <div className="text-xs text-muted-foreground mt-1">
                           <MessageSquare className="h-3 w-3 inline mr-1" />
-                          {req.admin_note}
+                          {req.adminNote}
                         </div>
                       )}
                     </td>
@@ -382,12 +382,12 @@ export default function InstituteRequests() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium">{req.institute_name}</p>
-                      {req.institute_name_bn && (
-                        <p className="text-xs text-muted-foreground">{req.institute_name_bn}</p>
+                      <p className="text-sm font-medium">{req.instituteName}</p>
+                      {req.instituteNameBn && (
+                        <p className="text-xs text-muted-foreground">{req.instituteNameBn}</p>
                       )}
                       <p className="text-xs text-muted-foreground mt-1">
-                        By: {req.user_name || req.user_email || 'Unknown'}
+                        By: {req.userName || req.userEmail || 'Unknown'}
                       </p>
                     </div>
                     <span className={statusBadgeClass(req.status)}>
@@ -414,10 +414,10 @@ export default function InstituteRequests() {
                       </Button>
                     </div>
                   )}
-                  {req.admin_note && (
+                  {req.adminNote && (
                     <div className="text-xs text-muted-foreground mt-2">
                       <MessageSquare className="h-3 w-3 inline mr-1" />
-                      {req.admin_note}
+                      {req.adminNote}
                     </div>
                   )}
                 </motion.div>

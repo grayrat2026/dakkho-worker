@@ -119,7 +119,7 @@ export function ExamPracticePage() {
     setAnswers([]);
   };
 
-  const correctCount = answers.reduce((sum, ans, i) => {
+  const correctCount = answers.reduce((sum: number, ans, i) => {
     if (ans !== null && questions[i] && ans === questions[i].correctAnswer) return sum + 1;
     return sum;
   }, 0);

@@ -101,7 +101,7 @@ export function PrivacySettingsPage() {
         readReceipts,
         dataSharing,
         analyticsOptOut,
-        personalizedRecommendations,
+        personalizedRecommendations: personalizedAds,
         cookieConsent,
       });
     } catch {}

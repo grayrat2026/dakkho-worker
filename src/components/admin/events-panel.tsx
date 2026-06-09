@@ -26,14 +26,14 @@ import { apiGet, apiPost, apiDelete, ApiError } from '@/lib/api-client';
 interface Event {
   id: number;
   title: string;
-  title_bn: string | null;
+  titleBn: string | null;
   description: string | null;
-  event_type: string;
-  start_date: string;
-  end_date: string | null;
-  is_featured: number;
-  is_active: number;
-  created_at: string;
+  eventType: string;
+  startDate: string;
+  endDate: string | null;
+  isFeatured: number;
+  isActive: number;
+  createdAt: string;
 }
 
 const typeBadgeStyles: Record<string, string> = {
@@ -133,9 +133,9 @@ export default function EventsPanel() {
     const q = search.toLowerCase();
     return (
       ev.title.toLowerCase().includes(q) ||
-      (ev.title_bn && ev.title_bn.toLowerCase().includes(q)) ||
+      (ev.titleBn && ev.titleBn.toLowerCase().includes(q)) ||
       (ev.description && ev.description.toLowerCase().includes(q)) ||
-      ev.event_type.toLowerCase().includes(q)
+      ev.eventType.toLowerCase().includes(q)
     );
   });
 
@@ -260,21 +260,21 @@ export default function EventsPanel() {
                   >
                     <td className="font-medium">
                       <div>{ev.title}</div>
-                      {ev.title_bn && <div className="text-xs text-muted-foreground">{ev.title_bn}</div>}
+                      {ev.titleBn && <div className="text-xs text-muted-foreground">{ev.titleBn}</div>}
                     </td>
                     <td>
                       <span
-                        className={`status-badge ${typeBadgeStyles[ev.event_type] || 'bg-white/5 text-white/60 border border-white/10'}`}
+                        className={`status-badge ${typeBadgeStyles[ev.eventType] || 'bg-white/5 text-white/60 border border-white/10'}`}
                       >
-                        {ev.event_type.replace('_', ' ')}
+                        {ev.eventType.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="text-sm">
-                      {new Date(ev.start_date).toLocaleDateString()}
-                      {ev.end_date ? ` — ${new Date(ev.end_date).toLocaleDateString()}` : ''}
+                      {new Date(ev.startDate).toLocaleDateString()}
+                      {ev.endDate ? ` — ${new Date(ev.endDate).toLocaleDateString()}` : ''}
                     </td>
                     <td>
-                      {ev.is_featured ? (
+                      {ev.isFeatured ? (
                         <span className="status-badge status-badge-pending">⭐ Featured</span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -282,9 +282,9 @@ export default function EventsPanel() {
                     </td>
                     <td>
                       <span
-                        className={`status-badge ${ev.is_active ? 'status-badge-active' : 'status-badge-inactive'}`}
+                        className={`status-badge ${ev.isActive ? 'status-badge-active' : 'status-badge-inactive'}`}
                       >
-                        {ev.is_active ? 'Active' : 'Inactive'}
+                        {ev.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="text-right">
@@ -350,15 +350,15 @@ export default function EventsPanel() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm font-medium">{ev.title}</p>
-                      {ev.title_bn && <p className="text-xs text-muted-foreground">{ev.title_bn}</p>}
+                      {ev.titleBn && <p className="text-xs text-muted-foreground">{ev.titleBn}</p>}
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(ev.start_date).toLocaleDateString()}
+                        {new Date(ev.startDate).toLocaleDateString()}
                       </p>
                     </div>
                     <span
-                      className={`status-badge ${typeBadgeStyles[ev.event_type] || 'bg-white/5 text-white/60 border border-white/10'}`}
+                      className={`status-badge ${typeBadgeStyles[ev.eventType] || 'bg-white/5 text-white/60 border border-white/10'}`}
                     >
-                      {ev.event_type.replace('_', ' ')}
+                      {ev.eventType.replace('_', ' ')}
                     </span>
                   </div>
                   <div className="flex gap-2 mt-3">

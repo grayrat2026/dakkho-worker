@@ -25,15 +25,15 @@ interface AchievementWithUnlocks extends AchievementDefinition {
 const EMPTY_FORM = {
   slug: '',
   name: '',
-  name_bn: '',
+  nameBn: '',
   description: '',
-  description_bn: '',
+  descriptionBn: '',
   category: 'learning' as 'learning' | 'streaks' | 'social' | 'special',
   icon: '🏆',
   xp: '10',
-  condition_type: '',
-  condition_value: '',
-  is_active: true,
+  conditionType: '',
+  conditionValue: '',
+  isActive: true,
 };
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; gradient: string }> = {
@@ -96,15 +96,15 @@ export default function AchievementsPanel() {
     setForm({
       slug: ach.slug,
       name: ach.name,
-      name_bn: ach.name_bn || '',
+      nameBn: ach.nameBn || '',
       description: ach.description,
-      description_bn: ach.description_bn || '',
+      descriptionBn: ach.descriptionBn || '',
       category: ach.category,
       icon: ach.icon,
       xp: String(ach.xp),
-      condition_type: ach.condition_type,
-      condition_value: ach.condition_value,
-      is_active: ach.is_active === 1,
+      conditionType: ach.conditionType,
+      conditionValue: ach.conditionValue,
+      isActive: ach.isActive === 1,
     });
     setDialogOpen(true);
   };
@@ -119,15 +119,15 @@ export default function AchievementsPanel() {
       const payload = {
         slug: form.slug,
         name: form.name,
-        name_bn: form.name_bn || null,
+        nameBn: form.nameBn || null,
         description: form.description,
-        description_bn: form.description_bn || null,
+        descriptionBn: form.descriptionBn || null,
         category: form.category,
         icon: form.icon,
         xp: parseInt(form.xp) || 10,
-        condition_type: form.condition_type,
-        condition_value: form.condition_value,
-        is_active: form.is_active ? 1 : 0,
+        condition_type: form.conditionType,
+        condition_value: form.conditionValue,
+        is_active: form.isActive ? 1 : 0,
       };
 
       if (editingId) {
@@ -314,8 +314,8 @@ export default function AchievementsPanel() {
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-semibold text-sm truncate">{ach.name}</p>
-                                {ach.name_bn && (
-                                  <p className="text-xs text-muted-foreground truncate">{ach.name_bn}</p>
+                                {ach.nameBn && (
+                                  <p className="text-xs text-muted-foreground truncate">{ach.nameBn}</p>
                                 )}
                               </div>
                               {/* Actions */}
@@ -344,7 +344,7 @@ export default function AchievementsPanel() {
                               </span>
 
                               {/* Active Status */}
-                              {ach.is_active !== 1 && (
+                              {ach.isActive !== 1 && (
                                 <span className="status-badge status-badge-inactive text-[10px]">Inactive</span>
                               )}
 
@@ -355,12 +355,12 @@ export default function AchievementsPanel() {
                             </div>
 
                             {/* Condition */}
-                            {(ach.condition_type || ach.condition_value) && (
+                            {(ach.conditionType || ach.conditionValue) && (
                               <div className="mt-2 pt-2 border-t border-white/[0.04]">
                                 <p className="text-[10px] text-muted-foreground">
-                                  {ach.condition_type && <span className="font-medium">{ach.condition_type}</span>}
-                                  {ach.condition_type && ach.condition_value && ': '}
-                                  {ach.condition_value && <span>{ach.condition_value}</span>}
+                                  {ach.conditionType && <span className="font-medium">{ach.conditionType}</span>}
+                                  {ach.conditionType && ach.conditionValue && ': '}
+                                  {ach.conditionValue && <span>{ach.conditionValue}</span>}
                                 </p>
                               </div>
                             )}
@@ -408,8 +408,8 @@ export default function AchievementsPanel() {
               <div className="space-y-2">
                 <Label>Name (বাংলা)</Label>
                 <Input
-                  value={form.name_bn}
-                  onChange={(e) => setForm({ ...form, name_bn: e.target.value })}
+                  value={form.nameBn}
+                  onChange={(e) => setForm({ ...form, nameBn: e.target.value })}
                   className="bg-white/[0.04] border-white/[0.08]"
                 />
               </div>
@@ -428,8 +428,8 @@ export default function AchievementsPanel() {
             <div className="space-y-2">
               <Label>Description (বাংলা)</Label>
               <Textarea
-                value={form.description_bn}
-                onChange={(e) => setForm({ ...form, description_bn: e.target.value })}
+                value={form.descriptionBn}
+                onChange={(e) => setForm({ ...form, descriptionBn: e.target.value })}
                 className="bg-white/[0.04] border-white/[0.08] min-h-[60px]"
               />
             </div>
@@ -477,8 +477,8 @@ export default function AchievementsPanel() {
               <div className="space-y-2">
                 <Label>Condition Type</Label>
                 <Input
-                  value={form.condition_type}
-                  onChange={(e) => setForm({ ...form, condition_type: e.target.value })}
+                  value={form.conditionType}
+                  onChange={(e) => setForm({ ...form, conditionType: e.target.value })}
                   className="bg-white/[0.04] border-white/[0.08]"
                   placeholder="courses_completed"
                 />
@@ -486,8 +486,8 @@ export default function AchievementsPanel() {
               <div className="space-y-2">
                 <Label>Condition Value</Label>
                 <Input
-                  value={form.condition_value}
-                  onChange={(e) => setForm({ ...form, condition_value: e.target.value })}
+                  value={form.conditionValue}
+                  onChange={(e) => setForm({ ...form, conditionValue: e.target.value })}
                   className="bg-white/[0.04] border-white/[0.08]"
                   placeholder="1"
                 />
@@ -499,8 +499,8 @@ export default function AchievementsPanel() {
               <Label htmlFor="ach-active">Active</Label>
               <Switch
                 id="ach-active"
-                checked={form.is_active}
-                onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
+                checked={form.isActive}
+                onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
               />
             </div>
 

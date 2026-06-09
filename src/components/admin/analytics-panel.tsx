@@ -31,29 +31,9 @@ const itemVariants = {
 // ============================================================
 const COLORS = ['#4A90E2', '#00D4AA', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#0EA5E9', '#10B981'];
 
-const PLACEHOLDER_ENROLLMENT = [
-  { month: 'Jan', enrollments: 0 },
-  { month: 'Feb', enrollments: 0 },
-  { month: 'Mar', enrollments: 0 },
-  { month: 'Apr', enrollments: 0 },
-  { month: 'May', enrollments: 0 },
-  { month: 'Jun', enrollments: 0 },
-];
-
-const PLACEHOLDER_DISTRIBUTION = [
-  { name: 'Beginner', value: 0 },
-  { name: 'Intermediate', value: 0 },
-  { name: 'Advanced', value: 0 },
-];
-
-const PLACEHOLDER_GROWTH = [
-  { month: 'Jan', users: 0 },
-  { month: 'Feb', users: 0 },
-  { month: 'Mar', users: 0 },
-  { month: 'Apr', users: 0 },
-  { month: 'May', users: 0 },
-  { month: 'Jun', users: 0 },
-];
+const EMPTY_ENROLLMENT: { month: string; enrollments: number }[] = [];
+const EMPTY_DISTRIBUTION: { name: string; value: number }[] = [];
+const EMPTY_GROWTH: { month: string; users: number }[] = [];
 
 // ============================================================
 // Types
@@ -125,9 +105,9 @@ export default function AnalyticsPanel() {
   const hasDistributionData = chartData && chartData.courseDistribution.some(d => d.value > 0);
   const hasUserGrowthData = chartData && chartData.userGrowth.some(d => d.users > 0);
 
-  const enrollmentData = hasEnrollmentData ? chartData!.enrollmentTrend : PLACEHOLDER_ENROLLMENT;
-  const distributionData = hasDistributionData ? chartData!.courseDistribution : PLACEHOLDER_DISTRIBUTION;
-  const growthData = hasUserGrowthData ? chartData!.userGrowth : PLACEHOLDER_GROWTH;
+  const enrollmentData = hasEnrollmentData ? chartData!.enrollmentTrend : EMPTY_ENROLLMENT;
+  const distributionData = hasDistributionData ? chartData!.courseDistribution : EMPTY_DISTRIBUTION;
+  const growthData = hasUserGrowthData ? chartData!.userGrowth : EMPTY_GROWTH;
 
   return (
     <motion.div

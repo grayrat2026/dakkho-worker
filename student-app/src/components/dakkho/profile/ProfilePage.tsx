@@ -8,7 +8,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAuthStore, useNavigationStore } from '@/lib/store';
-import { studentProfileApi, activityApi, achievementsApi } from '@/lib/api-client';
+import { studentProfileApi, activityApi, achievementsApi, instituteApi } from '@/lib/api-client';
+import { TECHNOLOGY_SHORT_NAMES } from '@/lib/constants';
 import { GlassCard } from '../shared/GlassCard';
 import { AnimatedCounter } from '../shared/AnimatedCounter';
 
@@ -69,7 +70,11 @@ function formatRelativeTime(dateString: string): string {
 export function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const refreshUser = useAuthStore((s) => s.refreshUser);
   const navigate = useNavigationStore((s) => s.navigate);
+
+  // Resolved institute name from instituteId
+  const [resolvedInstituteName, setResolvedInstituteName] = useState<string | null>(null);
 
   // Stats state
   const [statsData, setStatsData] = useState<{
@@ -102,8 +107,24 @@ export function ProfilePage() {
   }> | null>(null);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
 
-  // Fetch all data on mount
+  // Refresh user data and fetch all data on mount
   useEffect(() => {
+    refreshUser().catch(() => {/* ignore */});
+
+    // Resolve institute name from instituteId
+    async function fetchInstituteName() {
+      if (user?.instituteId) {
+        try {
+          const res = await instituteApi.list({ limit: 100 });
+          const found = res.institutes.find((inst) => inst.id === user.instituteId);
+          if (found) setResolvedInstituteName(found.name);
+        } catch (err) {
+          console.error('Failed to resolve institute name:', err);
+        }
+      }
+    }
+    fetchInstituteName();
+
     async function fetchStats() {
       try {
         const res = await studentProfileApi.stats();
@@ -182,14 +203,14 @@ export function ProfilePage() {
               <h1 className="text-xl font-extrabold text-foreground">{user.fullName}</h1>
               <p className="text-sm text-muted-foreground">{user.email}</p>
               <div className="flex items-center gap-2 mt-1">
-                {user.institute && (
+                {(user.institute || resolvedInstituteName) && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 font-semibold">
-                    {user.institute}
+                    {resolvedInstituteName || user.institute}
                   </span>
                 )}
                 {user.technology && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {user.technology || 'N/A'}
+                    {TECHNOLOGY_SHORT_NAMES[user.technology] || user.technology}
                   </span>
                 )}
               </div>

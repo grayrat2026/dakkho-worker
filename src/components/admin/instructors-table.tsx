@@ -72,7 +72,7 @@ function renderStars(rating: number) {
   return (
     <div className="flex items-center gap-0.5">
       {stars}
-      <span className="ml-1 text-xs text-muted-foreground">{rating.toFixed(1)}</span>
+      <span className="ml-1 text-xs text-muted-foreground">{(rating ?? 0).toFixed(1)}</span>
     </div>
   );
 }
@@ -493,17 +493,17 @@ export default function InstructorsTable() {
                             <span className="text-muted-foreground/40 text-xs">—</span>
                           )}
                         </TableCell>
-                        <TableCell>{renderStars(inst.rating)}</TableCell>
+                        <TableCell>{renderStars(inst.rating ?? 0)}</TableCell>
                         <TableCell className="text-sm">
                           <div className="flex items-center gap-1">
                             <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                            {inst.totalStudents}
+                            {inst.totalStudents ?? 0}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
                           <div className="flex items-center gap-1">
                             <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                            {inst.totalCourses}
+                            {inst.totalCourses ?? 0}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -582,13 +582,13 @@ export default function InstructorsTable() {
                         )}
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" /> {inst.totalStudents}
+                            <Users className="h-3 w-3" /> {inst.totalStudents ?? 0}
                           </span>
                           <span className="flex items-center gap-1">
-                            <BookOpen className="h-3 w-3" /> {inst.totalCourses}
+                            <BookOpen className="h-3 w-3" /> {inst.totalCourses ?? 0}
                           </span>
                           <span className="flex items-center gap-0.5">
-                            <Star className="h-3 w-3 text-amber-400 fill-amber-400" /> {inst.rating.toFixed(1)}
+                            <Star className="h-3 w-3 text-amber-400 fill-amber-400" /> {(inst.rating ?? 0).toFixed(1)}
                           </span>
                         </div>
                       </div>

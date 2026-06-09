@@ -13,17 +13,17 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { apiPost, apiPut, apiDelete, ApiError } from '@/lib/api-client';
+import { apiGet, apiPost, apiPut, apiDelete, ApiError } from '@/lib/api-client';
 
 interface Technology {
   id: number;
   name: string;
-  name_bn: string | null;
-  short_code: string | null;
+  nameBn: string | null;
+  shortCode: string | null;
   description: string | null;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const techColors: Record<string, string> = {
@@ -64,12 +64,8 @@ export default function TechnologiesTable() {
   const fetchTechnologies = useCallback(async () => {
     setLoading(true);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const baseUrl = API_BASE.replace(/\/+$/, '');
-      const url = `${baseUrl}/api/technologies`;
-      const res = await fetch(url);
-      const data = await res.json();
-      setTechnologies((data.technologies as Technology[]) || []);
+      const data = await apiGet('/technologies') as Record<string, unknown>;
+      setTechnologies((data.documents || data.technologies || []) as Technology[]);
     } catch {
       toast({ title: 'Error loading technologies', variant: 'destructive' });
     } finally {
@@ -89,8 +85,8 @@ export default function TechnologiesTable() {
     setEditTech(tech);
     setForm({
       name: tech.name || '',
-      name_bn: tech.name_bn || '',
-      short_code: tech.short_code || '',
+      name_bn: tech.nameBn || '',
+      short_code: tech.shortCode || '',
       description: tech.description || '',
     });
     setDialogOpen(true);
@@ -129,8 +125,8 @@ export default function TechnologiesTable() {
 
   const toggleActive = async (tech: Technology) => {
     try {
-      await apiPut('/technologies', { technologyId: tech.id, is_active: tech.is_active ? 0 : 1 });
-      toast({ title: tech.is_active ? 'Deactivated' : 'Activated' });
+      await apiPut('/technologies', { technologyId: tech.id, is_active: tech.isActive ? 0 : 1 });
+      toast({ title: tech.isActive ? 'Deactivated' : 'Activated' });
       fetchTechnologies();
     } catch {
       toast({ title: 'Error', variant: 'destructive' });
@@ -142,8 +138,8 @@ export default function TechnologiesTable() {
     const q = searchQuery.toLowerCase();
     return (
       tech.name.toLowerCase().includes(q) ||
-      (tech.name_bn && tech.name_bn.toLowerCase().includes(q)) ||
-      (tech.short_code && tech.short_code.toLowerCase().includes(q))
+      (tech.nameBn && tech.nameBn.toLowerCase().includes(q)) ||
+      (tech.shortCode && tech.shortCode.toLowerCase().includes(q))
     );
   });
 
@@ -262,27 +258,27 @@ export default function TechnologiesTable() {
                     <TableRow key={tech.id} className="border-white/[0.06] hover:bg-white/[0.03]">
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg ${(techColors[tech.short_code || ''] || 'bg-white/5 text-white/60')} flex items-center justify-center text-lg`}>
-                            {techIcons[tech.short_code || ''] || tech.name.charAt(0).toUpperCase()}
+                          <div className={`w-9 h-9 rounded-lg ${(techColors[tech.shortCode || ''] || 'bg-white/5 text-white/60')} flex items-center justify-center text-lg`}>
+                            {techIcons[tech.shortCode || ''] || tech.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="font-medium">{tech.name}</div>
-                            {tech.name_bn && (
-                              <span className="text-xs text-muted-foreground">{tech.name_bn}</span>
+                            {tech.nameBn && (
+                              <span className="text-xs text-muted-foreground">{tech.nameBn}</span>
                             )}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`${techColors[tech.short_code || ''] || 'bg-white/5 text-white/60'} border-0 font-mono text-xs`}>
-                          {tech.short_code || 'N/A'}
+                        <Badge variant="outline" className={`${techColors[tech.shortCode || ''] || 'bg-white/5 text-white/60'} border-0 font-mono text-xs`}>
+                          {tech.shortCode || 'N/A'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                         {tech.description || '—'}
                       </TableCell>
                       <TableCell>
-                        {tech.is_active ? (
+                        {tech.isActive ? (
                           <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-xs">
                             <BadgeCheck className="h-3 w-3 mr-1" /> Active
                           </Badge>
@@ -304,7 +300,7 @@ export default function TechnologiesTable() {
                               <Edit className="h-4 w-4 mr-2" /> Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => toggleActive(tech)}>
-                              {tech.is_active ? 'Deactivate' : 'Activate'}
+                              {tech.isActive ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => deleteTechnology(tech.id)} className="text-destructive">
                               <Trash2 className="h-4 w-4 mr-2" /> Delete
@@ -333,23 +329,23 @@ export default function TechnologiesTable() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-lg ${(techColors[tech.short_code || ''] || 'bg-white/5 text-white/60')} flex items-center justify-center text-base flex-shrink-0`}>
-                          {techIcons[tech.short_code || ''] || tech.name.charAt(0).toUpperCase()}
+                        <div className={`w-8 h-8 rounded-lg ${(techColors[tech.shortCode || ''] || 'bg-white/5 text-white/60')} flex items-center justify-center text-base flex-shrink-0`}>
+                          {techIcons[tech.shortCode || ''] || tech.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-medium truncate">{tech.name}</p>
                           </div>
-                          {tech.name_bn && (
-                            <p className="text-xs text-muted-foreground truncate">{tech.name_bn}</p>
+                          {tech.nameBn && (
+                            <p className="text-xs text-muted-foreground truncate">{tech.nameBn}</p>
                           )}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        <Badge variant="outline" className={`${techColors[tech.short_code || ''] || 'bg-white/5 text-white/60'} border-0 font-mono text-[10px]`}>
-                          {tech.short_code || 'N/A'}
+                        <Badge variant="outline" className={`${techColors[tech.shortCode || ''] || 'bg-white/5 text-white/60'} border-0 font-mono text-[10px]`}>
+                          {tech.shortCode || 'N/A'}
                         </Badge>
-                        {tech.is_active ? (
+                        {tech.isActive ? (
                           <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-[10px]">
                             Active
                           </Badge>
@@ -371,7 +367,7 @@ export default function TechnologiesTable() {
                           <Edit className="h-4 w-4 mr-2" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toggleActive(tech)}>
-                          {tech.is_active ? 'Deactivate' : 'Activate'}
+                          {tech.isActive ? 'Deactivate' : 'Activate'}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => deleteTechnology(tech.id)} className="text-destructive">
                           <Trash2 className="h-4 w-4 mr-2" /> Delete

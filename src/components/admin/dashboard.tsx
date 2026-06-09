@@ -115,14 +115,14 @@ interface StatCardDef {
 }
 
 const statCardDefs: StatCardDef[] = [
-  { title: 'Total Users', key: 'totalUsers', icon: Users, gradientClass: 'gradient-stat-blue', iconBg: 'bg-blue-500/15', iconColor: 'text-blue-400', trend: 12.5 },
-  { title: 'Total Courses', key: 'totalCourses', icon: BookOpen, gradientClass: 'gradient-stat-emerald', iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-400', trend: 8.3 },
-  { title: 'Total Videos', key: 'totalVideos', icon: Video, gradientClass: 'gradient-stat-purple', iconBg: 'bg-purple-500/15', iconColor: 'text-purple-400', trend: 15.2 },
-  { title: 'Enrollments', key: 'totalEnrollments', icon: GraduationCap, gradientClass: 'gradient-stat-amber', iconBg: 'bg-amber-500/15', iconColor: 'text-amber-400', trend: 6.7 },
-  { title: 'Revenue', key: 'totalRevenue', icon: DollarSign, gradientClass: 'gradient-stat-teal', iconBg: 'bg-teal-500/15', iconColor: 'text-teal-400', trend: 22.1, format: 'currency', prefix: '৳' },
-  { title: 'Pending Payments', key: 'pendingPayments', icon: Clock, gradientClass: 'gradient-stat-rose', iconBg: 'bg-rose-500/15', iconColor: 'text-rose-400', trend: -3.4 },
-  { title: 'Active Packages', key: 'activePackages', icon: Package, gradientClass: 'gradient-stat-cyan', iconBg: 'bg-cyan-500/15', iconColor: 'text-cyan-400', trend: 4.8 },
-  { title: 'New Today', key: 'newSignupsToday', icon: UserPlus, gradientClass: 'gradient-stat-orange', iconBg: 'bg-orange-500/15', iconColor: 'text-orange-400', trend: 18.9 },
+  { title: 'Total Users', key: 'totalUsers', icon: Users, gradientClass: 'gradient-stat-blue', iconBg: 'bg-blue-500/15', iconColor: 'text-blue-400', trend: 0 },
+  { title: 'Total Courses', key: 'totalCourses', icon: BookOpen, gradientClass: 'gradient-stat-emerald', iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-400', trend: 0 },
+  { title: 'Total Videos', key: 'totalVideos', icon: Video, gradientClass: 'gradient-stat-purple', iconBg: 'bg-purple-500/15', iconColor: 'text-purple-400', trend: 0 },
+  { title: 'Enrollments', key: 'totalEnrollments', icon: GraduationCap, gradientClass: 'gradient-stat-amber', iconBg: 'bg-amber-500/15', iconColor: 'text-amber-400', trend: 0 },
+  { title: 'Revenue', key: 'totalRevenue', icon: DollarSign, gradientClass: 'gradient-stat-teal', iconBg: 'bg-teal-500/15', iconColor: 'text-teal-400', trend: 0, format: 'currency', prefix: '৳' },
+  { title: 'Pending Payments', key: 'pendingPayments', icon: Clock, gradientClass: 'gradient-stat-rose', iconBg: 'bg-rose-500/15', iconColor: 'text-rose-400', trend: 0 },
+  { title: 'Active Packages', key: 'activePackages', icon: Package, gradientClass: 'gradient-stat-cyan', iconBg: 'bg-cyan-500/15', iconColor: 'text-cyan-400', trend: 0 },
+  { title: 'New Today', key: 'newSignupsToday', icon: UserPlus, gradientClass: 'gradient-stat-orange', iconBg: 'bg-orange-500/15', iconColor: 'text-orange-400', trend: 0 },
 ];
 
 // ============================================================
@@ -135,18 +135,7 @@ const quickActions = [
   { label: 'Manage Config', icon: Cog, href: '/config', gradient: 'from-amber-500 to-orange-400' },
 ] as const;
 
-// ============================================================
-// Placeholder chart data
-// ============================================================
-const placeholderChartData = [
-  { day: 'Mon', enrollments: 24, revenue: 3200, views: 156 },
-  { day: 'Tue', enrollments: 18, revenue: 2800, views: 132 },
-  { day: 'Wed', enrollments: 32, revenue: 4100, views: 198 },
-  { day: 'Thu', enrollments: 28, revenue: 3600, views: 175 },
-  { day: 'Fri', enrollments: 45, revenue: 5200, views: 224 },
-  { day: 'Sat', enrollments: 38, revenue: 4800, views: 210 },
-  { day: 'Sun', enrollments: 22, revenue: 2900, views: 148 },
-];
+// Chart data will be fetched from API; initialized as empty
 
 // ============================================================
 // Animated Counter Hook
@@ -283,7 +272,7 @@ export default function Dashboard() {
   const [recentEnrollments, setRecentEnrollments] = useState<Record<string, unknown>[]>([]);
   const [recentLogs, setRecentLogs] = useState<Record<string, unknown>[]>([]);
   const [pendingPayments, setPendingPayments] = useState<Record<string, unknown>[]>([]);
-  const [chartData, setChartData] = useState(placeholderChartData);
+  const [chartData, setChartData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -298,55 +287,12 @@ export default function Dashboard() {
       setRecentLogs((data.recentLogs as Record<string, unknown>[]) || []);
       setPendingPayments((data.pendingPayments as Record<string, unknown>[]) || []);
       if (data.chartData) {
-        setChartData(data.chartData as typeof placeholderChartData);
+        setChartData(data.chartData as Record<string, unknown>[]);
       }
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
-      setError('Failed to load dashboard data. Using placeholder values.');
-      // Set default stats for demo
-      setStats({
-        totalUsers: 1247,
-        totalCourses: 38,
-        totalVideos: 412,
-        totalEnrollments: 3256,
-        activeSessions: 89,
-        newSignupsToday: 14,
-        totalRevenue: 285400,
-        pendingPayments: 7,
-        activePackages: 156,
-        totalAchievements: 24,
-      });
-      setPopularCourses([
-        { title: 'Complete Web Development Bootcamp', level: 'beginner', totalStudents: 423, rating: 4.7, thumbnailUrl: '' },
-        { title: 'React & Next.js Masterclass', level: 'intermediate', totalStudents: 356, rating: 4.8, thumbnailUrl: '' },
-        { title: 'Python for Data Science', level: 'beginner', totalStudents: 312, rating: 4.5, thumbnailUrl: '' },
-        { title: 'Mobile App Development with Flutter', level: 'intermediate', totalStudents: 287, rating: 4.6, thumbnailUrl: '' },
-        { title: 'Cybersecurity Fundamentals', level: 'advanced', totalStudents: 198, rating: 4.4, thumbnailUrl: '' },
-      ]);
-      setRecentEnrollments([
-        { userId: 'usr_a1b2c3d4', courseId: 'crs_x1y2z3', userName: 'Rahim Ahmed', courseName: 'Complete Web Development Bootcamp', progress: 72, completed: false, createdAt: new Date(Date.now() - 1800000).toISOString() },
-        { userId: 'usr_e5f6g7h8', courseId: 'crs_a4b5c6', userName: 'Fatima Khan', courseName: 'React & Next.js Masterclass', progress: 45, completed: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
-        { userId: 'usr_i9j0k1l2', courseId: 'crs_d7e8f9', userName: 'Karim Hossain', courseName: 'Python for Data Science', progress: 100, completed: true, createdAt: new Date(Date.now() - 7200000).toISOString() },
-        { userId: 'usr_m3n4o5p6', courseId: 'crs_g0h1i2', userName: 'Nusrat Jahan', courseName: 'Mobile App Development with Flutter', progress: 18, completed: false, createdAt: new Date(Date.now() - 10800000).toISOString() },
-        { userId: 'usr_q7r8s9t0', courseId: 'crs_j3k4l5', userName: 'Tanvir Islam', courseName: 'Cybersecurity Fundamentals', progress: 92, completed: false, createdAt: new Date(Date.now() - 14400000).toISOString() },
-      ]);
-      setRecentLogs([
-        { action: 'LOGIN', user_email: 'admin@dakkho.com', resource_type: 'session', created_at: new Date(Date.now() - 300000).toISOString() },
-        { action: 'CREATE_COURSE', user_email: 'admin@dakkho.com', resource_type: 'course', resource_id: 'crs_new_001', created_at: new Date(Date.now() - 900000).toISOString() },
-        { action: 'UPDATE_CONFIG', user_email: 'admin@dakkho.com', resource_type: 'config', created_at: new Date(Date.now() - 1800000).toISOString() },
-        { action: 'SEND_CUSTOM_EMAIL', user_email: 'admin@dakkho.com', resource_type: 'notification', created_at: new Date(Date.now() - 2700000).toISOString() },
-        { action: 'CREATE_VIDEO', user_email: 'instructor@dakkho.com', resource_type: 'video', resource_id: 'vid_new_002', created_at: new Date(Date.now() - 3600000).toISOString() },
-        { action: 'DELETE_COURSE', user_email: 'admin@dakkho.com', resource_type: 'course', resource_id: 'crs_old_003', created_at: new Date(Date.now() - 5400000).toISOString() },
-        { action: 'UPLOAD_FILE', user_email: 'admin@dakkho.com', resource_type: 'file', created_at: new Date(Date.now() - 7200000).toISOString() },
-        { action: 'VIEW_RESOURCE', user_email: 'admin@dakkho.com', resource_type: 'analytics', created_at: new Date(Date.now() - 9000000).toISOString() },
-      ]);
-      setPendingPayments([
-        { id: 1, user_id: 'usr_a1b2c3d4', user_name: 'Rahim Ahmed', amount: 1500, gateway: 'bkash', status: 'pending', trx_id_submitted: 'BKASH789XYZ', created_at: new Date(Date.now() - 1200000).toISOString() },
-        { id: 2, user_id: 'usr_e5f6g7h8', user_name: 'Fatima Khan', amount: 2500, gateway: 'nagad', status: 'pending', trx_id_submitted: 'NGD456ABC', created_at: new Date(Date.now() - 3600000).toISOString() },
-        { id: 3, user_id: 'usr_i9j0k1l2', user_name: 'Karim Hossain', amount: 800, gateway: 'bkash', status: 'pending', trx_id_submitted: 'BKASH321DEF', created_at: new Date(Date.now() - 7200000).toISOString() },
-        { id: 4, user_id: 'usr_m3n4o5p6', user_name: 'Nusrat Jahan', amount: 3200, gateway: 'rocket', status: 'pending', trx_id_submitted: 'RKT654GHI', created_at: new Date(Date.now() - 14400000).toISOString() },
-        { id: 5, user_id: 'usr_q7r8s9t0', user_name: 'Tanvir Islam', amount: 1500, gateway: 'bkash', status: 'verified', trx_id_submitted: 'BKASH987JKL', created_at: new Date(Date.now() - 28800000).toISOString() },
-      ]);
+      setError('Failed to load dashboard data. Please check your connection and try again.');
+      // On error, keep all data as empty/null — do NOT set mock data
     } finally {
       setLoading(false);
     }
@@ -547,16 +493,16 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm truncate">
-                            <span className="font-medium">{String(log.user_email || 'System')}</span>
+                            <span className="font-medium">{String(log.userEmail || 'System')}</span>
                             <span className="text-muted-foreground"> {action.replace(/_/g, ' ').toLowerCase()}</span>
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {log.resource_type && String(log.resource_type)}
-                            {log.resource_id && ` \u00B7 ${String(log.resource_id).slice(0, 8)}...`}
+                            {log.resourceType && String(log.resourceType)}
+                            {log.resourceId && ` \u00B7 ${String(log.resourceId).slice(0, 8)}...`}
                           </p>
                         </div>
                         <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                          {log.created_at ? formatTime(String(log.created_at)) : ''}
+                          {log.createdAt ? formatTime(String(log.createdAt)) : ''}
                         </span>
                       </motion.div>
                     );
@@ -675,13 +621,11 @@ export default function Dashboard() {
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {recentEnrollments.slice(0, 6).map((enrollment, i) => {
                     const progress = Number(enrollment.progress ?? 0);
-                    const userName = String(enrollment.userName ?? enrollment.user_name ?? `User ${String(enrollment.userId ?? 'Unknown').slice(0, 8)}`);
-                    const courseName = String(enrollment.courseName ?? enrollment.course_name ?? `Course ${String(enrollment.courseId ?? 'N/A').slice(0, 8)}`);
+                    const userName = String(enrollment.userName ?? `User ${String(enrollment.userId ?? 'Unknown').slice(0, 8)}`);
+                    const courseName = String(enrollment.courseName ?? `Course ${String(enrollment.courseId ?? 'N/A').slice(0, 8)}`);
                     const time = enrollment.createdAt
                       ? formatTime(String(enrollment.createdAt))
-                      : enrollment.created_at
-                        ? formatTime(String(enrollment.created_at))
-                        : '';
+                      : '';
                     const completed = Boolean(enrollment.completed);
 
                     return (
@@ -746,8 +690,8 @@ export default function Dashboard() {
                     const amount = Number(payment.amount ?? 0);
                     const gateway = String(payment.gateway ?? 'Unknown');
                     const status = String(payment.status ?? 'pending');
-                    const userName = String(payment.user_name ?? payment.userName ?? `User ${String(payment.user_id ?? 'Unknown').slice(0, 8)}`);
-                    const trxId = String(payment.trx_id_submitted ?? payment.gateway_trx_id ?? 'N/A');
+                    const userName = String(payment.userName ?? `User ${String(payment.userId ?? 'Unknown').slice(0, 8)}`);
+                    const trxId = String(payment.trxIdSubmitted ?? payment.gatewayTrxId ?? 'N/A');
 
                     const statusColorMap: Record<string, string> = {
                       pending: 'bg-amber-500/15 text-amber-400 border-amber-500/20',

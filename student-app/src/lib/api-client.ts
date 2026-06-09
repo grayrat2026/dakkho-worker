@@ -151,6 +151,7 @@ export interface AuthResponse {
     instituteId: number | null;
     technology: string | null;
     emailVerified: boolean;
+    avatarUrl?: string;
     themeMode?: 'light' | 'dark' | 'system';
     packages: UserPackage[];
   };
@@ -164,6 +165,7 @@ export interface UserProfile {
   instituteId: number | null;
   technology: string | null;
   emailVerified: boolean;
+  avatarUrl?: string;
   themeMode?: 'light' | 'dark' | 'system';
   packages: UserPackage[];
 }

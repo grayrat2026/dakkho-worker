@@ -87,48 +87,48 @@ export interface Instructor {
 export interface Institute {
   id: number;
   name: string;
-  name_bn?: string;
+  nameBn?: string;
   division?: string;
   district?: string;
-  eiin_number?: string;
+  eiinNumber?: string;
   type: string;
-  is_requested: number;
-  requested_by?: string;
-  approved_by?: string;
-  approved_at?: string;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
+  isRequested: number;
+  requestedBy?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Technology Types (D1) ----
 export interface Technology {
   id: number;
   name: string;
-  name_bn?: string;
-  short_code?: string;
+  nameBn?: string;
+  shortCode?: string;
   description?: string;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Institute Request Types (D1) ----
 export interface InstituteRequest {
   id: number;
-  user_id: string;
-  user_email?: string;
-  user_name?: string;
-  institute_name: string;
-  institute_name_bn?: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  instituteName: string;
+  instituteNameBn?: string;
   division?: string;
   district?: string;
   status: 'pending' | 'approved' | 'rejected';
-  admin_note?: string;
-  reviewed_by?: string;
-  reviewed_at?: string;
-  created_at: string;
-  updated_at: string;
+  adminNote?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Enrollment Types ----
@@ -226,144 +226,144 @@ export interface UserSettings {
 export interface Coupon {
   id: number;
   code: string;
-  discount_type: 'percentage' | 'flat';
-  discount_value: number;
-  max_discount?: number;
-  min_purchase: number;
-  usage_limit?: number;
-  usage_count: number;
-  per_user_limit: number;
-  valid_from: string;
-  valid_until: string;
-  applicable_courses?: string;
-  applicable_technologies?: string;
-  is_active: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  maxDiscount?: number;
+  minPurchase: number;
+  usageLimit?: number;
+  usageCount: number;
+  perUserLimit: number;
+  validFrom: string;
+  validUntil: string;
+  applicableCourses?: string;
+  applicableTechnologies?: string;
+  isActive: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Discount Types (D1) ----
 export interface Discount {
   id: number;
   name: string;
-  name_bn?: string;
+  nameBn?: string;
   description?: string;
-  discount_type: 'percentage' | 'flat';
-  discount_value: number;
-  applicable_type: string;
-  applicable_ids?: string;
-  valid_from: string;
-  valid_until: string;
-  is_auto_apply: number;
-  is_active: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  applicableType: string;
+  applicableIds?: string;
+  validFrom: string;
+  validUntil: string;
+  isAutoApply: number;
+  isActive: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Event Types (D1) ----
 export interface Event {
   id: number;
   title: string;
-  title_bn?: string;
+  titleBn?: string;
   description?: string;
-  description_bn?: string;
-  event_type: 'event' | 'special_day' | 'holiday' | 'exam' | 'workshop';
-  banner_url?: string;
-  start_date: string;
-  end_date?: string;
-  is_featured: number;
+  descriptionBn?: string;
+  eventType: 'event' | 'special_day' | 'holiday' | 'exam' | 'workshop';
+  bannerUrl?: string;
+  startDate: string;
+  endDate?: string;
+  isFeatured: number;
   metadata?: string;
-  is_active: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
+  isActive: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Live Class Types (D1) ----
 export interface LiveClass {
   id: number;
-  course_id?: string;
+  courseId?: string;
   title: string;
-  title_bn?: string;
+  titleBn?: string;
   description?: string;
-  instructor_id?: string;
-  technology_id?: number;
-  scheduled_at: string;
-  duration_minutes: number;
-  meeting_url?: string;
+  instructorId?: string;
+  technologyId?: number;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetingUrl?: string;
   platform: 'jitsi' | 'zoom' | 'meet' | 'other';
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
-  recording_url?: string;
-  is_active: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
+  recordingUrl?: string;
+  isActive: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Payment Types (D1) ----
 export interface Payment {
   id: number;
-  user_id: string;
-  package_id?: number;
-  course_id?: string;
+  userId: string;
+  packageId?: number;
+  courseId?: string;
   amount: number;
   currency: string;
   gateway: string;
-  gateway_trx_id?: string;
-  gateway_payment_id?: string;
+  gatewayTrxId?: string;
+  gatewayPaymentId?: string;
   status: 'pending' | 'verified' | 'rejected' | 'refunded';
-  proof_url?: string;
-  trx_id_submitted?: string;
-  phone_submitted?: string;
-  verified_by?: string;
-  verified_at?: string;
+  proofUrl?: string;
+  trxIdSubmitted?: string;
+  phoneSubmitted?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
   metadata?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Payment Config Types (D1) ----
 export interface PaymentConfig {
   id: number;
   gateway: string;
-  is_active: number;
+  isActive: number;
   config: string;
-  sandbox_mode: number;
+  sandboxMode: number;
   instructions?: string;
-  instructions_bn?: string;
-  created_at: string;
-  updated_at: string;
+  instructionsBn?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- Course Package Types (D1) ----
 export interface CoursePackage {
   id: number;
-  course_id: string;
-  package_type: 'basic' | 'standard' | 'premium';
+  courseId: string;
+  packageType: 'basic' | 'standard' | 'premium';
   price: number;
-  duration_months: number;
-  max_users: number;
-  is_auto_assign: number;
-  is_active: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
+  durationMonths: number;
+  maxUsers: number;
+  isAutoAssign: number;
+  isActive: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---- User Package Types (D1) ----
 export interface UserPackage {
   id: number;
-  user_id: string;
-  package_id: number;
-  course_id: string;
-  package_type: string;
-  activated_at: string;
-  expires_at: string;
-  shared_with?: string;
+  userId: string;
+  packageId: number;
+  courseId: string;
+  packageType: string;
+  activatedAt: string;
+  expiresAt: string;
+  sharedWith?: string;
   status: 'active' | 'expired' | 'cancelled';
-  created_at: string;
+  createdAt: string;
 }
 
 // ---- Achievement Definition Types (D1) ----
@@ -371,50 +371,50 @@ export interface AchievementDefinition {
   id: number;
   slug: string;
   name: string;
-  name_bn?: string;
+  nameBn?: string;
   description: string;
-  description_bn?: string;
+  descriptionBn?: string;
   category: 'learning' | 'streaks' | 'social' | 'special';
   icon: string;
   xp: number;
-  condition_type: string;
-  condition_value: string;
-  is_active: number;
-  created_at: string;
+  conditionType: string;
+  conditionValue: string;
+  isActive: number;
+  createdAt: string;
 }
 
 // ---- Student Achievement Types (D1) ----
 export interface StudentAchievement {
   id: number;
-  user_id: string;
-  achievement_id: number;
-  unlocked_at: string;
+  userId: string;
+  achievementId: number;
+  unlockedAt: string;
 }
 
 // ---- Student Activity Types (D1) ----
 export interface StudentActivity {
   id: number;
-  user_id: string;
-  activity_type: 'video_watch' | 'quiz_complete' | 'assignment_submit' | 'streak_bonus' | 'enrollment' | 'certificate';
-  resource_type: string;
-  resource_id?: string;
+  userId: string;
+  activityType: 'video_watch' | 'quiz_complete' | 'assignment_submit' | 'streak_bonus' | 'enrollment' | 'certificate';
+  resourceType: string;
+  resourceId?: string;
   title: string;
   description?: string;
   metadata?: string;
-  created_at: string;
+  createdAt: string;
 }
 
 // ---- Audit Log Types (D1) ----
 export interface AuditLog {
   id: string;
   action: string;
-  resource_type: string;
-  resource_id?: string;
-  user_id?: string;
-  user_email?: string;
+  resourceType: string;
+  resourceId?: string;
+  userId?: string;
+  userEmail?: string;
   details?: string;
-  ip_address?: string;
-  created_at: string;
+  ipAddress?: string;
+  createdAt: string;
 }
 
 // ---- Notification Log Types (D1) ----
@@ -424,25 +424,25 @@ export interface NotificationLog {
   category: string;
   title?: string;
   message?: string;
-  target_type?: string;
-  target_id?: string;
-  sent_count: number;
-  failed_count: number;
+  targetType?: string;
+  targetId?: string;
+  sentCount: number;
+  failedCount: number;
   metadata?: string;
-  created_by?: string;
-  created_at: string;
+  createdBy?: string;
+  createdAt: string;
 }
 
 // ---- Push Token Types (D1) ----
 export interface PushToken {
   id: number;
-  user_id: string;
-  push_token: string;
-  device_type?: string;
-  device_info?: string;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
+  userId: string;
+  pushToken: string;
+  deviceType?: string;
+  deviceInfo?: string;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================================

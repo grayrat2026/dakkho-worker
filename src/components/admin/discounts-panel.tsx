@@ -25,16 +25,16 @@ import { apiGet, apiPost, apiDelete, ApiError } from '@/lib/api-client';
 interface Discount {
   id: number;
   name: string;
-  name_bn: string | null;
+  nameBn: string | null;
   description: string | null;
-  discount_type: string;
-  discount_value: number;
-  applicable_type: string;
-  valid_from: string;
-  valid_until: string;
-  is_auto_apply: number;
-  is_active: number;
-  created_at: string;
+  discountType: string;
+  discountValue: number;
+  applicableType: string;
+  validFrom: string;
+  validUntil: string;
+  isAutoApply: number;
+  isActive: number;
+  createdAt: string;
 }
 
 export default function DiscountsPanel() {
@@ -124,7 +124,7 @@ export default function DiscountsPanel() {
     const q = search.toLowerCase();
     return (
       d.name.toLowerCase().includes(q) ||
-      (d.name_bn && d.name_bn.toLowerCase().includes(q)) ||
+      (d.nameBn && d.nameBn.toLowerCase().includes(q)) ||
       (d.description && d.description.toLowerCase().includes(q))
     );
   });
@@ -251,16 +251,16 @@ export default function DiscountsPanel() {
                   >
                     <td className="font-medium">
                       <div>{d.name}</div>
-                      {d.name_bn && <div className="text-xs text-muted-foreground">{d.name_bn}</div>}
+                      {d.nameBn && <div className="text-xs text-muted-foreground">{d.nameBn}</div>}
                     </td>
-                    <td>{d.discount_type === 'percentage' ? `${d.discount_value}%` : `৳${d.discount_value}`}</td>
-                    <td className="capitalize text-sm">{d.applicable_type}</td>
+                    <td>{d.discountType === 'percentage' ? `${d.discountValue}%` : `৳${d.discountValue}`}</td>
+                    <td className="capitalize text-sm">{d.applicableType}</td>
                     <td className="text-xs text-muted-foreground">
-                      {new Date(d.valid_from).toLocaleDateString()} —{' '}
-                      {new Date(d.valid_until).toLocaleDateString()}
+                      {new Date(d.validFrom).toLocaleDateString()} —{' '}
+                      {new Date(d.validUntil).toLocaleDateString()}
                     </td>
                     <td>
-                      {d.is_auto_apply ? (
+                      {d.isAutoApply ? (
                         <span className="status-badge status-badge-verified">Auto</span>
                       ) : (
                         <span className="text-muted-foreground text-sm">Manual</span>
@@ -268,17 +268,17 @@ export default function DiscountsPanel() {
                     </td>
                     <td>
                       <span
-                        className={`status-badge ${d.is_active ? 'status-badge-active' : 'status-badge-inactive'}`}
+                        className={`status-badge ${d.isActive ? 'status-badge-active' : 'status-badge-inactive'}`}
                       >
                         <span className="relative flex h-1.5 w-1.5">
-                          {d.is_active && (
+                          {d.isActive && (
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                           )}
                           <span
-                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${d.is_active ? 'bg-emerald-500' : 'bg-red-500'}`}
+                            className={`relative inline-flex rounded-full h-1.5 w-1.5 ${d.isActive ? 'bg-emerald-500' : 'bg-red-500'}`}
                           />
                         </span>
-                        {d.is_active ? 'Active' : 'Inactive'}
+                        {d.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="text-right">
@@ -334,18 +334,18 @@ export default function DiscountsPanel() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm font-medium">{d.name}</p>
-                      {d.name_bn && <p className="text-xs text-muted-foreground">{d.name_bn}</p>}
+                      {d.nameBn && <p className="text-xs text-muted-foreground">{d.nameBn}</p>}
                       <p className="text-sm mt-1">
-                        {d.discount_type === 'percentage' ? `${d.discount_value}%` : `৳${d.discount_value}`} off
+                        {d.discountType === 'percentage' ? `${d.discountValue}%` : `৳${d.discountValue}`} off
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span
-                        className={`status-badge ${d.is_active ? 'status-badge-active' : 'status-badge-inactive'}`}
+                        className={`status-badge ${d.isActive ? 'status-badge-active' : 'status-badge-inactive'}`}
                       >
-                        {d.is_active ? 'Active' : 'Inactive'}
+                        {d.isActive ? 'Active' : 'Inactive'}
                       </span>
-                      {d.is_auto_apply && <span className="status-badge status-badge-verified text-xs">Auto</span>}
+                      {d.isAutoApply && <span className="status-badge status-badge-verified text-xs">Auto</span>}
                     </div>
                   </div>
                   <div className="flex justify-end mt-2">

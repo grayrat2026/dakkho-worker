@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare, ChevronLeft, Send, Star, Lightbulb,
   Bug, CheckCircle, ThumbsUp, ThumbsDown, Sparkles,
-  AlertCircle, Loader2, Filter, TrendingUp,
+  AlertCircle, AlertTriangle, Loader2, Filter, TrendingUp,
 } from 'lucide-react';
 import { useNavigationStore } from '@/lib/store';
 import { GlassCard } from '../shared/GlassCard';

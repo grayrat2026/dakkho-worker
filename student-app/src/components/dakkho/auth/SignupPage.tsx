@@ -93,6 +93,7 @@ export function SignupPage() {
     institute: '',
     customInstitute: '',
     technology: '',
+    instituteId: undefined as number | undefined,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

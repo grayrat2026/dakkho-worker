@@ -125,12 +125,12 @@ export default function PaymentsPanel() {
                 payments.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No payments</TableCell></TableRow> :
                 payments.map((p) => (
                   <TableRow key={p.id} className="border-white/[0.06] hover:bg-white/[0.03]">
-                    <TableCell className="font-mono text-sm">{p.trx_id_submitted || p.gateway_trx_id || 'N/A'}</TableCell>
+                    <TableCell className="font-mono text-sm">{p.trxIdSubmitted || p.gatewayTrxId || 'N/A'}</TableCell>
                     <TableCell className="font-semibold">৳{p.amount}</TableCell>
                     <TableCell className="capitalize text-sm">{p.gateway}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.phone_submitted || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{p.phoneSubmitted || '—'}</TableCell>
                     <TableCell>{statusBadge(p.status)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       {p.status === 'pending' && (
                         <div className="flex justify-end gap-1">
@@ -153,7 +153,7 @@ export default function PaymentsPanel() {
             payments.map((p) => (
               <div key={p.id} className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                 <div className="flex justify-between items-start">
-                  <div><p className="font-mono text-sm">{p.trx_id_submitted || 'N/A'}</p><p className="font-semibold">৳{p.amount}</p></div>
+                  <div><p className="font-mono text-sm">{p.trxIdSubmitted || 'N/A'}</p><p className="font-semibold">৳{p.amount}</p></div>
                   {statusBadge(p.status)}
                 </div>
                 <div className="flex gap-2 mt-2">
@@ -179,8 +179,8 @@ export default function PaymentsPanel() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium capitalize">{cfg.gateway}</span>
-                    {cfg.is_active ? <Badge className="bg-green-500/10 text-green-400 border-green-500/20">Active</Badge> : <Badge className="bg-white/5 text-white/40">Inactive</Badge>}
-                    {cfg.sandbox_mode ? <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Sandbox</Badge> : null}
+                    {cfg.isActive ? <Badge className="bg-green-500/10 text-green-400 border-green-500/20">Active</Badge> : <Badge className="bg-white/5 text-white/40">Inactive</Badge>}
+                    {cfg.sandboxMode ? <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Sandbox</Badge> : null}
                   </div>
                   <Button size="sm" variant="outline" className="border-white/10 text-xs h-7"
                     onClick={async () => {

@@ -170,11 +170,8 @@ export default function UsersTable() {
 
   const fetchTechnologies = useCallback(async () => {
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const baseUrl = API_BASE.replace(/\/+$/, '');
-      const res = await fetch(`${baseUrl}/api/technologies`);
-      const techData = await res.json();
-      const techs = (techData.technologies as Record<string, unknown>[]) || [];
+      const data = await apiGet('/technologies') as Record<string, unknown>;
+      const techs = ((data.documents || data.technologies || []) as Record<string, unknown>[]);
       setTechnologies(
         techs.map((d) => ({ id: Number(d.id), name: String(d.name ?? 'Unknown') })),
       );

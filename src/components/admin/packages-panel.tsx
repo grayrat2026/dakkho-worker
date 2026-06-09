@@ -16,13 +16,13 @@ import { apiGet, apiPost, apiPut, apiDelete, ApiError } from '@/lib/api-client';
 import type { CoursePackage, Course } from '@/lib/types';
 
 const EMPTY_FORM = {
-  course_id: '',
-  package_type: 'basic' as 'basic' | 'standard' | 'premium',
+  courseId: '',
+  packageType: 'basic' as 'basic' | 'standard' | 'premium',
   price: '',
-  duration_months: '1',
-  max_users: '1',
-  is_auto_assign: false,
-  is_active: true,
+  durationMonths: '1',
+  maxUsers: '1',
+  isAutoAssign: false,
+  isActive: true,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -82,8 +82,8 @@ export default function PackagesPanel() {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      getCourseTitle(pkg.course_id).toLowerCase().includes(q) ||
-      pkg.package_type.toLowerCase().includes(q)
+      getCourseTitle(pkg.courseId).toLowerCase().includes(q) ||
+      pkg.packageType.toLowerCase().includes(q)
     );
   });
 
@@ -96,32 +96,32 @@ export default function PackagesPanel() {
   const openEdit = (pkg: CoursePackage) => {
     setEditingId(pkg.id);
     setForm({
-      course_id: pkg.course_id,
-      package_type: pkg.package_type,
+      courseId: pkg.courseId,
+      packageType: pkg.packageType,
       price: String(pkg.price),
-      duration_months: String(pkg.duration_months),
-      max_users: String(pkg.max_users),
-      is_auto_assign: pkg.is_auto_assign === 1,
-      is_active: pkg.is_active === 1,
+      durationMonths: String(pkg.durationMonths),
+      maxUsers: String(pkg.maxUsers),
+      isAutoAssign: pkg.isAutoAssign === 1,
+      isActive: pkg.isActive === 1,
     });
     setDialogOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!form.course_id || !form.price) {
+    if (!form.courseId || !form.price) {
       toast({ title: 'Please fill in all required fields', variant: 'destructive' });
       return;
     }
     setSubmitting(true);
     try {
       const payload = {
-        course_id: form.course_id,
-        package_type: form.package_type,
+        course_id: form.courseId,
+        package_type: form.packageType,
         price: parseFloat(form.price),
-        duration_months: parseInt(form.duration_months) || 1,
-        max_users: parseInt(form.max_users) || 1,
-        is_auto_assign: form.is_auto_assign ? 1 : 0,
-        is_active: form.is_active ? 1 : 0,
+        duration_months: parseInt(form.durationMonths) || 1,
+        max_users: parseInt(form.maxUsers) || 1,
+        is_auto_assign: form.isAutoAssign ? 1 : 0,
+        is_active: form.isActive ? 1 : 0,
       };
 
       if (editingId) {
@@ -161,7 +161,7 @@ export default function PackagesPanel() {
     try {
       await apiPut('/packages', {
         id: pkg.id,
-        is_auto_assign: pkg.is_auto_assign === 1 ? 0 : 1,
+        is_auto_assign: pkg.isAutoAssign === 1 ? 0 : 1,
       });
       fetchPackages();
     } catch {
@@ -173,7 +173,7 @@ export default function PackagesPanel() {
     try {
       await apiPut('/packages', {
         id: pkg.id,
-        is_active: pkg.is_active === 1 ? 0 : 1,
+        is_active: pkg.isActive === 1 ? 0 : 1,
       });
       fetchPackages();
     } catch {
@@ -271,25 +271,25 @@ export default function PackagesPanel() {
                     filtered.map((pkg) => (
                       <tr key={pkg.id}>
                         <td className="font-medium max-w-[200px] truncate">
-                          {getCourseTitle(pkg.course_id)}
+                          {getCourseTitle(pkg.courseId)}
                         </td>
                         <td>
-                          <Badge className={`${TYPE_COLORS[pkg.package_type] || 'bg-white/5'} border text-xs capitalize`}>
-                            {pkg.package_type}
+                          <Badge className={`${TYPE_COLORS[pkg.packageType] || 'bg-white/5'} border text-xs capitalize`}>
+                            {pkg.packageType}
                           </Badge>
                         </td>
                         <td className="font-semibold">৳{pkg.price.toLocaleString()}</td>
-                        <td className="text-sm">{pkg.duration_months} {pkg.duration_months === 1 ? 'month' : 'months'}</td>
-                        <td className="text-sm">{pkg.max_users}</td>
+                        <td className="text-sm">{pkg.durationMonths} {pkg.durationMonths === 1 ? 'month' : 'months'}</td>
+                        <td className="text-sm">{pkg.maxUsers}</td>
                         <td>
                           <Switch
-                            checked={pkg.is_auto_assign === 1}
+                            checked={pkg.isAutoAssign === 1}
                             onCheckedChange={() => toggleAutoAssign(pkg)}
                           />
                         </td>
                         <td>
                           <Switch
-                            checked={pkg.is_active === 1}
+                            checked={pkg.isActive === 1}
                             onCheckedChange={() => toggleActive(pkg)}
                           />
                         </td>
@@ -326,22 +326,22 @@ export default function PackagesPanel() {
                   <div key={pkg.id} className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] space-y-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium truncate max-w-[200px]">{getCourseTitle(pkg.course_id)}</p>
+                        <p className="text-sm font-medium truncate max-w-[200px]">{getCourseTitle(pkg.courseId)}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge className={`${TYPE_COLORS[pkg.package_type] || 'bg-white/5'} border text-xs capitalize`}>
-                            {pkg.package_type}
+                          <Badge className={`${TYPE_COLORS[pkg.packageType] || 'bg-white/5'} border text-xs capitalize`}>
+                            {pkg.packageType}
                           </Badge>
                           <span className="text-sm font-semibold">৳{pkg.price.toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`status-badge ${pkg.is_active === 1 ? 'status-badge-active' : 'status-badge-inactive'}`}>
-                          {pkg.is_active === 1 ? 'Active' : 'Inactive'}
+                        <span className={`status-badge ${pkg.isActive === 1 ? 'status-badge-active' : 'status-badge-inactive'}`}>
+                          {pkg.isActive === 1 ? 'Active' : 'Inactive'}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{pkg.duration_months}mo · {pkg.max_users} users</span>
+                      <span>{pkg.durationMonths}mo · {pkg.maxUsers} users</span>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(pkg)}>
                           <Edit className="h-3.5 w-3.5" />
@@ -370,8 +370,8 @@ export default function PackagesPanel() {
             <div className="space-y-2">
               <Label>Course *</Label>
               <select
-                value={form.course_id}
-                onChange={(e) => setForm({ ...form, course_id: e.target.value })}
+                value={form.courseId}
+                onChange={(e) => setForm({ ...form, courseId: e.target.value })}
                 className="w-full h-9 rounded-md bg-white/[0.04] border border-white/[0.08] px-3 text-sm focus:outline-none focus:ring-1 focus:ring-dakkho-blue"
               >
                 <option value="">Select a course...</option>
@@ -385,8 +385,8 @@ export default function PackagesPanel() {
             <div className="space-y-2">
               <Label>Package Type *</Label>
               <select
-                value={form.package_type}
-                onChange={(e) => setForm({ ...form, package_type: e.target.value as 'basic' | 'standard' | 'premium' })}
+                value={form.packageType}
+                onChange={(e) => setForm({ ...form, packageType: e.target.value as 'basic' | 'standard' | 'premium' })}
                 className="w-full h-9 rounded-md bg-white/[0.04] border border-white/[0.08] px-3 text-sm focus:outline-none focus:ring-1 focus:ring-dakkho-blue"
               >
                 <option value="basic">Basic</option>
@@ -413,8 +413,8 @@ export default function PackagesPanel() {
                 <Input
                   type="number"
                   min="1"
-                  value={form.duration_months}
-                  onChange={(e) => setForm({ ...form, duration_months: e.target.value })}
+                  value={form.durationMonths}
+                  onChange={(e) => setForm({ ...form, durationMonths: e.target.value })}
                   className="bg-white/[0.04] border-white/[0.08]"
                 />
               </div>
@@ -426,8 +426,8 @@ export default function PackagesPanel() {
               <Input
                 type="number"
                 min="1"
-                value={form.max_users}
-                onChange={(e) => setForm({ ...form, max_users: e.target.value })}
+                value={form.maxUsers}
+                onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
                 className="bg-white/[0.04] border-white/[0.08]"
               />
             </div>
@@ -438,16 +438,16 @@ export default function PackagesPanel() {
                 <Label htmlFor="auto-assign">Auto-assign to enrolled students</Label>
                 <Switch
                   id="auto-assign"
-                  checked={form.is_auto_assign}
-                  onCheckedChange={(checked) => setForm({ ...form, is_auto_assign: checked })}
+                  checked={form.isAutoAssign}
+                  onCheckedChange={(checked) => setForm({ ...form, isAutoAssign: checked })}
                 />
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="pkg-active">Active</Label>
                 <Switch
                   id="pkg-active"
-                  checked={form.is_active}
-                  onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
+                  checked={form.isActive}
+                  onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
                 />
               </div>
             </div>

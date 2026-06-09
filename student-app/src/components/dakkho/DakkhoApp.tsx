@@ -286,6 +286,7 @@ function PageRouter() {
 
 export function DakkhoApp() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isSignupPending = useAuthStore((s) => s.isSignupPending);
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const hydrateAuth = useAuthStore((s) => s.hydrateAuth);
   const currentPage = useNavigationStore((s) => s.currentPage);
@@ -344,18 +345,23 @@ export function DakkhoApp() {
     'forgot-password': <ForgotPasswordPage />,
   };
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from login and signup pages
   // Note: 'forgot-password' is allowed even when authenticated — a logged-in
   // user who forgot their password needs to be able to access this flow.
-  const authPageKeys = ['login', 'signup'];
+  // Note: 'signup' redirect is deferred until OTP verification completes
+  // (isSignupPending becomes false) to avoid premature redirect during signup.
   const redirectingRef = useRef(false);
   useEffect(() => {
-    if (isAuthenticated && authPageKeys.includes(currentPage) && !redirectingRef.current) {
+    // Redirect authenticated users away from login page
+    // For signup page, only redirect after OTP verification is complete (not during pending state)
+    const shouldRedirect = (currentPage === 'login' && isAuthenticated) ||
+                          (currentPage === 'signup' && isAuthenticated && !isSignupPending);
+    if (shouldRedirect && !redirectingRef.current) {
       redirectingRef.current = true;
       navigate('home');
       requestAnimationFrame(() => { redirectingRef.current = false; });
     }
-  }, [isAuthenticated, currentPage, navigate]);
+  }, [isAuthenticated, isSignupPending, currentPage, navigate]);
 
   // ── While auth is being hydrated, show a loading screen ──
   // This avoids the flash where SSR renders auth pages but the

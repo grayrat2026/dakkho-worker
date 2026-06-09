@@ -29,10 +29,10 @@ interface NotifLog {
   category: string;
   title: string | null;
   message: string | null;
-  target_type: string | null;
-  sent_count: number;
-  failed_count: number;
-  created_at: string;
+  targetType: string | null;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
 }
 
 export default function PushPanel() {
@@ -99,10 +99,10 @@ export default function PushPanel() {
   });
 
   // Compute stats
-  const totalSent = logs.reduce((acc, log) => acc + log.sent_count, 0);
-  const totalFailed = logs.reduce((acc, log) => acc + log.failed_count, 0);
+  const totalSent = logs.reduce((acc, log) => acc + log.sentCount, 0);
+  const totalFailed = logs.reduce((acc, log) => acc + log.failedCount, 0);
   const sentToday = logs.filter((log) => {
-    const d = new Date(log.created_at);
+    const d = new Date(log.createdAt);
     const today = new Date();
     return d.toDateString() === today.toDateString();
   }).length;
@@ -258,7 +258,7 @@ export default function PushPanel() {
               {!loading &&
                 !error &&
                 filtered.map((log, idx) => {
-                  const hasFailures = log.failed_count > 0;
+                  const hasFailures = log.failedCount > 0;
                   return (
                     <motion.tr
                       key={log.id}
@@ -270,11 +270,11 @@ export default function PushPanel() {
                       <td>
                         <span className="status-badge status-badge-verified">{log.type}</span>
                       </td>
-                      <td className="text-sm capitalize">{log.target_type || 'all'}</td>
-                      <td className="text-sm text-emerald-400 font-medium">{log.sent_count}</td>
+                      <td className="text-sm capitalize">{log.targetType || 'all'}</td>
+                      <td className="text-sm text-emerald-400 font-medium">{log.sentCount}</td>
                       <td className="text-sm">
                         {hasFailures ? (
-                          <span className="text-red-400 font-medium">{log.failed_count}</span>
+                          <span className="text-red-400 font-medium">{log.failedCount}</span>
                         ) : (
                           <span className="text-muted-foreground">0</span>
                         )}
@@ -287,7 +287,7 @@ export default function PushPanel() {
                         </span>
                       </td>
                       <td className="text-xs text-muted-foreground">
-                        {new Date(log.created_at).toLocaleString()}
+                        {new Date(log.createdAt).toLocaleString()}
                       </td>
                     </motion.tr>
                   );
@@ -334,22 +334,22 @@ export default function PushPanel() {
                     <div>
                       <p className="text-sm font-medium">{log.title || '—'}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {log.type} · {log.target_type || 'all'}
+                        {log.type} · {log.targetType || 'all'}
                       </p>
                     </div>
                     <span
-                      className={`status-badge ${log.failed_count > 0 ? 'status-badge-pending' : 'status-badge-active'}`}
+                      className={`status-badge ${log.failedCount > 0 ? 'status-badge-pending' : 'status-badge-active'}`}
                     >
-                      {log.failed_count > 0 ? 'Partial' : 'Sent'}
+                      {log.failedCount > 0 ? 'Partial' : 'Sent'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-emerald-400">{log.sent_count} sent</span>
-                    {log.failed_count > 0 && (
-                      <span className="text-xs text-red-400">{log.failed_count} failed</span>
+                    <span className="text-xs text-emerald-400">{log.sentCount} sent</span>
+                    {log.failedCount > 0 && (
+                      <span className="text-xs text-red-400">{log.failedCount} failed</span>
                     )}
                     <span className="text-xs text-muted-foreground ml-auto">
-                      {new Date(log.created_at).toLocaleString()}
+                      {new Date(log.createdAt).toLocaleString()}
                     </span>
                   </div>
                 </motion.div>

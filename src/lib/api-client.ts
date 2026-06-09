@@ -188,14 +188,14 @@ async function request<T = unknown>(path: string, options: RequestOptions): Prom
     data = { raw: text };
   }
 
-  // NOTE: snake_case → camelCase transform is DISABLED.
-  // The panel components use snake_case property names that match the D1 API
-  // response format. The transform was causing "undefined" property access
-  // and crashes (e.g. .toLowerCase() on undefined). Keeping snake_case
-  // ensures compatibility with all existing components.
-  // if (data && typeof data === 'object') {
-  //   data = transformResponse(data);
-  // }
+  // Transform snake_case → camelCase so frontend components can use
+  // idiomatic camelCase property names. D1 returns snake_case columns
+  // (e.g. is_active, created_at) which this transform converts
+  // automatically (isActive, createdAt). Nested objects and arrays
+  // are handled recursively.
+  if (data && typeof data === 'object') {
+    data = transformResponse(data);
+  }
 
   // Throw on non-2xx
   if (!res.ok) {

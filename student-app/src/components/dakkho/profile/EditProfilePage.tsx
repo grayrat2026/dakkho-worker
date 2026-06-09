@@ -21,7 +21,7 @@ export function EditProfilePage() {
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
-  const [institute, setInstitute] = useState(user?.institute || '');
+  const [instituteId, setInstituteId] = useState(user?.instituteId ? String(user.instituteId) : '');
   const [technology, setTechnology] = useState(user?.technology || '');
   const [apiInstitutes, setApiInstitutes] = useState<Institute[]>([]);
   const [apiTechnologies, setApiTechnologies] = useState<Technology[]>([]);
@@ -76,7 +76,7 @@ export function EditProfilePage() {
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email format';
-    if (!institute.trim()) newErrors.institute = 'Institute is required';
+    if (!instituteId) newErrors.institute = 'Institute is required';
     if (!technology.trim()) newErrors.technology = 'Technology is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -87,9 +87,8 @@ export function EditProfilePage() {
     setIsSaving(true);
     setSaveError(null);
     try {
-      // Find the instituteId from the selected institute name
-      const selectedInstitute = apiInstitutes.find((inst) => inst.name === institute);
-      const instituteId = selectedInstitute ? String(selectedInstitute.id) : undefined;
+      // Find the institute name from the selected ID for the store
+      const selectedInstitute = apiInstitutes.find((inst) => String(inst.id) === instituteId);
 
       await studentProfileApi.update({
         name: fullName,
@@ -101,7 +100,14 @@ export function EditProfilePage() {
       });
 
       if (user) {
-        setUser({ ...user, fullName, email, institute, technology });
+        setUser({
+          ...user,
+          fullName,
+          email,
+          institute: selectedInstitute?.name || user.institute,
+          instituteId: instituteId ? Number(instituteId) : user.instituteId,
+          technology,
+        });
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -288,8 +294,8 @@ export function EditProfilePage() {
               <div className="relative">
                 <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <select
-                  value={institute}
-                  onChange={(e) => { setInstitute(e.target.value); setErrors({ ...errors, institute: '' }); }}
+                  value={instituteId}
+                  onChange={(e) => { setInstituteId(e.target.value); setErrors({ ...errors, institute: '' }); }}
                   className={`w-full pl-10 pr-4 py-3 rounded-xl bg-muted/30 border text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/50 appearance-none ${
                     errors.institute ? 'border-red-500' : 'border-white/30 dark:border-white/10'
                   }`}
@@ -299,7 +305,7 @@ export function EditProfilePage() {
                     <option disabled>Loading institutes...</option>
                   ) : (
                     apiInstitutes.map((inst) => (
-                      <option key={inst.id} value={inst.name}>{inst.name}</option>
+                      <option key={inst.id} value={String(inst.id)}>{inst.name}</option>
                     ))
                   )}
                 </select>

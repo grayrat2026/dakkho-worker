@@ -32,17 +32,17 @@ import { apiGet, apiPost, apiDelete, ApiError } from '@/lib/api-client';
 
 interface LiveClass {
   id: number;
-  course_id: string | null;
+  courseId: string | null;
   title: string;
-  title_bn: string | null;
+  titleBn: string | null;
   description: string | null;
-  scheduled_at: string;
-  duration_minutes: number;
-  meeting_url: string | null;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetingUrl: string | null;
   platform: string;
   status: string;
-  is_active: number;
-  created_at: string;
+  isActive: number;
+  createdAt: string;
 }
 
 interface Course {
@@ -167,7 +167,7 @@ export default function LiveClassesPanel() {
     const q = search.toLowerCase();
     return (
       cls.title.toLowerCase().includes(q) ||
-      (cls.title_bn && cls.title_bn.toLowerCase().includes(q)) ||
+      (cls.titleBn && cls.titleBn.toLowerCase().includes(q)) ||
       cls.platform.toLowerCase().includes(q) ||
       cls.status.toLowerCase().includes(q)
     );
@@ -294,10 +294,10 @@ export default function LiveClassesPanel() {
                   >
                     <td className="font-medium">
                       <div>{cls.title}</div>
-                      {cls.title_bn && <div className="text-xs text-muted-foreground">{cls.title_bn}</div>}
+                      {cls.titleBn && <div className="text-xs text-muted-foreground">{cls.titleBn}</div>}
                     </td>
-                    <td className="text-sm">{new Date(cls.scheduled_at).toLocaleString()}</td>
-                    <td className="text-sm">{cls.duration_minutes} min</td>
+                    <td className="text-sm">{new Date(cls.scheduledAt).toLocaleString()}</td>
+                    <td className="text-sm">{cls.durationMinutes} min</td>
                     <td>
                       <span
                         className={`status-badge ${platformBadgeStyles[cls.platform] || platformBadgeStyles.custom}`}
@@ -318,8 +318,8 @@ export default function LiveClassesPanel() {
                     </td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
-                        {cls.meeting_url && (
-                          <a href={cls.meeting_url} target="_blank" rel="noopener noreferrer">
+                        {cls.meetingUrl && (
+                          <a href={cls.meetingUrl} target="_blank" rel="noopener noreferrer">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -384,9 +384,9 @@ export default function LiveClassesPanel() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm font-medium">{cls.title}</p>
-                      {cls.title_bn && <p className="text-xs text-muted-foreground">{cls.title_bn}</p>}
+                      {cls.titleBn && <p className="text-xs text-muted-foreground">{cls.titleBn}</p>}
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(cls.scheduled_at).toLocaleString()} · {cls.duration_minutes} min
+                        {new Date(cls.scheduledAt).toLocaleString()} · {cls.durationMinutes} min
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -407,8 +407,8 @@ export default function LiveClassesPanel() {
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    {cls.meeting_url && (
-                      <a href={cls.meeting_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                    {cls.meetingUrl && (
+                      <a href={cls.meetingUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
                         <Button
                           size="sm"
                           variant="ghost"
