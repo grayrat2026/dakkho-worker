@@ -320,6 +320,7 @@ interface AuthState {
   signup: (data: { fullName: string; email: string; password: string; instituteId?: number; technology?: string }) => Promise<{ token: string; userId: string }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<boolean>;
   verifyOTP: (email: string, otp: string) => Promise<boolean>;
   resendOTP: (email: string) => Promise<void>;
   setUser: (user: User | null) => void;
@@ -459,6 +460,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await authApi.forgotPassword({ email });
     } catch (err: any) {
       throw new Error(err.message || 'Failed to send reset email');
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  resetPassword: async (email, otp, newPassword) => {
+    set({ isLoading: true });
+    try {
+      const res = await authApi.resetPassword({ email, otp, newPassword });
+      if (res.success) {
+        return true;
+      }
+      throw new Error(res.message || 'Password reset failed');
+    } catch (err: any) {
+      throw new Error(err.message || 'Password reset failed');
     } finally {
       set({ isLoading: false });
     }

@@ -82,6 +82,7 @@ function MailCheckAnimation() {
 export function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
+  const [otpValue, setOtpValue] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -89,7 +90,7 @@ export function ForgotPasswordPage() {
   const [otpError, setOtpError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const { forgotPassword, verifyOTP, isLoading } = useAuthStore();
+  const { forgotPassword, resetPassword, isLoading } = useAuthStore();
   const navigate = useNavigationStore((s) => s.navigate);
 
   useEffect(() => {
@@ -118,17 +119,19 @@ export function ForgotPasswordPage() {
   }, [email, forgotPassword]);
 
   const handleOTPComplete = async (otp: string) => {
-    const result = await verifyOTP(email, otp);
-    if (result) {
-      setStep('success');
-    } else {
-      setOtpError('Invalid OTP. Please try again.');
-    }
+    // Store the OTP value — actual verification happens when user clicks "Reset Password"
+    setOtpValue(otp);
+    setOtpError('');
   };
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError('');
+
+    if (!otpValue || otpValue.length !== 6) {
+      setOtpError('Please enter the complete 6-digit code');
+      return;
+    }
 
     if (newPassword.length < 8) {
       setPasswordError('Password must be at least 8 characters');
@@ -138,7 +141,22 @@ export function ForgotPasswordPage() {
       setPasswordError('Passwords do not match');
       return;
     }
-    setStep('success');
+
+    try {
+      const result = await resetPassword(email, otpValue, newPassword);
+      if (result) {
+        setStep('success');
+      } else {
+        setPasswordError('Failed to reset password. Please try again.');
+      }
+    } catch (err: any) {
+      const message = err?.message || 'Failed to reset password';
+      if (message.toLowerCase().includes('otp') || message.toLowerCase().includes('code') || message.toLowerCase().includes('invalid') || message.toLowerCase().includes('expired')) {
+        setOtpError(message);
+      } else {
+        setPasswordError(message);
+      }
+    }
   };
 
   const getStepIcon = () => {
@@ -285,7 +303,12 @@ export function ForgotPasswordPage() {
 
                 <OTPInput
                   onComplete={handleOTPComplete}
-                  onResend={() => { setCooldown(OTP_RESEND_COOLDOWN); setOtpError(''); }}
+                  onResend={() => {
+                    setCooldown(OTP_RESEND_COOLDOWN);
+                    setOtpError('');
+                    setOtpValue('');
+                    forgotPassword(email).catch(() => setOtpError('Failed to resend code'));
+                  }}
                   cooldown={cooldown}
                   error={otpError}
                 />

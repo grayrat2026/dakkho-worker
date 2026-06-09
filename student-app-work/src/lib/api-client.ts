@@ -175,6 +175,8 @@ export const authApi = {
     api.post<{ success: boolean; message: string }>('/api/auth/verify-otp', data),
   forgotPassword: (data: { email: string }) =>
     api.post<{ success: boolean; message: string }>('/api/auth/forgot-password', data),
+  resetPassword: (data: { email: string; otp: string; newPassword: string }) =>
+    api.post<{ success: boolean; message: string }>('/api/auth/reset-password', data),
   resendOTP: (data: { email: string }) =>
     api.post<{ success: boolean; message: string }>('/api/auth/resend-otp', data),
 };

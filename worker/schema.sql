@@ -658,6 +658,21 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id);
 
 -- ============================================================
+-- PASSWORD_RESET_OTPS TABLE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS password_reset_otps (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  otp TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_password_reset_otps_email ON password_reset_otps(email);
+CREATE INDEX IF NOT EXISTS idx_password_reset_otps_expires ON password_reset_otps(expires_at);
+
+-- ============================================================
 -- SEED DATA
 -- ============================================================
 

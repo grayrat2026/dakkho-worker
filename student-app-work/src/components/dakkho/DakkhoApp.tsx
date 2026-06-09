@@ -6,6 +6,7 @@ import { useNavigationStore, useAuthStore, useNotificationStore, useServerConfig
 // Notifications now come from OneSignal push notifications
 import { ContentProtection } from './ContentProtection';
 import { AppShell } from './AppShell';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // Auth pages
 import { LoginPage } from './auth/LoginPage';
@@ -141,6 +142,8 @@ function PageRouter() {
   const pageParams = useNavigationStore((s) => s.pageParams);
 
   const pages: Record<string, React.ReactNode> = {
+    // Auth page accessible while logged in
+    'forgot-password': <ForgotPasswordPage />,
     // Main pages
     home: <HomePage />,
     explore: <ExplorePage />,
@@ -324,7 +327,7 @@ export function DakkhoApp() {
   };
 
   // Redirect authenticated users away from auth pages
-  const authPageKeys = ['login', 'signup', 'forgot-password'];
+  const authPageKeys = ['login', 'signup'];
   const redirectingRef = useRef(false);
   useEffect(() => {
     if (isAuthenticated && authPageKeys.includes(currentPage) && !redirectingRef.current) {
@@ -336,32 +339,33 @@ export function DakkhoApp() {
 
   if (!isAuthenticated) {
     return (
-      <ContentProtection>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {authPages[currentPage] || <LoginPage />}
-          </motion.div>
-        </AnimatePresence>
-      </ContentProtection>
+      <ErrorBoundary>
+        <ContentProtection>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {authPages[currentPage] || <LoginPage />}
+            </motion.div>
+          </AnimatePresence>
+        </ContentProtection>
+      </ErrorBoundary>
     );
   }
 
-  // If authenticated and still on an auth page, show loading while redirecting
-  if (authPageKeys.includes(currentPage)) {
-    return null;
-  }
-
   // Authenticated pages (with shell)
+  // ErrorBoundary wraps ONLY the PageRouter so that page errors
+  // don't unmount the AppShell (TopBar, Sidebar, BottomNav).
   return (
     <ContentProtection>
       <AppShell>
-        <PageRouter />
+        <ErrorBoundary>
+          <PageRouter />
+        </ErrorBoundary>
       </AppShell>
     </ContentProtection>
   );

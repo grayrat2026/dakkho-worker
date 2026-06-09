@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from './shared/Sidebar';
 import { TopBar } from './shared/TopBar';
@@ -14,6 +14,8 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const sidebarOpen = useNavigationStore((s) => s.sidebarOpen);
   const setSidebarOpen = useNavigationStore((s) => s.setSidebarOpen);
+  const currentPage = useNavigationStore((s) => s.currentPage);
+  const mainRef = useRef<HTMLElement>(null);
 
   // Lock body scroll when mobile sidebar is open
   useEffect(() => {
@@ -27,6 +29,16 @@ export function AppShell({ children }: AppShellProps) {
     };
   }, [sidebarOpen]);
 
+  // Reset scroll position when navigating to a new page
+  useEffect(() => {
+    // Scroll the main element to top (in case it's the scroll container)
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    // Also scroll the window to top (in case body is the scroll container)
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
@@ -34,6 +46,7 @@ export function AppShell({ children }: AppShellProps) {
       
       {/* Main content area - independent scroll from sidebar */}
       <main
+        ref={mainRef}
         className="pt-16 pb-20 md:pb-6 md:pl-[260px] min-h-screen"
         style={{ overflowY: 'auto' }}
       >

@@ -31,7 +31,7 @@ export function TopBar() {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-30 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-white/30 dark:border-white/5"
+      className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-white/30 dark:border-white/5"
     >
       <div className="h-full flex items-center justify-between px-4 md:px-6 gap-3">
         {/* LEFT side: Logo image only (no DAKKHO text) */}

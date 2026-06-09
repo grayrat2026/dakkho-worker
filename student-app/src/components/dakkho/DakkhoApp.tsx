@@ -143,6 +143,8 @@ function PageRouter() {
   const pageParams = useNavigationStore((s) => s.pageParams);
 
   const pages: Record<string, React.ReactNode> = {
+    // Auth pages (also accessible when authenticated, e.g. forgot-password)
+    'forgot-password': <ForgotPasswordPage />,
     // Main pages
     home: <HomePage />,
     explore: <ExplorePage />,
@@ -343,7 +345,9 @@ export function DakkhoApp() {
   };
 
   // Redirect authenticated users away from auth pages
-  const authPageKeys = ['login', 'signup', 'forgot-password'];
+  // Note: 'forgot-password' is allowed even when authenticated — a logged-in
+  // user who forgot their password needs to be able to access this flow.
+  const authPageKeys = ['login', 'signup'];
   const redirectingRef = useRef(false);
   useEffect(() => {
     if (isAuthenticated && authPageKeys.includes(currentPage) && !redirectingRef.current) {
@@ -398,14 +402,16 @@ export function DakkhoApp() {
   // blank flash while the redirect was pending.
 
   // ── Authenticated pages (with shell) ──
+  // ErrorBoundary wraps ONLY the PageRouter so that page errors
+  // don't unmount the AppShell (TopBar, Sidebar, BottomNav).
   return (
-    <ErrorBoundary>
-      <ContentProtection>
-        <AppShell>
-          <NotificationPermissionModal />
+    <ContentProtection>
+      <AppShell>
+        <NotificationPermissionModal />
+        <ErrorBoundary>
           <PageRouter />
-        </AppShell>
-      </ContentProtection>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </AppShell>
+    </ContentProtection>
   );
 }

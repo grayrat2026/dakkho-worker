@@ -679,7 +679,50 @@ studentApiRoutes.post('/auth/verify-otp', async (c) => {
   }
 });
 
-// POST /auth/forgot-password — Request password reset
+// ─── Helper: Generate a random 6-digit OTP ───
+function generateOTP(): string {
+  const bytes = new Uint8Array(3);
+  crypto.getRandomValues(bytes);
+  const num = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
+  return (num % 1000000).toString().padStart(6, '0');
+}
+
+// ─── Helper: Send password reset OTP email via Resend ───
+async function sendPasswordResetEmail(
+  env: Env,
+  to: string,
+  otp: string
+): Promise<void> {
+  const { sendEmail } = await import('../lib/resend');
+  await sendEmail(
+    env,
+    to,
+    'DAKKHO — Password Reset Code',
+    `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="color: #0ea5e9; font-size: 28px; margin: 0;">DAKKHO</h1>
+        <p style="color: #64748b; margin: 4px 0 0;">Password Reset</p>
+      </div>
+      <div style="background: #f8fafc; border-radius: 16px; padding: 32px; text-align: center;">
+        <p style="color: #334155; font-size: 16px; margin: 0 0 16px;">Your password reset code is:</p>
+        <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #0ea5e9; background: white; border: 2px dashed #e2e8f0; border-radius: 12px; padding: 16px; display: inline-block;">
+          ${otp}
+        </div>
+        <p style="color: #64748b; font-size: 14px; margin: 16px 0 0;">This code expires in 5 minutes.</p>
+        <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0;">If you did not request a password reset, please ignore this email.</p>
+      </div>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+        Sent from DAKKHO — Bangladesh's Premier Polytechnic Student Platform<br />
+        Timestamp: ${new Date().toISOString()}
+      </p>
+    </div>
+    `
+  );
+}
+
+// POST /auth/forgot-password — Request password reset OTP
 studentApiRoutes.post('/auth/forgot-password', async (c) => {
   try {
     const { email } = await c.req.json();
@@ -694,18 +737,95 @@ studentApiRoutes.post('/auth/forgot-password', async (c) => {
     ).bind(email).first();
 
     if (user) {
-      // TODO: Send password reset email via Resend
-      // For now, just acknowledge the request
+      // Delete any previous unused OTPs for this email
+      await c.env.DB.prepare(
+        'DELETE FROM password_reset_otps WHERE email = ? AND used = 0'
+      ).bind(email).run();
+
+      // Generate a 6-digit OTP
+      const otp = generateOTP();
+
+      // Store OTP in D1 with 5-minute expiration
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      await c.env.DB.prepare(
+        'INSERT INTO password_reset_otps (email, otp, expires_at) VALUES (?, ?, ?)'
+      ).bind(email, otp, expiresAt).run();
+
+      // Send OTP email via Resend
+      try {
+        await sendPasswordResetEmail(c.env, email, otp);
+      } catch (emailError) {
+        console.error('Failed to send password reset email:', emailError);
+        // Still return success for security — don't reveal email sending failure
+      }
     }
 
-    // Always return success for security
-    return c.json({ success: true, message: 'If an account exists with this email, a reset link has been sent.' });
+    // Always return success for security (don't reveal if email exists)
+    return c.json({ success: true, message: 'If an account exists with this email, a reset code has been sent.' });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 
-// POST /auth/resend-otp — Resend OTP for email verification
+// POST /auth/reset-password — Verify OTP and set new password
+studentApiRoutes.post('/auth/reset-password', async (c) => {
+  try {
+    const { email, otp, newPassword } = await c.req.json();
+
+    if (!email || !otp || !newPassword) {
+      return c.json({ error: 'email, otp, and newPassword are required' }, 400);
+    }
+
+    if (newPassword.length < 8) {
+      return c.json({ error: 'Password must be at least 8 characters' }, 400);
+    }
+
+    // Look up the most recent unused OTP for this email
+    const otpRecord = await c.env.DB.prepare(
+      'SELECT id, otp, expires_at, used FROM password_reset_otps WHERE email = ? AND used = 0 ORDER BY created_at DESC LIMIT 1'
+    ).bind(email).first<{ id: number; otp: string; expires_at: string; used: number }>();
+
+    if (!otpRecord) {
+      return c.json({ error: 'Invalid or expired reset code. Please request a new one.' }, 400);
+    }
+
+    // Check if OTP has expired
+    if (new Date(otpRecord.expires_at) < new Date()) {
+      // Mark expired OTP as used
+      await c.env.DB.prepare(
+        'UPDATE password_reset_otps SET used = 1 WHERE id = ?'
+      ).bind(otpRecord.id).run();
+      return c.json({ error: 'Reset code has expired. Please request a new one.' }, 400);
+    }
+
+    // Verify OTP
+    if (otpRecord.otp !== otp) {
+      return c.json({ error: 'Invalid reset code. Please try again.' }, 400);
+    }
+
+    // Mark OTP as used
+    await c.env.DB.prepare(
+      'UPDATE password_reset_otps SET used = 1 WHERE id = ?'
+    ).bind(otpRecord.id).run();
+
+    // Update the user's password
+    const newPasswordHash = await hashPassword(newPassword);
+    await c.env.DB.prepare(
+      'UPDATE users SET password_hash = ?, updated_at = datetime(\'now\') WHERE email = ?'
+    ).bind(newPasswordHash, email).run();
+
+    // Invalidate all active student sessions for this user (force re-login)
+    await c.env.DB.prepare(
+      'UPDATE student_sessions SET is_active = 0 WHERE email = ?'
+    ).bind(email).run();
+
+    return c.json({ success: true, message: 'Password has been reset successfully.' });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /auth/resend-otp — Resend OTP for password reset
 studentApiRoutes.post('/auth/resend-otp', async (c) => {
   try {
     const { email } = await c.req.json();
@@ -714,8 +834,36 @@ studentApiRoutes.post('/auth/resend-otp', async (c) => {
       return c.json({ error: 'Email is required' }, 400);
     }
 
-    // TODO: Send OTP email via Resend
-    return c.json({ success: true, message: 'Verification email resent if account exists.' });
+    // Check if user exists
+    const user = await c.env.DB.prepare(
+      'SELECT id FROM users WHERE email = ? AND is_active = 1'
+    ).bind(email).first();
+
+    if (user) {
+      // Delete any previous unused OTPs for this email
+      await c.env.DB.prepare(
+        'DELETE FROM password_reset_otps WHERE email = ? AND used = 0'
+      ).bind(email).run();
+
+      // Generate a new 6-digit OTP
+      const otp = generateOTP();
+
+      // Store OTP in D1 with 5-minute expiration
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      await c.env.DB.prepare(
+        'INSERT INTO password_reset_otps (email, otp, expires_at) VALUES (?, ?, ?)'
+      ).bind(email, otp, expiresAt).run();
+
+      // Send OTP email via Resend
+      try {
+        await sendPasswordResetEmail(c.env, email, otp);
+      } catch (emailError) {
+        console.error('Failed to resend password reset email:', emailError);
+      }
+    }
+
+    // Always return success for security
+    return c.json({ success: true, message: 'If an account exists, a new reset code has been sent.' });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
