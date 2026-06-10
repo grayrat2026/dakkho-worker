@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Users, Clock, BookOpen, Play, ChevronLeft, Heart, Share2, Award, CheckCircle, ChevronDown, User } from 'lucide-react';
 import { useNavigationStore, useBookmarkStore } from '@/lib/store';
-import { type Course, type Instructor, type Video, courseApi, instructorApi, categoryApi } from '@/lib/api-client';
+import { type Course, type Instructor, type Video, courseApi, categoryApi } from '@/lib/api-client';
 import { formatDuration, getLevelColor } from '@/lib/utils';
 import { GlassCard } from '../shared/GlassCard';
 import { GradientButton } from '../shared/GradientButton';
@@ -21,7 +21,7 @@ export function CourseDetailPage() {
   const courseId = pageParams.courseId as string;
 
   const [course, setCourse] = useState<Course | null>(null);
-  const [instructor, setInstructor] = useState<Instructor | undefined>(undefined);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [relatedCourses, setRelatedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,12 +36,8 @@ export function CourseDetailPage() {
         const c = res.course;
         setCourse(c);
 
-        // Fetch instructor if we have an ID
-        if (c.instructorId) {
-          instructorApi.get(c.instructorId)
-            .then((instRes) => setInstructor(instRes.instructor))
-            .catch(() => {});
-        }
+        // Set instructors from API (multiple instructors support)
+        setInstructors(res.instructors);
 
         // Fetch videos for this course
         courseApi.videos(courseId)
@@ -164,7 +160,7 @@ export function CourseDetailPage() {
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
             <h1 className="text-xl md:text-2xl font-extrabold mb-2">{course.title}</h1>
             <div className="flex flex-wrap items-center gap-4 text-sm">
-              {instructor && <span>by {instructor.name}</span>}
+              {instructors.length > 0 && <span>by {instructors.map(i => i.name).join(', ')}</span>}
               <span className="flex items-center gap-1"><Star className="w-4 h-4 text-amber-400 fill-amber-400" />{course.rating}</span>
               <span className="flex items-center gap-1"><Users className="w-4 h-4" />{course.totalStudents} students</span>
               <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{formatDuration(course.duration)}</span>
@@ -255,50 +251,54 @@ export function CourseDetailPage() {
                   </div>
                 </GlassCard>
 
-                {/* Instructor Card */}
-                {instructor && (
+                {/* Instructors Card */}
+                {instructors.length > 0 && (
                   <GlassCard className="p-6">
-                    <h2 className="text-lg font-bold mb-4">Your Instructor</h2>
-                    <div className="flex items-start gap-4">
-                      <motion.div
-                        className="w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-extrabold flex-shrink-0 overflow-hidden"
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        {instructor.avatarUrl ? (
-                          <img src={instructor.avatarUrl} alt={instructor.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
-                            {instructor.name.charAt(0)}
+                    <h2 className="text-lg font-bold mb-4">{instructors.length === 1 ? 'Your Instructor' : 'Your Instructors'}</h2>
+                    <div className="space-y-4">
+                      {instructors.map((inst) => (
+                        <div key={inst.id} className="flex items-start gap-4">
+                          <motion.div
+                            className="w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-extrabold flex-shrink-0 overflow-hidden"
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            {inst.avatarUrl ? (
+                              <img src={inst.avatarUrl} alt={inst.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                                {inst.name.charAt(0)}
+                              </div>
+                            )}
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-bold text-foreground">{inst.name}</h3>
+                            <p className="text-sm text-sky-500 font-semibold">{inst.specialization}</p>
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                {inst.rating} Rating
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {inst.totalStudents.toLocaleString()} Students
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="w-3 h-3" />
+                                {inst.totalCourses} Courses
+                              </span>
+                            </div>
+                            <motion.button
+                              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-semibold"
+                              onClick={() => navigate('instructor-profile', { instructorId: inst.id })}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <User className="w-3 h-3" />
+                              View Full Profile
+                            </motion.button>
                           </div>
-                        )}
-                      </motion.div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-bold text-foreground">{instructor.name}</h3>
-                        <p className="text-sm text-sky-500 font-semibold">{instructor.specialization}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            {instructor.rating} Rating
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            {instructor.totalStudents.toLocaleString()} Students
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <BookOpen className="w-3 h-3" />
-                            {instructor.totalCourses} Courses
-                          </span>
                         </div>
-                        <motion.button
-                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-semibold"
-                          onClick={() => navigate('instructor-profile', { instructorId: instructor.id })}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <User className="w-3 h-3" />
-                          View Full Profile
-                        </motion.button>
-                      </div>
+                      ))}
                     </div>
                   </GlassCard>
                 )}
@@ -421,33 +421,46 @@ export function CourseDetailPage() {
               </GlassCard>
             )}
 
-            {activeTab === 'instructor' && instructor && (
-              <GlassCard className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <motion.div
-                    className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-extrabold overflow-hidden"
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    {instructor.avatarUrl ? (
-                      <img src={instructor.avatarUrl} alt={instructor.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
-                        {instructor.name.charAt(0)}
+            {activeTab === 'instructor' && instructors.length > 0 && (
+              <div className="space-y-4">
+                {instructors.map((inst) => (
+                  <GlassCard key={inst.id} className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <motion.div
+                        className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-extrabold overflow-hidden"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        {inst.avatarUrl ? (
+                          <img src={inst.avatarUrl} alt={inst.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                            {inst.name.charAt(0)}
+                          </div>
+                        )}
+                      </motion.div>
+                      <div>
+                        <h3 className="text-lg font-bold text-foreground">{inst.name}</h3>
+                        <p className="text-sm text-sky-500 font-semibold">{inst.specialization}</p>
                       </div>
-                    )}
-                  </motion.div>
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">{instructor.name}</h3>
-                    <p className="text-sm text-sky-500 font-semibold">{instructor.specialization}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{instructor.bio}</p>
-                <div className="flex gap-6 text-sm">
-                  <div><span className="font-bold text-foreground">{instructor.totalStudents.toLocaleString()}</span> <span className="text-muted-foreground">students</span></div>
-                  <div><span className="font-bold text-foreground">{instructor.totalCourses}</span> <span className="text-muted-foreground">courses</span></div>
-                  <div><span className="font-bold text-foreground">{instructor.rating}</span> <span className="text-muted-foreground">rating</span></div>
-                </div>
-              </GlassCard>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{inst.bio}</p>
+                    <div className="flex gap-6 text-sm">
+                      <div><span className="font-bold text-foreground">{inst.totalStudents.toLocaleString()}</span> <span className="text-muted-foreground">students</span></div>
+                      <div><span className="font-bold text-foreground">{inst.totalCourses}</span> <span className="text-muted-foreground">courses</span></div>
+                      <div><span className="font-bold text-foreground">{inst.rating}</span> <span className="text-muted-foreground">rating</span></div>
+                    </div>
+                    <motion.button
+                      className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-semibold"
+                      onClick={() => navigate('instructor-profile', { instructorId: inst.id })}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <User className="w-3 h-3" />
+                      View Full Profile
+                    </motion.button>
+                  </GlassCard>
+                ))}
+              </div>
             )}
           </motion.div>
         </div>

@@ -412,9 +412,10 @@ export const courseApi = {
     const res = await api.get<{ courses: Record<string, unknown>[]; total: number }>(`/api/courses${qs ? `?${qs}` : ''}`);
     return { courses: res.courses.map(mapCourse), total: res.total };
   },
-  get: async (id: string): Promise<{ course: Course }> => {
-    const res = await api.get<{ course: Record<string, unknown> }>(`/api/courses/${id}`);
-    return { course: mapCourse(res.course) };
+  get: async (id: string): Promise<{ course: Course; instructors: Instructor[] }> => {
+    const res = await api.get<{ course: Record<string, unknown>; instructors?: Record<string, unknown>[] }>(`/api/courses/${id}`);
+    const instructors = (res.instructors || []).map(mapInstructor);
+    return { course: mapCourse(res.course), instructors };
   },
   videos: async (id: string): Promise<{ videos: Video[]; total: number }> => {
     const res = await api.get<{ videos: Record<string, unknown>[]; total: number }>(`/api/courses/${id}/videos`);

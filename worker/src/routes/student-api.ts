@@ -338,7 +338,18 @@ studentApiRoutes.get('/courses/:id', async (c) => {
       return c.json({ error: 'Course not found' }, 404);
     }
 
-    return c.json({ course });
+    // Fetch all instructors for this course via course_instructors join table
+    let instructors: unknown[] = [];
+    try {
+      const instResult = await c.env.DB.prepare(
+        'SELECT i.* FROM instructors i JOIN course_instructors ci ON i.id = ci.instructor_id WHERE ci.course_id = ? ORDER BY ci.sort_order ASC'
+      ).bind(id).all();
+      instructors = instResult.results;
+    } catch {
+      // course_instructors table may not exist or no entries — fallback empty
+    }
+
+    return c.json({ course, instructors });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
