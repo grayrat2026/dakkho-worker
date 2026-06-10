@@ -63,3 +63,24 @@ Stage Summary:
 - Deployment repo updated at github.com/grayrat2026/dakkho-admin-web
 - Cloudflare Pages auto-deploy will pick up the new build
 - UI completely unchanged — same login form, same admin shell, same components
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Manual Cloudflare Pages deployment via Wrangler
+
+Work Log:
+- Installed wrangler 4.99.0 globally
+- Listed Cloudflare Pages projects: dakkho-admin, dakkho-student, dakkho-unified
+- Deployed out/ directory to dakkho-admin project using CLOUDFLARE_API_TOKEN
+- Uploaded 205 files (31 already cached) in 2.82 seconds
+- Deployment ID: a0fd2339-d771-4ac3-973a-47f373f2fcb5
+- Verified new deployment URL (a0fd2339.dakkho-admin.pages.dev) — new build confirmed
+- Verified main domain (dakkho-admin.pages.dev) — new build confirmed with b3779b1e0411fa93.css
+- No basePath (/dakkho-admin) in any paths — all correct
+
+Stage Summary:
+- Direct Cloudflare Pages deployment successful via Wrangler
+- New build is LIVE on https://dakkho-admin.pages.dev/
+- Also pushed to GitHub (grayrat2026/dakkho-admin-web) as backup
+- UI unchanged, paths corrected
