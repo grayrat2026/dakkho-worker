@@ -50,7 +50,7 @@ userRoutes.get('/', async (c) => {
     const total = (countResult as any)?.total || 0;
 
     const result = await c.env.DB.prepare(
-      `SELECT id, email, full_name, phone, bio, institute_id, technology, semester, avatar_url, role, email_verified, is_active, enrolled_course_ids, created_at, updated_at FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+      `SELECT u.id, u.email, u.full_name, u.phone, u.bio, u.institute_id, u.technology, u.semester, u.avatar_url, u.role, u.email_verified, u.is_active, u.enrolled_course_ids, u.created_at, u.updated_at, i.name as institute_name, t.name as technology_name FROM users u LEFT JOIN institutes i ON u.institute_id = i.id LEFT JOIN technologies t ON u.technology = t.short_code ${where} ORDER BY u.created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
 
     return c.json({ documents: result.results, total });
@@ -103,7 +103,7 @@ userRoutes.put('/', async (c) => {
     }
 
     const updatedUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, phone, bio, institute_id, technology, semester, avatar_url, role, email_verified, is_active, enrolled_course_ids, created_at, updated_at FROM users WHERE id = ?'
+      'SELECT u.id, u.email, u.full_name, u.phone, u.bio, u.institute_id, u.technology, u.semester, u.avatar_url, u.role, u.email_verified, u.is_active, u.enrolled_course_ids, u.created_at, u.updated_at, i.name as institute_name, t.name as technology_name FROM users u LEFT JOIN institutes i ON u.institute_id = i.id LEFT JOIN technologies t ON u.technology = t.short_code WHERE u.id = ?'
     ).bind(userId).first();
 
     const user = c.get('user');

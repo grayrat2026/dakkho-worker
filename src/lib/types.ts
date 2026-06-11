@@ -11,7 +11,9 @@ export interface User {
   phone?: string;
   bio?: string;
   instituteId?: number;
+  instituteName?: string;
   technology?: string;
+  technologyName?: string;
   semester?: number;
   avatarUrl?: string;
   role: 'student' | 'instructor' | 'admin';

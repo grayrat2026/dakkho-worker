@@ -72,7 +72,9 @@ function mapUser(doc: Record<string, unknown>): User {
     phone: doc.phone ? String(doc.phone) : undefined,
     bio: doc.bio ? String(doc.bio) : undefined,
     instituteId: doc.instituteId ? Number(doc.instituteId) : undefined,
+    instituteName: doc.instituteName ? String(doc.instituteName) : undefined,
     technology: doc.technology ? String(doc.technology) : undefined,
+    technologyName: doc.technologyName ? String(doc.technologyName) : undefined,
     semester: doc.semester ? Number(doc.semester) : undefined,
     avatarUrl: doc.avatarUrl ? String(doc.avatarUrl) : undefined,
     role: (doc.role as User['role']) ?? 'student',
@@ -129,7 +131,7 @@ export default function UsersTable() {
   const [institutes, setInstitutes] = useState<{ id: number; name: string }[]>([]);
 
   // Technologies for dropdown
-  const [technologies, setTechnologies] = useState<{ id: number; name: string }[]>([]);
+  const [technologies, setTechnologies] = useState<{ id: number; name: string; shortCode: string }[]>([]);
 
   // -------------------------------------------------------------------------
   // Data fetching
@@ -173,7 +175,7 @@ export default function UsersTable() {
       const data = await apiGet('/technologies') as Record<string, unknown>;
       const techs = (((data.technologies || data.documents) || []) as Record<string, unknown>[]);
       setTechnologies(
-        techs.map((d) => ({ id: Number(d.id), name: String(d.name ?? 'Unknown') })),
+        techs.map((d) => ({ id: Number(d.id), name: String(d.name ?? 'Unknown'), shortCode: String((d as any).shortCode ?? (d as any).short_code ?? '') })),
       );
     } catch {
       // silent
@@ -290,8 +292,8 @@ export default function UsersTable() {
           `"${u.fullName}"`,
           u.email,
           u.role,
-          u.instituteId ?? '',
-          u.technology ?? '',
+          u.instituteName ?? u.instituteId ?? '',
+          u.technologyName ?? u.technology ?? '',
           u.isActive ? 'Active' : 'Inactive',
           u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '',
         ].join(','),
@@ -528,12 +530,12 @@ export default function UsersTable() {
 
                     {/* Institute */}
                     <td className="hidden lg:table-cell text-muted-foreground text-sm">
-                      {user.instituteId ?? '—'}
+                      {user.instituteName ?? user.instituteId ?? '—'}
                     </td>
 
                     {/* Technology */}
                     <td className="hidden xl:table-cell text-muted-foreground text-sm">
-                      {user.technology ?? '—'}
+                      {user.technologyName ?? user.technology ?? '—'}
                     </td>
 
                     {/* Status */}
@@ -712,9 +714,9 @@ export default function UsersTable() {
                   {renderStatusBadge(user.isActive)}
                 </div>
 
-                {(user.instituteId || user.technology) && (
+                {(user.instituteName || user.technologyName || user.instituteId || user.technology) && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    {[user.technology, user.instituteId].filter(Boolean).join(' · ')}
+                    {[user.technologyName ?? user.technology, user.instituteName ?? user.instituteId].filter(Boolean).join('·')}
                   </p>
                 )}
               </motion.div>
@@ -827,7 +829,7 @@ export default function UsersTable() {
                   </SelectTrigger>
                   <SelectContent>
                     {technologies.map((tech) => (
-                      <SelectItem key={tech.id} value={tech.name}>
+                      <SelectItem key={tech.id} value={tech.shortCode || tech.name}>
                         {tech.name}
                       </SelectItem>
                     ))}

@@ -301,6 +301,7 @@ export function DakkhoApp() {
   const needsVerification = useAuthStore((s) => s.needsVerification);
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const hydrateAuth = useAuthStore((s) => s.hydrateAuth);
+  const refreshUser = useAuthStore((s) => s.refreshUser);
   const currentPage = useNavigationStore((s) => s.currentPage);
   const navigate = useNavigationStore((s) => s.navigate);
   const syncFromUrl = useNavigationStore((s) => s.syncFromUrl);
@@ -329,6 +330,10 @@ export function DakkhoApp() {
 
     // 4. Server config
     fetchConfig();
+
+    // 5. Refresh user data from API to ensure institute/technology names are current
+    // (localStorage may have stale data without instituteName/technologyName)
+    refreshUser();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync from browser URL on initial load
