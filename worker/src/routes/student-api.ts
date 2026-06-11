@@ -953,6 +953,15 @@ studentApiRoutes.post('/auth/verify-otp', async (c) => {
     ).bind(email, otp, 'email_verification').first<{ id: number; email: string; otp: string; purpose: string; expires_at: string; used: number; created_at: string }>();
 
     if (!otpRecord) {
+      // Debug: check if the OTP exists but is already used or has different purpose
+      const anyOtpRecord = await c.env.DB.prepare(
+        'SELECT id, email, otp, purpose, used, expires_at FROM password_reset_otps WHERE email = ? AND otp = ? ORDER BY created_at DESC LIMIT 1'
+      ).bind(email, otp).first<{ id: number; email: string; otp: string; purpose: string; used: number | null; expires_at: string }>();
+      if (anyOtpRecord) {
+        console.log(`OTP verify failed: email=${email}, otp=${otp}, found_purpose=${anyOtpRecord.purpose}, found_used=${anyOtpRecord.used}, expected_purpose=email_verification, expected_used=0`);
+      } else {
+        console.log(`OTP verify failed: no record found for email=${email}, otp=${otp}`);
+      }
       return c.json({ success: false, message: 'Invalid or expired OTP' }, 400);
     }
 
@@ -989,6 +998,37 @@ studentApiRoutes.post('/auth/verify-otp', async (c) => {
     return c.json({ success: true, message: 'Email verified successfully' });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /auth/otp-cooldown — Get remaining cooldown seconds for resending OTP (server-side)
+studentApiRoutes.get('/auth/otp-cooldown', async (c) => {
+  try {
+    const email = c.req.query('email');
+    if (!email) {
+      return c.json({ error: 'email query parameter is required' }, 400);
+    }
+
+    // Find the most recent OTP sent to this email (any purpose)
+    const lastOtp = await c.env.DB.prepare(
+      'SELECT created_at FROM password_reset_otps WHERE email = ? ORDER BY created_at DESC LIMIT 1'
+    ).bind(email).first<{ created_at: string | null }>();
+
+    if (!lastOtp || !lastOtp.created_at) {
+      return c.json({ cooldownSeconds: 0 });
+    }
+
+    // Calculate remaining cooldown (60 seconds since last OTP was sent)
+    const RESEND_COOLDOWN_SECONDS = 60;
+    const sentAt = new Date(lastOtp.created_at).getTime();
+    const now = Date.now();
+    const elapsed = Math.floor((now - sentAt) / 1000);
+    const remaining = Math.max(0, RESEND_COOLDOWN_SECONDS - elapsed);
+
+    return c.json({ cooldownSeconds: remaining });
+  } catch (error) {
+    // On error, return 0 cooldown so user isn't stuck
+    return c.json({ cooldownSeconds: 0 });
   }
 });
 
@@ -1126,7 +1166,7 @@ studentApiRoutes.post('/auth/forgot-password', async (c) => {
       // Store OTP in D1 with 5-minute expiration
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
       await c.env.DB.prepare(
-        'INSERT INTO password_reset_otps (email, otp, purpose, expires_at, created_at) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO password_reset_otps (email, otp, purpose, expires_at, used, created_at) VALUES (?, ?, ?, ?, 0, ?)'
       ).bind(email, otp, 'password_reset', expiresAt, new Date().toISOString()).run();
 
       // Send OTP email via Resend
@@ -1255,6 +1295,22 @@ studentApiRoutes.post('/auth/resend-otp', async (c) => {
       ).bind(email).first<{ email_verified: number }>();
       const resendPurpose = (userForPurpose && !userForPurpose.email_verified) ? 'email_verification' : 'password_reset';
 
+      // ── Server-side cooldown: prevent resend within 60 seconds ──
+      const lastOtp = await c.env.DB.prepare(
+        'SELECT created_at FROM password_reset_otps WHERE email = ? ORDER BY created_at DESC LIMIT 1'
+      ).bind(email).first<{ created_at: string | null }>();
+      if (lastOtp?.created_at) {
+        const lastSentAt = new Date(lastOtp.created_at).getTime();
+        const elapsedSec = Math.floor((Date.now() - lastSentAt) / 1000);
+        if (elapsedSec < 60) {
+          return c.json({
+            error: `Please wait ${60 - elapsedSec} seconds before requesting a new code.`,
+            code: 'COOLDOWN_ACTIVE',
+            cooldownSeconds: 60 - elapsedSec,
+          }, 429);
+        }
+      }
+
       // ── Per-user daily rate limit ──
       const rateLimit = await checkDailyEmailRateLimit(c.env.DB, email);
       if (!rateLimit.allowed) {
@@ -1275,7 +1331,7 @@ studentApiRoutes.post('/auth/resend-otp', async (c) => {
       const expiryMinutes = resendPurpose === 'email_verification' ? 10 : 5;
       const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000).toISOString();
       await c.env.DB.prepare(
-        'INSERT INTO password_reset_otps (email, otp, purpose, expires_at, created_at) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO password_reset_otps (email, otp, purpose, expires_at, used, created_at) VALUES (?, ?, ?, ?, 0, ?)'
       ).bind(email, otp, resendPurpose, expiresAt, new Date().toISOString()).run();
 
       // Send OTP email via Resend

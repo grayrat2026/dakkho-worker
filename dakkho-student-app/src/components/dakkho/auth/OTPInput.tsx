@@ -223,7 +223,7 @@ export function OTPInput({ onComplete, onResend, cooldown, error, mode = 'numeri
           <p className="text-xs text-muted-foreground">
             Resend code in <span className="font-bold text-sky-500">{cooldown}s</span>
           </p>
-        ) : (
+        ) : cooldown === 0 ? (
           <motion.button
             onClick={onResend}
             disabled={isVerifying}
@@ -233,6 +233,9 @@ export function OTPInput({ onComplete, onResend, cooldown, error, mode = 'numeri
           >
             {isVerifying ? 'Verifying...' : 'Resend Code'}
           </motion.button>
+        ) : (
+          // cooldown === -1 means loading from server
+          <p className="text-xs text-muted-foreground">Loading...</p>
         )}
       </div>
     </div>

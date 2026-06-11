@@ -10,7 +10,7 @@ import { GradientButton } from '../shared/GradientButton';
 import { OTPInput } from '../auth/OTPInput';
 import { OTP_RESEND_COOLDOWN } from '@/lib/constants';
 
-// ── Cooldown persistence helpers ──
+// ── Cooldown persistence helpers (localStorage as backup) ──
 const COOLDOWN_STORAGE_KEY = 'dakkho-otp-cooldown-end';
 
 function saveCooldownEnd(timestamp: number) {
@@ -38,29 +38,63 @@ export function EmailVerificationPage() {
   const [otpError, setOtpError] = useState<string | undefined>();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  // Start at 0 so SSR and client hydration match; load from localStorage in useEffect
-  const [cooldown, setCooldown] = useState(0);
+  // Start at -1 to indicate "loading from server"; will be set to actual value after mount
+  const [cooldown, setCooldown] = useState(-1);
   const [resendSent, setResendSent] = useState(false);
   const cooldownHydrated = useRef(false);
 
-  // ── Hydrate cooldown from localStorage after mount (survives page refresh) ──
+  // ── Hydrate cooldown from SERVER after mount (survives page refresh) ──
   useEffect(() => {
-    if (cooldownHydrated.current) return;
+    if (cooldownHydrated.current || !user?.email) return;
     cooldownHydrated.current = true;
-    const endTime = loadCooldownEnd();
-    if (!endTime) return;
-    const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-    if (remaining > 0) {
-      setCooldown(remaining);
-    } else {
-      clearCooldownEnd();
-    }
-  }, []);
+
+    const fetchCooldown = async () => {
+      try {
+        const res = await authApi.otpCooldown(user.email);
+        const serverCooldown = res.cooldownSeconds || 0;
+        if (serverCooldown > 0) {
+          const endTime = Date.now() + serverCooldown * 1000;
+          saveCooldownEnd(endTime);
+          setCooldown(serverCooldown);
+        } else {
+          // Also check localStorage as fallback
+          const endTime = loadCooldownEnd();
+          if (endTime) {
+            const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+            if (remaining > 0) {
+              setCooldown(remaining);
+            } else {
+              clearCooldownEnd();
+              setCooldown(0);
+            }
+          } else {
+            setCooldown(0);
+          }
+        }
+      } catch {
+        // Fallback to localStorage if server request fails
+        const endTime = loadCooldownEnd();
+        if (endTime) {
+          const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+          if (remaining > 0) {
+            setCooldown(remaining);
+          } else {
+            clearCooldownEnd();
+            setCooldown(0);
+          }
+        } else {
+          setCooldown(0);
+        }
+      }
+    };
+
+    fetchCooldown();
+  }, [user?.email]);
 
   // Cooldown timer
   useEffect(() => {
     if (cooldown <= 0) {
-      clearCooldownEnd();
+      if (cooldown === 0) clearCooldownEnd();
       return;
     }
     const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -102,8 +136,19 @@ export function EmailVerificationPage() {
       setResendSent(true);
       setOtpError(undefined);
       setTimeout(() => setResendSent(false), 3000);
-    } catch {
-      setOtpError('Failed to resend code. Please try again.');
+    } catch (err: any) {
+      // If server says cooldown is active, sync our local cooldown to the server value
+      if (err?.code === 'COOLDOWN_ACTIVE' && err?.cooldownSeconds) {
+        const remaining = err.cooldownSeconds;
+        const endTime = Date.now() + remaining * 1000;
+        saveCooldownEnd(endTime);
+        setCooldown(remaining);
+        setOtpError(undefined);
+      } else if (err?.code === 'RATE_LIMITED') {
+        setOtpError(err.message || 'Too many requests. Please try again tomorrow.');
+      } else {
+        setOtpError('Failed to resend code. Please try again.');
+      }
     } finally {
       isResending.current = false;
     }
@@ -248,14 +293,14 @@ export function EmailVerificationPage() {
             </motion.div>
           )}
 
-          {/* Resend feedback — purely informational, never interactive */}
+          {/* Resend feedback — purely informational, NEVER interactive */}
           <AnimatePresence>
             {resendSent && (
               <motion.div
                 role="status"
                 aria-live="polite"
                 className="flex items-center gap-2 justify-center text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg px-3 py-2 mb-3 select-none"
-                style={{ pointerEvents: 'none' }}
+                style={{ pointerEvents: 'none', userSelect: 'none', cursor: 'default' }}
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
@@ -271,7 +316,7 @@ export function EmailVerificationPage() {
             <div className="flex gap-2">
               <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-amber-700 dark:text-amber-400">
-                <p className="font-semibold mb-1">Didn't receive the code?</p>
+                <p className="font-semibold mb-1">Didn&apos;t receive the code?</p>
                 <p className="text-amber-600 dark:text-amber-500">
                   Check your spam folder or wait for the cooldown and tap &quot;Resend Code&quot; to get a new one. The code expires in 10 minutes.
                 </p>

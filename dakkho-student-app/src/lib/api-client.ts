@@ -210,6 +210,8 @@ export const authApi = {
     api.post<{ success: boolean; message: string }>('/api/auth/reset-password', data),
   resendOTP: (data: { email: string }) =>
     api.post<{ success: boolean; message: string }>('/api/auth/resend-otp', data),
+  otpCooldown: (email: string) =>
+    api.get<{ cooldownSeconds: number }>(`/api/auth/otp-cooldown?email=${encodeURIComponent(email)}`),
   updateProfile: (data: { fullName?: string; instituteId?: number; technology?: string; bio?: string; phone?: string; semester?: string; avatarUrl?: string }) =>
     api.put<{ success: boolean; user: UserProfile }>('/api/auth/profile', data),
 };

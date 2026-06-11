@@ -1,21 +1,27 @@
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Fix all OTP/verification bugs in Dakkho platform
+Task: Fix OTP verification bugs - "Invalid or expired code" error, server-side cooldown, and rate limiting
 
 Work Log:
-- Read backend code: student-api.ts, student-auth.ts, schema.sql
-- Read frontend code: EmailVerificationPage.tsx, OTPInput.tsx, api-client.ts, store.ts, constants.ts
-- Identified root cause of "Invalid or expired code" error: deployed dist code still uses `expires_at > datetime("now")` SQL filter which compares ISO 8601 format with SQLite datetime format unreliably
-- Source code already had the fix (JS-based expiry check) but was never rebuilt/deployed
-- Deployed resend-otp used 5-minute expiry for email verification; source code updated to 10 minutes but not deployed
-- Fixed frontend EmailVerificationPage.tsx: countdown persistence using useEffect instead of useState initializer (fixes SSR hydration issue where localStorage is unavailable)
-- Fixed frontend: added isResending ref to prevent double-clicking resend button
-- Fixed frontend: changed "New code sent" notification from pointer-events-none CSS class to inline style (more reliable), added role="status" and aria-live="polite"
-- Rebuilt and deployed worker to Cloudflare (dakkho-admin-api.dakkho-admin.workers.dev)
-- Built and deployed student app to Cloudflare Pages (dakkho-student.pages.dev)
+- Read and analyzed backend code (student-api.ts, student-auth.ts) and frontend code (EmailVerificationPage.tsx, OTPInput.tsx, api-client.ts, store.ts)
+- Identified root cause of "Invalid or expired code" bug: resend-otp and forgot-password INSERT statements didn't explicitly set `used = 0`, and clicking "new code sent to your email" text could trigger resend which deletes the original OTP
+- Fixed resend-otp endpoint to include `used = 0` in INSERT statement
+- Fixed forgot-password endpoint to include `used = 0` in INSERT statement
+- Added server-side 60-second cooldown enforcement in resend-otp endpoint (returns 429 with COOLDOWN_ACTIVE code)
+- Added new GET /auth/otp-cooldown endpoint that returns remaining cooldown seconds from server (based on last OTP's created_at)
+- Updated frontend api-client.ts to include otpCooldown API method
+- Updated EmailVerificationPage.tsx to fetch cooldown from server on page load (survives page refresh)
+- Updated OTPInput.tsx to handle cooldown === -1 loading state
+- Made "New code sent to your email" text fully non-interactive (pointerEvents: 'none', userSelect: 'none', cursor: 'default')
+- Added debug logging to verify-otp endpoint to help diagnose future OTP validation failures
+- Cleaned up expired OTPs in D1 database (marked 4 expired OTPs as used)
+- Deployed worker to Cloudflare (version 54ca8dbc)
+- Deployed student app to Cloudflare Pages
 
 Stage Summary:
-- Worker deployed with all OTP fixes: JS-based expiry validation, 10-minute OTP expiration for email verification, rate limiting, improved resend logic
-- Student app deployed with frontend fixes: countdown persists across page refresh, "New code sent" notification is purely informational, resend button has double-click protection
-- Key fix: The deployed worker code was outdated (dist/ was stale), source code had all fixes but wasn't deployed
+- OTP "Invalid or expired code" bug fixed by ensuring `used = 0` is set in all INSERT statements
+- Resend cooldown now enforced server-side and persists across page refreshes
+- "New code sent to your email" text is now fully non-interactive
+- Per-user daily rate limiting already existed (10 emails/day), now enforced with server-side cooldown too
+- Debug logging added to help diagnose future issues
