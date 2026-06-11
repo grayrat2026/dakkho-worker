@@ -89,3 +89,24 @@ Stage Summary:
 - Unverified users can navigate to verification page from profile
 - Verified users see green confirmation card
 - OTP generation is now cryptographically secure
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix OTP expiry bug and add rate limiting for email verification
+
+Work Log:
+- Investigated the OTP verification flow in student-api.ts
+- Found root cause: `verify-otp` endpoint used `expires_at > datetime("now")` in SQL, but `expires_at` stores ISO 8601 format (`2026-06-11T12:10:00.000Z`) while SQLite's `datetime("now")` returns a different format (`2026-06-11 12:00:00`). The lexicographic comparison between these formats is unreliable — the `T` vs space character difference causes incorrect results.
+- The `reset-password` endpoint already handled this correctly by checking expiry in JavaScript.
+- Fixed `verify-otp` to validate expiry in JavaScript (using `new Date(otpRecord.expires_at) < new Date()`) instead of SQL
+- Fixed `resend-otp` to use 10-minute expiry for email_verification (was incorrectly 5 minutes)
+- Added `checkDailyEmailRateLimit()` helper that counts OTPs created for an email in the last 24 hours
+- Added rate limiting to `resend-otp` endpoint: max 10 emails per user per day, returns 429 with clear message
+- Added rate limiting to `forgot-password` endpoint: same limit, but silently returns success to prevent email enumeration
+- Deployed worker successfully to https://dakkho-admin-api.dakkho-admin.workers.dev
+
+Stage Summary:
+- OTP expiry bug fixed: JavaScript-based expiry validation replaces broken SQL comparison
+- Email verification OTP now consistently uses 10-minute expiry
+- Rate limiting added: max 10 verification/reset emails per user per day
+- Worker deployed: Version ID 58fe02ce-9cf4-4b8d-9914-0f614663dae0

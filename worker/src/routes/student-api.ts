@@ -937,18 +937,32 @@ studentApiRoutes.post('/auth/verify-otp', async (c) => {
     }
 
     // Validate OTP against stored codes — only email_verification purpose
+    // NOTE: We do NOT filter by `expires_at > datetime("now")` in SQL because
+    // expires_at is stored in ISO 8601 format (e.g. 2026-06-11T12:10:00.000Z) while
+    // SQLite's datetime("now") returns a different format (2026-06-11 12:00:00).
+    // Lexicographic comparison between these formats is unreliable, so we validate
+    // expiry in JavaScript instead — consistent with the reset-password endpoint.
     const otpRecord = await c.env.DB.prepare(
-      'SELECT * FROM password_reset_otps WHERE email = ? AND otp = ? AND purpose = ? AND expires_at > datetime("now") AND used = 0 ORDER BY created_at DESC LIMIT 1'
-    ).bind(email, otp, 'email_verification').first();
+      'SELECT * FROM password_reset_otps WHERE email = ? AND otp = ? AND purpose = ? AND used = 0 ORDER BY created_at DESC LIMIT 1'
+    ).bind(email, otp, 'email_verification').first<{ id: number; email: string; otp: string; purpose: string; expires_at: string; used: number; created_at: string }>();
 
     if (!otpRecord) {
       return c.json({ success: false, message: 'Invalid or expired OTP' }, 400);
     }
 
+    // Check expiry in JavaScript — works correctly with ISO 8601 dates
+    if (new Date(otpRecord.expires_at) < new Date()) {
+      // Mark expired OTP as used so it can't be retried
+      await c.env.DB.prepare(
+        'UPDATE password_reset_otps SET used = 1 WHERE id = ?'
+      ).bind(otpRecord.id).run();
+      return c.json({ success: false, message: 'OTP has expired. Please request a new one.' }, 400);
+    }
+
     // Mark OTP as used
     await c.env.DB.prepare(
       'UPDATE password_reset_otps SET used = 1 WHERE id = ?'
-    ).bind((otpRecord as any).id).run();
+    ).bind(otpRecord.id).run();
 
     // Mark email as verified
     const session = await c.env.DB.prepare(
@@ -1088,6 +1102,13 @@ studentApiRoutes.post('/auth/forgot-password', async (c) => {
     ).bind(email).first();
 
     if (user) {
+      // ── Per-user daily rate limit ──
+      const rateLimit = await checkDailyEmailRateLimit(c.env.DB, email);
+      if (!rateLimit.allowed) {
+        // Don't reveal rate limit to prevent email enumeration — still return success
+        return c.json({ success: true, message: 'If an account exists with this email, a reset code has been sent.' });
+      }
+
       // Delete any previous unused OTPs for this email with password_reset purpose
       await c.env.DB.prepare(
         'DELETE FROM password_reset_otps WHERE email = ? AND used = 0 AND purpose = ?'
@@ -1176,7 +1197,24 @@ studentApiRoutes.post('/auth/reset-password', async (c) => {
   }
 });
 
-// POST /auth/resend-otp — Resend OTP for password reset
+// ─── Helper: Check per-user daily email rate limit ───
+const EMAIL_OTP_DAILY_LIMIT = 10; // Max 10 verification emails per user per day
+
+async function checkDailyEmailRateLimit(db: D1Database, email: string): Promise<{ allowed: boolean; count: number; limit: number }> {
+  try {
+    // Count OTPs created for this email in the last 24 hours (both purposes)
+    const result = await db.prepare(
+      "SELECT COUNT(*) as count FROM password_reset_otps WHERE email = ? AND created_at > datetime('now', '-24 hours')"
+    ).bind(email).first<{ count: number }>();
+    const count = result?.count || 0;
+    return { allowed: count < EMAIL_OTP_DAILY_LIMIT, count, limit: EMAIL_OTP_DAILY_LIMIT };
+  } catch {
+    // If the check fails, allow the request (fail open)
+    return { allowed: true, count: 0, limit: EMAIL_OTP_DAILY_LIMIT };
+  }
+}
+
+// POST /auth/resend-otp — Resend OTP for email verification or password reset
 studentApiRoutes.post('/auth/resend-otp', async (c) => {
   try {
     const { email } = await c.req.json();
@@ -1197,6 +1235,15 @@ studentApiRoutes.post('/auth/resend-otp', async (c) => {
       ).bind(email).first<{ email_verified: number }>();
       const resendPurpose = (userForPurpose && !userForPurpose.email_verified) ? 'email_verification' : 'password_reset';
 
+      // ── Per-user daily rate limit ──
+      const rateLimit = await checkDailyEmailRateLimit(c.env.DB, email);
+      if (!rateLimit.allowed) {
+        return c.json({
+          error: `Too many verification emails. You can send up to ${rateLimit.limit} emails per day. Please try again tomorrow.`,
+          code: 'RATE_LIMITED',
+        }, 429);
+      }
+
       await c.env.DB.prepare(
         'DELETE FROM password_reset_otps WHERE email = ? AND used = 0 AND purpose = ?'
       ).bind(email, resendPurpose).run();
@@ -1204,8 +1251,9 @@ studentApiRoutes.post('/auth/resend-otp', async (c) => {
       // Generate a new 6-digit OTP
       const otp = generateOTP();
 
-      // Store OTP in D1 with 5-minute expiration
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      // Store OTP with appropriate expiry: 10 min for email_verification, 5 min for password_reset
+      const expiryMinutes = resendPurpose === 'email_verification' ? 10 : 5;
+      const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000).toISOString();
       await c.env.DB.prepare(
         'INSERT INTO password_reset_otps (email, otp, purpose, expires_at) VALUES (?, ?, ?, ?)'
       ).bind(email, otp, resendPurpose, expiresAt).run();
@@ -1225,7 +1273,7 @@ studentApiRoutes.post('/auth/resend-otp', async (c) => {
                 <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #0ea5e9; background: white; border: 2px dashed #e2e8f0; border-radius: 12px; padding: 16px; display: inline-block;">
                   ${otp}
                 </div>
-                <p style="color: #64748b; font-size: 14px; margin: 16px 0 0;">This code expires in 5 minutes.</p>
+                <p style="color: #64748b; font-size: 14px; margin: 16px 0 0;">This code expires in ${expiryMinutes} minutes.</p>
                 <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0;">If you did not request this, please ignore this email.</p>
               </div>
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
