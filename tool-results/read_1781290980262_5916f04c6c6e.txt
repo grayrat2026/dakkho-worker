@@ -1,0 +1,592 @@
+     1→'use client';
+     2→
+     3→import { useState, useMemo } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  ArrowLeft, Plus, ChevronDown, ChevronRight, Trash2, Edit3,
+     7→  FolderOpen, Video, FileText, Link as LinkIcon, Radio,
+     8→  BookOpen, Play, Eye, X, Save, MessageSquare, Send,
+     9→} from 'lucide-react';
+    10→import { toast } from 'sonner';
+    11→import { GlassCard } from '@/components/shared/GlassCard';
+    12→import { GradientButton } from '@/components/shared/GradientButton';
+    13→import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
+    14→import { EmptyState } from '@/components/shared/EmptyState';
+    15→import {
+    16→  useCurriculum, useCourseSubjects, useCourse,
+    17→  useCreateChapter, useUpdateChapter, useDeleteChapter,
+    18→  useCreateLesson, useDeleteLesson,
+    19→  useReviews, useReplyReview,
+    20→} from '@/lib/api-hooks';
+    21→import { useNavigationStore } from '@/lib/store';
+    22→import { cn, formatDurationShort, relativeTime } from '@/lib/utils';
+    23→import { staggerChildren, collapseExpand } from '@/lib/animations';
+    24→
+    25→type AddMode = 'chapter' | 'lesson' | null;
+    26→
+    27→export function CourseSubject() {
+    28→  const params = useNavigationStore((s) => s.params);
+    29→  const navigate = useNavigationStore((s) => s.navigate);
+    30→  const goBack = useNavigationStore((s) => s.goBack);
+    31→  const courseId = params.courseId || '';
+    32→  const subjectId = params.subjectId || '';  // Can be UUID string or number
+    33→
+    34→  const { data: courseData, loading: courseLoading } = useCourse(courseId);
+    35→  const { data: subjectsData, loading: subjectsLoading } = useCourseSubjects(courseId);
+    36→  const { data: curriculumData, loading: curriculumLoading, refetch: refetchCurriculum } = useCurriculum(courseId);
+    37→  const { mutate: createChapter, loading: creatingChapter } = useCreateChapter(courseId);
+    38→  const { mutate: updateChapter, loading: updatingChapter } = useUpdateChapter(courseId);
+    39→  const { mutate: deleteChapter, loading: deletingChapter } = useDeleteChapter(courseId);
+    40→  const { mutate: createLesson, loading: creatingLesson } = useCreateLesson(courseId);
+    41→  const { mutate: deleteLesson, loading: deletingLesson } = useDeleteLesson(courseId);
+    42→
+    43→  // Reviews for this course
+    44→  const { data: reviewsData, refetch: refetchReviews } = useReviews(1);
+    45→  const { mutate: replyReview, loading: replyingReview } = useReplyReview();
+    46→
+    47→  const course = courseData?.course || courseData;
+    48→  const allSubjects = subjectsData?.subjects || [];
+    49→  const currentSubject = allSubjects.find((s: any) => String(s.subjectId || s.id) === String(subjectId));
+    50→  const curriculum = curriculumData?.curriculum || { subjects: [], chapters: [], lessons: [], resources: [] };
+    51→
+    52→  // Filter data for this subject
+    53→  const subjectChapters = useMemo(() => {
+    54→    return (curriculum.chapters || [])
+    55→      .filter((ch: any) => String(ch.subjectId || ch.subject_id) === String(subjectId))
+    56→      .sort((a: any, b: any) => (a.sortOrder || a.sort_order || 0) - (b.sortOrder || b.sort_order || 0));
+    57→  }, [curriculum, subjectId]);
+    58→
+    59→  const allLessons = useMemo(() => {
+    60→    return (curriculum.lessons || [])
+    61→      .filter((l: any) => String(l.subjectId || l.subject_id) === String(subjectId));
+    62→  }, [curriculum, subjectId]);
+    63→
+    64→  const reviews = useMemo(() => reviewsData?.reviews || [], [reviewsData]);
+    65→
+    66→  // State
+    67→  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+    68→  const [addMode, setAddMode] = useState<AddMode>(null);
+    69→  const [selectedChapterId, setSelectedChapterId] = useState<string>('');
+    70→
+    71→  // Chapter form
+    72→  const [chapterTitle, setChapterTitle] = useState('');
+    73→  const [chapterDesc, setChapterDesc] = useState('');
+    74→
+    75→  // Lesson form
+    76→  const [lessonTitle, setLessonTitle] = useState('');
+    77→  const [lessonType, setLessonType] = useState<'video' | 'link' | 'youtube' | 'document'>('video');
+    78→  const [lessonVideoUrl, setLessonVideoUrl] = useState('');
+    79→  const [lessonDesc, setLessonDesc] = useState('');
+    80→  const [lessonIsPreview, setLessonIsPreview] = useState(false);
+    81→
+    82→  // Reply form
+    83→  const [replyTexts, setReplyTexts] = useState<Record<number, string>>({});
+    84→
+    85→  const toggleChapter = (chapterId: string) => {
+    86→    setExpandedChapters((prev) => {
+    87→      const next = new Set(prev);
+    88→      if (next.has(chapterId)) next.delete(chapterId);
+    89→      else next.add(chapterId);
+    90→      return next;
+    91→    });
+    92→  };
+    93→
+    94→  const handleCreateChapter = async () => {
+    95→    if (!chapterTitle.trim()) { toast.error('Enter chapter title'); return; }
+    96→    const result = await createChapter({
+    97→      title: chapterTitle.trim(),
+    98→      subjectId,
+    99→      description: chapterDesc.trim() || undefined,
+   100→      sortOrder: subjectChapters.length + 1,
+   101→    });
+   102→    if (result) {
+   103→      toast.success('Chapter created');
+   104→      setChapterTitle('');
+   105→      setChapterDesc('');
+   106→      setAddMode(null);
+   107→      refetchCurriculum();
+   108→    } else {
+   109→      toast.error('Failed to create chapter');
+   110→    }
+   111→  };
+   112→
+   113→  const handleDeleteChapter = async (chapterId: string) => {
+   114→    if (!confirm('Delete this chapter and all its lessons?')) return;
+   115→    const result = await deleteChapter({ chapterId });
+   116→    if (result !== null) {
+   117→      toast.success('Chapter deleted');
+   118→      refetchCurriculum();
+   119→    } else {
+   120→      toast.error('Failed to delete chapter');
+   121→    }
+   122→  };
+   123→
+   124→  const handleCreateLesson = async () => {
+   125→    if (!lessonTitle.trim()) { toast.error('Enter lesson title'); return; }
+   126→    if (!selectedChapterId) { toast.error('Select a chapter'); return; }
+   127→    const result = await createLesson({
+   128→      title: lessonTitle.trim(),
+   129→      chapterId: selectedChapterId,
+   130→      subjectId,
+   131→      lessonType,
+   132→      videoUrl: lessonVideoUrl.trim() || undefined,
+   133→      description: lessonDesc.trim() || undefined,
+   134→      isPreview: lessonIsPreview,
+   135→      sortOrder: (allLessons.filter((l: any) => (l.chapterId || l.chapter_id) === selectedChapterId).length) + 1,
+   136→    });
+   137→    if (result) {
+   138→      toast.success('Lesson added');
+   139→      setLessonTitle('');
+   140→      setLessonVideoUrl('');
+   141→      setLessonDesc('');
+   142→      setLessonIsPreview(false);
+   143→      setAddMode(null);
+   144→      refetchCurriculum();
+   145→    } else {
+   146→      toast.error('Failed to add lesson');
+   147→    }
+   148→  };
+   149→
+   150→  const handleDeleteLesson = async (lessonId: string) => {
+   151→    if (!confirm('Delete this lesson?')) return;
+   152→    const result = await deleteLesson({ lessonId });
+   153→    if (result !== null) {
+   154→      toast.success('Lesson deleted');
+   155→      refetchCurriculum();
+   156→    } else {
+   157→      toast.error('Failed to delete lesson');
+   158→    }
+   159→  };
+   160→
+   161→  const handleReply = async (reviewId: number) => {
+   162→    const text = replyTexts[reviewId]?.trim();
+   163→    if (!text) return;
+   164→    const result = await replyReview({ reviewId, replyText: text });
+   165→    if (result) {
+   166→      toast.success('Reply posted');
+   167→      setReplyTexts((prev) => ({ ...prev, [reviewId]: '' }));
+   168→      refetchReviews();
+   169→    } else {
+   170→      toast.error('Failed to post reply');
+   171→    }
+   172→  };
+   173→
+   174→  // Expand all chapters by default
+   175→  useMemo(() => {
+   176→    if (subjectChapters.length > 0 && expandedChapters.size === 0) {
+   177→      setExpandedChapters(new Set(subjectChapters.map((ch: any) => ch.id)));
+   178→    }
+   179→  }, [subjectChapters.length]); // eslint-disable-line react-hooks/exhaustive-deps
+   180→
+   181→  if (courseLoading || subjectsLoading || curriculumLoading) {
+   182→    return <LoadingSkeleton type="card" count={3} />;
+   183→  }
+   184→
+   185→  if (!currentSubject) {
+   186→    return (
+   187→      <EmptyState
+   188→        icon={BookOpen}
+   189→        title="Subject not found"
+   190→        description="This subject doesn't exist or has been removed."
+   191→        actionLabel="Back to Curriculum"
+   192→        onAction={() => navigate('course-curriculum', { courseId })}
+   193→      />
+   194→    );
+   195→  }
+   196→
+   197→  const lessonTypeIcon: Record<string, typeof Video> = {
+   198→    video: Video, link: LinkIcon, youtube: Video, document: FileText,
+   199→  };
+   200→  const lessonTypeLabel: Record<string, string> = {
+   201→    video: 'Video', link: 'Link', youtube: 'YouTube', document: 'Document/PDF',
+   202→  };
+   203→  const lessonTypeColor: Record<string, string> = {
+   204→    video: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800/30 dark:text-neutral-300',
+   205→    link: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+   206→    youtube: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+   207→    document: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+   208→  };
+   209→
+   210→  return (
+   211→    <div className="space-y-6">
+   212→      {/* Header with Back */}
+   213→      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+   214→        <div className="flex items-center gap-3">
+   215→          <button
+   216→            onClick={() => navigate('course-curriculum', { courseId })}
+   217→            className="w-10 h-10 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition-colors"
+   218→          >
+   219→            <ArrowLeft className="w-5 h-5" />
+   220→          </button>
+   221→          <div className="flex-1 min-w-0">
+   222→            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground truncate">
+   223→              {currentSubject.subjectName || currentSubject.subject_name || currentSubject.name || 'Subject'}
+   224→            </h1>
+   225→            <p className="text-muted-foreground mt-0.5 text-sm">{course?.title || ''}</p>
+   226→          </div>
+   227→          <GradientButton
+   228→            size="sm"
+   229→            icon={<Plus className="w-4 h-4" />}
+   230→            onClick={() => { setAddMode('chapter'); setSelectedChapterId(''); }}
+   231→          >
+   232→            Chapter
+   233→          </GradientButton>
+   234→          <GradientButton
+   235→            size="sm"
+   236→            variant="ghost"
+   237→            icon={<Plus className="w-4 h-4" />}
+   238→            onClick={() => { setAddMode('lesson'); setSelectedChapterId(''); }}
+   239→          >
+   240→            Lesson
+   241→          </GradientButton>
+   242→        </div>
+   243→      </motion.div>
+   244→
+   245→      {/* Add Chapter Form */}
+   246→      <AnimatePresence>
+   247→        {addMode === 'chapter' && (
+   248→          <motion.div {...collapseExpand}>
+   249→            <GlassCard className="p-5" glow>
+   250→              <div className="flex items-center justify-between mb-4">
+   251→                <h3 className="text-base font-bold gradient-text">New Chapter</h3>
+   252→                <button onClick={() => setAddMode(null)} className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+   253→                  <X className="w-4 h-4" />
+   254→                </button>
+   255→              </div>
+   256→              <div className="space-y-3">
+   257→                <div>
+   258→                  <label className="text-sm font-semibold text-foreground mb-1 block">Chapter Title *</label>
+   259→                  <input
+   260→                    type="text"
+   261→                    value={chapterTitle}
+   262→                    onChange={(e) => setChapterTitle(e.target.value)}
+   263→                    placeholder="Enter chapter title"
+   264→                    className="w-full px-4 py-2.5 rounded-xl text-sm premium-input placeholder:text-muted-foreground/60"
+   265→                    autoFocus
+   266→                  />
+   267→                </div>
+   268→                <div>
+   269→                  <label className="text-sm font-semibold text-foreground mb-1 block">Description</label>
+   270→                  <textarea
+   271→                    value={chapterDesc}
+   272→                    onChange={(e) => setChapterDesc(e.target.value)}
+   273→                    placeholder="Optional chapter description"
+   274→                    rows={2}
+   275→                    className="w-full px-4 py-2.5 rounded-xl text-sm premium-input placeholder:text-muted-foreground/60 resize-none"
+   276→                  />
+   277→                </div>
+   278→                <div className="flex justify-end gap-2">
+   279→                  <GradientButton variant="ghost" size="sm" onClick={() => setAddMode(null)}>Cancel</GradientButton>
+   280→                  <GradientButton size="sm" onClick={handleCreateChapter} loading={creatingChapter} disabled={!chapterTitle.trim()} icon={<Save className="w-3.5 h-3.5" />}>
+   281→                    Create Chapter
+   282→                  </GradientButton>
+   283→                </div>
+   284→              </div>
+   285→            </GlassCard>
+   286→          </motion.div>
+   287→        )}
+   288→      </AnimatePresence>
+   289→
+   290→      {/* Add Lesson Form */}
+   291→      <AnimatePresence>
+   292→        {addMode === 'lesson' && (
+   293→          <motion.div {...collapseExpand}>
+   294→            <GlassCard className="p-5" glow>
+   295→              <div className="flex items-center justify-between mb-4">
+   296→                <h3 className="text-base font-bold gradient-text">New Lesson</h3>
+   297→                <button onClick={() => setAddMode(null)} className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+   298→                  <X className="w-4 h-4" />
+   299→                </button>
+   300→              </div>
+   301→              <div className="space-y-3">
+   302→                <div>
+   303→                  <label className="text-sm font-semibold text-foreground mb-1 block">Chapter *</label>
+   304→                  <select
+   305→                    value={selectedChapterId}
+   306→                    onChange={(e) => setSelectedChapterId(e.target.value)}
+   307→                    className="w-full px-4 py-2.5 rounded-xl text-sm premium-input"
+   308→                  >
+   309→                    <option value="">Select chapter</option>
+   310→                    {subjectChapters.map((ch: any) => (
+   311→                      <option key={ch.id} value={ch.id}>{ch.title}</option>
+   312→                    ))}
+   313→                  </select>
+   314→                  {subjectChapters.length === 0 && (
+   315→                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Create a chapter first before adding lessons.</p>
+   316→                  )}
+   317→                </div>
+   318→                <div>
+   319→                  <label className="text-sm font-semibold text-foreground mb-1 block">Lesson Title *</label>
+   320→                  <input
+   321→                    type="text"
+   322→                    value={lessonTitle}
+   323→                    onChange={(e) => setLessonTitle(e.target.value)}
+   324→                    placeholder="Enter lesson title"
+   325→                    className="w-full px-4 py-2.5 rounded-xl text-sm premium-input placeholder:text-muted-foreground/60"
+   326→                  />
+   327→                </div>
+   328→                <div className="grid grid-cols-2 gap-3">
+   329→                  <div>
+   330→                    <label className="text-sm font-semibold text-foreground mb-1 block">Type</label>
+   331→                    <select
+   332→                      value={lessonType}
+   333→                      onChange={(e) => setLessonType(e.target.value as any)}
+   334→                      className="w-full px-4 py-2.5 rounded-xl text-sm premium-input"
+   335→                    >
+   336→                      <option value="video">Video</option>
+   337→                      <option value="link">Link / Live</option>
+   338→                      <option value="youtube">YouTube</option>
+   339→                      <option value="document">Document / PDF / Note</option>
+   340→                    </select>
+   341→                  </div>
+   342→                  <div>
+   343→                    <label className="text-sm font-semibold text-foreground mb-1 block">Video/Link URL</label>
+   344→                    <input
+   345→                      type="url"
+   346→                      value={lessonVideoUrl}
+   347→                      onChange={(e) => setLessonVideoUrl(e.target.value)}
+   348→                      placeholder="https://..."
+   349→                      className="w-full px-4 py-2.5 rounded-xl text-sm premium-input placeholder:text-muted-foreground/60"
+   350→                    />
+   351→                  </div>
+   352→                </div>
+   353→                <div>
+   354→                  <label className="text-sm font-semibold text-foreground mb-1 block">Description</label>
+   355→                  <textarea
+   356→                    value={lessonDesc}
+   357→                    onChange={(e) => setLessonDesc(e.target.value)}
+   358→                    placeholder="Optional lesson description"
+   359→                    rows={2}
+   360→                    className="w-full px-4 py-2.5 rounded-xl text-sm premium-input placeholder:text-muted-foreground/60 resize-none"
+   361→                  />
+   362→                </div>
+   363→                <div className="flex items-center justify-between">
+   364→                  <label className="flex items-center gap-2 cursor-pointer">
+   365→                    <input
+   366→                      type="checkbox"
+   367→                      checked={lessonIsPreview}
+   368→                      onChange={(e) => setLessonIsPreview(e.target.checked)}
+   369→                      className="w-4 h-4 rounded"
+   370→                    />
+   371→                    <span className="text-sm font-semibold text-foreground">Preview (free access)</span>
+   372→                  </label>
+   373→                  <div className="flex gap-2">
+   374→                    <GradientButton variant="ghost" size="sm" onClick={() => setAddMode(null)}>Cancel</GradientButton>
+   375→                    <GradientButton size="sm" onClick={handleCreateLesson} loading={creatingLesson} disabled={!lessonTitle.trim() || !selectedChapterId} icon={<Save className="w-3.5 h-3.5" />}>
+   376→                      Add Lesson
+   377→                    </GradientButton>
+   378→                  </div>
+   379→                </div>
+   380→              </div>
+   381→            </GlassCard>
+   382→          </motion.div>
+   383→        )}
+   384→      </AnimatePresence>
+   385→
+   386→      {/* Chapters & Lessons */}
+   387→      {subjectChapters.length === 0 ? (
+   388→        <EmptyState
+   389→          icon={FolderOpen}
+   390→          title="No chapters yet"
+   391→          description="Create your first chapter to start organizing lessons for this subject."
+   392→          actionLabel="Add Chapter"
+   393→          onAction={() => setAddMode('chapter')}
+   394→        />
+   395→      ) : (
+   396→        <div className="space-y-3">
+   397→          {subjectChapters.map((chapter: any, ci: number) => {
+   398→            const chapterLessons = allLessons
+   399→              .filter((l: any) => (l.chapterId || l.chapter_id) === chapter.id)
+   400→              .sort((a: any, b: any) => (a.sortOrder || a.sort_order || 0) - (b.sortOrder || b.sort_order || 0));
+   401→            const isExpanded = expandedChapters.has(chapter.id);
+   402→
+   403→            return (
+   404→              <motion.div
+   405→                key={chapter.id || ci}
+   406→                initial={{ opacity: 0, y: 12 }}
+   407→                animate={{ opacity: 1, y: 0 }}
+   408→                transition={{ delay: ci * 0.05, duration: 0.3 }}
+   409→              >
+   410→                <GlassCard className="p-0 overflow-hidden">
+   411→                  {/* Chapter Header */}
+   412→                  <div
+   413→                    className="flex items-center gap-3 p-4 cursor-pointer hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
+   414→                    onClick={() => toggleChapter(chapter.id)}
+   415→                  >
+   416→                    <motion.div
+   417→                      animate={{ rotate: isExpanded ? 0 : -90 }}
+   418→                      transition={{ duration: 0.2 }}
+   419→                      className="flex-shrink-0"
+   420→                    >
+   421→                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+   422→                    </motion.div>
+   423→                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neutral-900 via-neutral-800 to-black dark:from-white dark:via-neutral-200 dark:to-white flex items-center justify-center flex-shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+   424→                      <span className="text-white dark:text-neutral-900 text-xs font-bold">{ci + 1}</span>
+   425→                    </div>
+   426→                    <div className="flex-1 min-w-0">
+   427→                      <p className="text-sm font-bold text-foreground truncate">{chapter.title}</p>
+   428→                      <p className="text-xs text-muted-foreground mt-0.5">{chapterLessons.length} {chapterLessons.length === 1 ? 'lesson' : 'lessons'}</p>
+   429→                    </div>
+   430→                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+   431→                      <button
+   432→                        onClick={() => { setAddMode('lesson'); setSelectedChapterId(chapter.id); }}
+   433→                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors"
+   434→                        title="Add lesson"
+   435→                      >
+   436→                        <Plus className="w-3.5 h-3.5" />
+   437→                      </button>
+   438→                      <button
+   439→                        onClick={() => handleDeleteChapter(chapter.id)}
+   440→                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+   441→                        title="Delete chapter"
+   442→                      >
+   443→                        <Trash2 className="w-3.5 h-3.5" />
+   444→                      </button>
+   445→                    </div>
+   446→                  </div>
+   447→
+   448→                  {/* Lessons */}
+   449→                  <AnimatePresence>
+   450→                    {isExpanded && (
+   451→                      <motion.div
+   452→                        initial={{ height: 0, opacity: 0 }}
+   453→                        animate={{ height: 'auto', opacity: 1 }}
+   454→                        exit={{ height: 0, opacity: 0 }}
+   455→                        transition={{ duration: 0.25 }}
+   456→                        className="overflow-hidden"
+   457→                      >
+   458→                        {chapterLessons.length > 0 ? (
+   459→                          <div className="border-t border-black/[0.03] dark:border-white/[0.03]">
+   460→                            {chapterLessons.map((lesson: any, li: number) => {
+   461→                              const LIcon = lessonTypeIcon[lesson.lessonType || lesson.lesson_type] || Video;
+   462→                              const lType = lesson.lessonType || lesson.lesson_type || 'video';
+   463→                              return (
+   464→                                <div
+   465→                                  key={lesson.id || li}
+   466→                                  className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors border-b border-black/[0.02] dark:border-white/[0.02] last:border-b-0"
+   467→                                >
+   468→                                  <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0', lessonTypeColor[lType])}>
+   469→                                    <LIcon className="w-3.5 h-3.5" />
+   470→                                  </div>
+   471→                                  <div className="flex-1 min-w-0">
+   472→                                    <p className="text-sm font-medium text-foreground truncate">{lesson.title}</p>
+   473→                                    <div className="flex items-center gap-2 mt-0.5">
+   474→                                      <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', lessonTypeColor[lType])}>
+   475→                                        {lessonTypeLabel[lType]}
+   476→                                      </span>
+   477→                                      {lesson.isPreview && (
+   478→                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center gap-0.5">
+   479→                                          <Eye className="w-2.5 h-2.5" /> Preview
+   480→                                        </span>
+   481→                                      )}
+   482→                                      {(lesson.duration > 0) && (
+   483→                                        <span className="text-[10px] text-muted-foreground">{formatDurationShort(lesson.duration)}</span>
+   484→                                      )}
+   485→                                    </div>
+   486→                                  </div>
+   487→                                  <button
+   488→                                    onClick={() => handleDeleteLesson(lesson.id)}
+   489→                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
+   490→                                  >
+   491→                                    <Trash2 className="w-3 h-3" />
+   492→                                  </button>
+   493→                                </div>
+   494→                              );
+   495→                            })}
+   496→                          </div>
+   497→                        ) : (
+   498→                          <div className="px-4 py-4 text-center border-t border-black/[0.03] dark:border-white/[0.03]">
+   499→                            <p className="text-xs text-muted-foreground">No lessons in this chapter yet</p>
+   500→                            <button
+   501→                              onClick={() => { setAddMode('lesson'); setSelectedChapterId(chapter.id); }}
+   502→                              className="text-xs font-semibold text-foreground mt-1 hover:underline"
+   503→                            >
+   504→                              + Add a lesson
+   505→                            </button>
+   506→                          </div>
+   507→                        )}
+   508→                      </motion.div>
+   509→                    )}
+   510→                  </AnimatePresence>
+   511→                </GlassCard>
+   512→              </motion.div>
+   513→            );
+   514→          })}
+   515→        </div>
+   516→      )}
+   517→
+   518→      {/* Student Reviews / Comments Section */}
+   519→      <motion.div
+   520→        initial={{ opacity: 0, y: 12 }}
+   521→        animate={{ opacity: 1, y: 0 }}
+   522→        transition={{ delay: 0.3, duration: 0.4 }}
+   523→      >
+   524→        <GlassCard className="p-5" glow>
+   525→          <div className="flex items-center gap-3 mb-4">
+   526→            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400" />
+   527→            <h2 className="text-lg font-bold gradient-text">Student Reviews</h2>
+   528→            <span className="text-xs text-muted-foreground ml-auto">{reviews.length} reviews</span>
+   529→          </div>
+   530→          {reviews.length === 0 ? (
+   531→            <p className="text-sm text-muted-foreground text-center py-6">No reviews yet</p>
+   532→          ) : (
+   533→            <div className="space-y-4 max-h-96 overflow-y-auto">
+   534→              {reviews.map((review: any, ri: number) => (
+   535→                <div key={review.id || ri} className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.03] dark:border-white/[0.03]">
+   536→                  <div className="flex items-start gap-3">
+   537→                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-600 flex items-center justify-center flex-shrink-0">
+   538→                      <span className="text-xs font-bold text-foreground">{(review.studentName || 'S')[0].toUpperCase()}</span>
+   539→                    </div>
+   540→                    <div className="flex-1 min-w-0">
+   541→                      <div className="flex items-center gap-2">
+   542→                        <span className="text-sm font-semibold text-foreground">{review.studentName || 'Student'}</span>
+   543→                        <div className="flex items-center gap-0.5">
+   544→                          {Array.from({ length: 5 }).map((_, si) => (
+   545→                            <span key={si} className={cn('text-xs', si < (review.rating || 0) ? 'text-amber-500' : 'text-muted-foreground/30')}>★</span>
+   546→                          ))}
+   547→                        </div>
+   548→                        <span className="text-[10px] text-muted-foreground">{relativeTime(review.createdAt || '')}</span>
+   549→                      </div>
+   550→                      <p className="text-sm text-foreground/80 mt-1">{review.text || review.comment || ''}</p>
+   551→
+   552→                      {/* Instructor Reply */}
+   553→                      {review.replyText && (
+   554→                        <div className="mt-2 ml-4 p-2.5 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border-l-2 border-foreground/20">
+   555→                          <p className="text-xs font-semibold text-muted-foreground mb-0.5">Your Reply</p>
+   556→                          <p className="text-sm text-foreground/80">{review.replyText}</p>
+   557→                        </div>
+   558→                      )}
+   559→
+   560→                      {/* Reply Form */}
+   561→                      {!review.replyText && !review.hasReply && (
+   562→                        <div className="mt-2 flex items-center gap-2">
+   563→                          <input
+   564→                            type="text"
+   565→                            value={replyTexts[review.id] || ''}
+   566→                            onChange={(e) => setReplyTexts((prev) => ({ ...prev, [review.id]: e.target.value }))}
+   567→                            placeholder="Write a reply..."
+   568→                            className="flex-1 px-3 py-1.5 rounded-lg text-sm premium-input placeholder:text-muted-foreground/50"
+   569→                          />
+   570→                          <GradientButton
+   571→                            size="sm"
+   572→                            icon={<Send className="w-3 h-3" />}
+   573→                            onClick={() => handleReply(review.id)}
+   574→                            loading={replyingReview}
+   575→                            disabled={!replyTexts[review.id]?.trim()}
+   576→                          >
+   577→                            Reply
+   578→                          </GradientButton>
+   579→                        </div>
+   580→                      )}
+   581→                    </div>
+   582→                  </div>
+   583→                </div>
+   584→              ))}
+   585→            </div>
+   586→          )}
+   587→        </GlassCard>
+   588→      </motion.div>
+   589→    </div>
+   590→  );
+   591→}
+   592→
