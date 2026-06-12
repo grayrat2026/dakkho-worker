@@ -316,6 +316,64 @@ studentApiRoutes.get('/live-classes/:id/livekit-token', studentAuthMiddleware, a
   }
 });
 
+// ─── Live Class Calls Fallback ───
+
+// GET /live-classes/:id/calls-session — Cloudflare Calls fallback for students
+studentApiRoutes.get('/live-classes/:id/calls-session', studentAuthMiddleware, async (c) => {
+  try {
+    const studentId = c.get('studentId');
+    const scheduleId = c.req.param('id');
+
+    const schedule = await c.env.DB.prepare(
+      'SELECT * FROM live_class_schedules WHERE id = ? AND is_active = 1'
+    ).bind(scheduleId).first();
+
+    if (!schedule) {
+      return c.json({ error: 'Live class not found' }, 404);
+    }
+
+    const s = schedule as any;
+    if (s.status === 'completed' || s.status === 'cancelled') {
+      return c.json({ error: 'This class has ended' }, 400);
+    }
+
+    // Verify enrollment
+    if (s.course_id) {
+      const enrollment = await c.env.DB.prepare(
+        'SELECT id FROM enrollments WHERE student_id = ? AND course_id = ? AND status = ?'
+      ).bind(studentId, s.course_id, 'active').first();
+      if (!enrollment) {
+        return c.json({ error: 'You must be enrolled in this course' }, 403);
+      }
+    }
+
+    const { getCallsConfig, getCallsClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
+    const config = await getCallsConfig(c.env.KV_CONFIG, c.env);
+    if (!config) {
+      return c.json({ error: 'Cloudflare Calls fallback is not configured' }, 503);
+    }
+
+    const roomName = s.meeting_url?.replace('livekit://', '') || `dakkho-class-${s.id}`;
+    const clientConfig = await getCallsClientConfig(config, roomName);
+    if (!clientConfig) {
+      return c.json({ error: 'Failed to create fallback session' }, 500);
+    }
+
+    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, roomName, `student-${studentId}`);
+
+    return c.json({
+      success: true,
+      provider: 'cloudflare-calls',
+      sessionId: clientConfig.sessionId,
+      url: clientConfig.url,
+      iceServers: clientConfig.iceServers,
+      room: roomName,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
 // ─── Coupons ───
 
 studentApiRoutes.get('/coupons/validate', async (c) => {

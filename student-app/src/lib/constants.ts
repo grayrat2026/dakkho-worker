@@ -1,6 +1,9 @@
 export const APP_NAME = 'DAKKHO';
 export const APP_DESCRIPTION = "Bangladesh's Premier Polytechnic Student Streaming Platform";
 
+// LiveKit public URL for client SDK — credentials are stored in KV on backend
+export const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://dakkho-u74kq16n.livekit.cloud';
+
 export const COLORS = {
   primary: '#0ea5e9',
   primaryDeep: '#2563eb',

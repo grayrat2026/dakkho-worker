@@ -229,6 +229,10 @@ export const eventApi = {
 export const liveClassApi = {
   list: () =>
     api.get<{ liveClasses: LiveClass[] }>('/api/live-classes'),
+  getLiveKitToken: (scheduleId: number | string) =>
+    api.get<{ success: boolean; token: string; url: string; room: string }>(`/api/live-classes/${scheduleId}/livekit-token`),
+  getCallsFallback: (scheduleId: number | string) =>
+    api.get<{ success: boolean; provider: string; sessionId: string; url: string; iceServers: RTCIceServer[]; room: string }>(`/api/live-classes/${scheduleId}/calls-session`),
 };
 
 // Course Packages

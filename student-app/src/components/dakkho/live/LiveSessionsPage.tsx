@@ -11,12 +11,16 @@ import {
   RefreshCw,
   Video,
   MonitorSmartphone,
+  Headphones,
+  Loader2,
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { GlassCard } from '../shared/GlassCard';
 import { GradientButton } from '../shared/GradientButton';
 import { EmptyState } from '../shared/EmptyState';
 import { liveClassApi, technologyApi, type LiveClass, type Technology } from '@/lib/api-client';
+import { StudentLiveClassRoom } from './StudentLiveClassRoom';
+import { LIVEKIT_URL } from '@/lib/constants';
 
 // ─── Helpers ────────────────────────────────────────────────────
 
@@ -89,6 +93,8 @@ export function LiveSessionsPage() {
   const [fetchState, setFetchState] = useState<FetchState>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const [reminders, setReminders] = useState<Set<number>>(new Set());
+  const [activeLiveKit, setActiveLiveKit] = useState<{ roomName: string; token: string; url: string; courseName: string } | null>(null);
+  const [livekitLoading, setLivekitLoading] = useState(false);
 
   // Build technology lookup map
   const techMap = useMemo(() => {
@@ -150,6 +156,47 @@ export function LiveSessionsPage() {
       return next;
     });
   };
+
+  // Join LiveKit class in-app
+  const joinLiveKitClass = async (session: LiveClass) => {
+    setLivekitLoading(true);
+    try {
+      const result = await liveClassApi.getLiveKitToken(session.id);
+      if (result?.token) {
+        const roomName = session.meeting_url?.replace('livekit://', '') || `dakkho-class-${session.id}`;
+        setActiveLiveKit({
+          roomName,
+          token: result.token,
+          url: result.url || LIVEKIT_URL,
+          courseName: session.title_bn || session.title,
+        });
+      } else {
+        // Fallback to external URL
+        if (session.meeting_url) {
+          window.open(session.meeting_url, '_blank', 'noopener');
+        }
+      }
+    } catch {
+      // Fallback to external URL
+      if (session.meeting_url) {
+        window.open(session.meeting_url, '_blank', 'noopener');
+      }
+    }
+    setLivekitLoading(false);
+  };
+
+  // If in LiveKit room, show the room component
+  if (activeLiveKit) {
+    return (
+      <StudentLiveClassRoom
+        roomName={activeLiveKit.roomName}
+        livekitToken={activeLiveKit.token}
+        livekitUrl={activeLiveKit.url}
+        courseName={activeLiveKit.courseName}
+        onLeave={() => setActiveLiveKit(null)}
+      />
+    );
+  }
 
   // ─── Error State ────────────────────────────────────────────
   if (fetchState === 'error') {
@@ -329,9 +376,12 @@ export function LiveSessionsPage() {
                         <GradientButton
                           size="sm"
                           variant="danger"
-                          onClick={() => window.open(session.meeting_url, '_blank', 'noopener')}
+                          onClick={() => joinLiveKitClass(session)}
+                          disabled={livekitLoading}
                         >
-                          Join
+                          {livekitLoading ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                           session.platform === 'livekit' ? <Headphones className="w-3 h-3" /> : <Video className="w-3 h-3" />}
+                          {session.platform === 'livekit' ? 'Join In-App' : 'Join'}
                         </GradientButton>
                       )}
                     </div>

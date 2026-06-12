@@ -3366,4 +3366,471 @@ instructorRoutes.get('/livekit/config', instructorOrAdminMiddleware, async (c) =
   }
 });
 
+// ═══════════════════════════════════════════════════
+// CLOUDFLARE CALLS — Emergency Fallback when LiveKit limits are reached
+// ═══════════════════════════════════════════════════
+
+// POST /livekit/calls-session — Create a Cloudflare Calls session as fallback
+instructorRoutes.post('/livekit/calls-session', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const { getCallsConfig, getCallsClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
+
+    const config = await getCallsConfig(c.env.KV_CONFIG, c.env);
+    if (!config) {
+      return c.json({ error: 'Cloudflare Calls is not configured. Add CF_CALLS_APP_ID and CF_ACCOUNT_ID to KV.' }, 503);
+    }
+
+    const body = await c.req.json();
+    const room = body.room;
+    if (!room) {
+      return c.json({ error: 'room is required' }, 400);
+    }
+
+    const clientConfig = await getCallsClientConfig(config, room);
+    if (!clientConfig) {
+      return c.json({ error: 'Failed to create Cloudflare Calls session' }, 500);
+    }
+
+    const authRole = c.get('authRole');
+    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+
+    // Track the session
+    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, room, instructorId || 'admin');
+
+    return c.json({
+      success: true,
+      provider: 'cloudflare-calls',
+      sessionId: clientConfig.sessionId,
+      url: clientConfig.url,
+      iceServers: clientConfig.iceServers,
+      room,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /livekit/calls-status — Check if Cloudflare Calls fallback is available
+instructorRoutes.get('/livekit/calls-status', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const { isCallsAvailable } = await import('../lib/cloudflare-calls');
+    const available = await isCallsAvailable(c.env.KV_CONFIG, c.env);
+    return c.json({ available });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// ROOM MANAGEMENT — Enhanced LiveKit room operations
+// ═══════════════════════════════════════════════════
+
+// GET /livekit/rooms — List all active rooms for this instructor
+instructorRoutes.get('/livekit/rooms', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const config = await getLiveKitConfig(c.env.KV_CONFIG);
+    if (!config) {
+      return c.json({ error: 'LiveKit is not configured' }, 503);
+    }
+
+    const authRole = c.get('authRole');
+    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+
+    // Get all live class schedules for this instructor
+    const schedules = await c.env.DB.prepare(
+      "SELECT id, title, course_id, scheduled_at, duration_minutes, meeting_url, platform, status FROM live_class_schedules WHERE instructor_id = ? AND is_active = 1 ORDER BY scheduled_at DESC"
+    ).bind(instructorId).all();
+
+    // Also get currently live rooms
+    const liveRooms = await c.env.DB.prepare(
+      "SELECT id, title, meeting_url, status FROM live_class_schedules WHERE instructor_id = ? AND status = 'live' AND is_active = 1"
+    ).bind(instructorId).all();
+
+    return c.json({
+      success: true,
+      rooms: schedules.results,
+      activeRooms: liveRooms.results,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /livekit/rooms — Create a new room with custom settings
+instructorRoutes.post('/livekit/rooms', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const config = await getLiveKitConfig(c.env.KV_CONFIG);
+    if (!config) {
+      return c.json({ error: 'LiveKit is not configured' }, 503);
+    }
+
+    const body = await c.req.json();
+    const {
+      title, course_id, scheduled_at, duration_minutes,
+      description, max_participants = 100, auto_recording = false,
+      room_type = 'video', // video | voice | classroom | webinar
+    } = body;
+
+    if (!title || !scheduled_at || !duration_minutes) {
+      return c.json({ error: 'title, scheduled_at, and duration_minutes are required' }, 400);
+    }
+
+    const authRole = c.get('authRole');
+    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+
+    if (!instructorId) {
+      return c.json({ error: 'instructorId is required' }, 400);
+    }
+
+    // Verify course ownership if course_id provided
+    if (course_id) {
+      const owns = await verifyCourseOwnership(c.env, course_id, instructorId);
+      if (!owns) {
+        return c.json({ error: 'You do not own this course' }, 403);
+      }
+    }
+
+    const now = new Date().toISOString();
+
+    // Insert schedule
+    const result = await c.env.DB.prepare(`
+      INSERT INTO live_class_schedules (
+        title, course_id, instructor_id, scheduled_at, duration_minutes,
+        meeting_url, platform, description, is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'livekit', ?, 1, ?, ?)
+    `).bind(
+      title, course_id || null, instructorId, scheduled_at,
+      duration_minutes, '', description || null, now, now
+    ).run();
+
+    const insertedId = result.meta?.last_row_id;
+    const roomName = generateRoomName(insertedId);
+    const livekitUrl = `livekit://${roomName}`;
+
+    // Update with room URL
+    await c.env.DB.prepare(
+      'UPDATE live_class_schedules SET meeting_url = ? WHERE rowid = ?'
+    ).bind(livekitUrl, insertedId).run();
+
+    // Store room settings in KV for later retrieval
+    await c.env.KV_CONFIG.put(
+      `ROOM_CONFIG:${roomName}`,
+      JSON.stringify({
+        roomName,
+        scheduleId: insertedId,
+        title,
+        maxParticipants: max_participants,
+        autoRecording: auto_recording,
+        roomType: room_type,
+        createdBy: instructorId,
+        createdAt: now,
+      }),
+      { expirationTtl: 7 * 24 * 3600 } // 7 days
+    );
+
+    const row = await c.env.DB.prepare(
+      'SELECT * FROM live_class_schedules WHERE rowid = ?'
+    ).bind(insertedId).first();
+
+    return c.json({
+      success: true,
+      schedule: row,
+      livekit: {
+        roomName,
+        url: livekitUrl,
+        maxParticipants: max_participants,
+        autoRecording: auto_recording,
+        roomType: room_type,
+      },
+    }, 201);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /livekit/rooms/:roomName — Get room configuration
+instructorRoutes.get('/livekit/rooms/:roomName', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const roomName = c.req.param('roomName');
+    const configData = await c.env.KV_CONFIG.get(`ROOM_CONFIG:${roomName}`);
+
+    if (!configData) {
+      return c.json({ error: 'Room configuration not found' }, 404);
+    }
+
+    const config = JSON.parse(configData);
+
+    // Also get current schedule status
+    const schedule = await c.env.DB.prepare(
+      'SELECT id, title, status, scheduled_at FROM live_class_schedules WHERE meeting_url LIKE ? AND is_active = 1'
+    ).bind(`%${roomName}%`).first();
+
+    return c.json({
+      success: true,
+      roomConfig: config,
+      schedule,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// DELETE /livekit/rooms/:roomName — Close a room
+instructorRoutes.delete('/livekit/rooms/:roomName', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const roomName = c.req.param('roomName');
+    const now = new Date().toISOString();
+
+    // Update schedule status
+    await c.env.DB.prepare(
+      "UPDATE live_class_schedules SET status = 'completed', updated_at = ? WHERE meeting_url LIKE ? AND is_active = 1"
+    ).bind(now, `%${roomName}%`).run();
+
+    // Clean up KV
+    await c.env.KV_CONFIG.delete(`ROOM_CONFIG:${roomName}`);
+
+    return c.json({ success: true, message: 'Room closed' });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// RECORDING — Manage class recordings
+// ═══════════════════════════════════════════════════
+
+// GET /livekit/recordings — List recordings for this instructor
+instructorRoutes.get('/livekit/recordings', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const authRole = c.get('authRole');
+    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+
+    // Get completed schedules with recording URLs
+    const recordings = await c.env.DB.prepare(
+      "SELECT id, title, course_id, scheduled_at, duration_minutes, recording_url, status FROM live_class_schedules WHERE instructor_id = ? AND recording_url IS NOT NULL AND is_active = 1 ORDER BY scheduled_at DESC"
+    ).bind(instructorId).all();
+
+    return c.json({
+      success: true,
+      recordings: recordings.results,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// PUT /livekit/recordings/:scheduleId — Update recording URL
+instructorRoutes.put('/livekit/recordings/:scheduleId', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const scheduleId = c.req.param('scheduleId');
+    const body = await c.req.json();
+    const { recording_url } = body;
+
+    if (!recording_url) {
+      return c.json({ error: 'recording_url is required' }, 400);
+    }
+
+    const now = new Date().toISOString();
+    await c.env.DB.prepare(
+      'UPDATE live_class_schedules SET recording_url = ?, updated_at = ? WHERE id = ? AND is_active = 1'
+    ).bind(recording_url, now, scheduleId).run();
+
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// ATTENDANCE — Track participant attendance in live classes
+// ═══════════════════════════════════════════════════
+
+// GET /livekit/attendance/:roomName — Get attendance for a room
+instructorRoutes.get('/livekit/attendance/:roomName', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const roomName = c.req.param('roomName');
+
+    // Get attendance data from KV
+    const attendanceData = await c.env.KV_CONFIG.get(`ATTENDANCE:${roomName}`);
+    if (!attendanceData) {
+      return c.json({ success: true, attendance: [], total: 0 });
+    }
+
+    const attendance = JSON.parse(attendanceData);
+    return c.json({
+      success: true,
+      attendance: attendance.participants || [],
+      total: (attendance.participants || []).length,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /livekit/attendance/:roomName — Record attendance for a participant
+instructorRoutes.post('/livekit/attendance/:roomName', async (c) => {
+  try {
+    const roomName = c.req.param('roomName');
+    const body = await c.req.json();
+    const { identity, name, role, event } = body; // event: 'join' | 'leave'
+
+    if (!identity || !event) {
+      return c.json({ error: 'identity and event are required' }, 400);
+    }
+
+    // Get existing attendance
+    const existing = await c.env.KV_CONFIG.get(`ATTENDANCE:${roomName}`);
+    const attendance = existing ? JSON.parse(existing) : { participants: {} };
+
+    const now = new Date().toISOString();
+
+    if (event === 'join') {
+      attendance.participants[identity] = {
+        identity,
+        name: name || identity,
+        role: role || 'participant',
+        joinedAt: now,
+        leftAt: null,
+        duration: 0,
+      };
+    } else if (event === 'leave') {
+      if (attendance.participants[identity]) {
+        attendance.participants[identity].leftAt = now;
+        const joinedAt = new Date(attendance.participants[identity].joinedAt).getTime();
+        attendance.participants[identity].duration = Math.floor((Date.now() - joinedAt) / 1000);
+      }
+    }
+
+    await c.env.KV_CONFIG.put(
+      `ATTENDANCE:${roomName}`,
+      JSON.stringify(attendance),
+      { expirationTtl: 7 * 24 * 3600 } // 7 days
+    );
+
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// TOKEN WITH ROLE — Enhanced token generation with role-based access
+// ═══════════════════════════════════════════════════
+
+// POST /livekit/token-role — Generate token with specific role and permissions
+instructorRoutes.post('/livekit/token-role', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const config = await getLiveKitConfig(c.env.KV_CONFIG);
+    if (!config) {
+      return c.json({ error: 'LiveKit is not configured' }, 503);
+    }
+
+    const body = await c.req.json();
+    const {
+      room, identity, name, role = 'viewer',
+      room_type = 'video', // video | voice | classroom | webinar
+      ttl = 6 * 60 * 60,
+    } = body;
+
+    if (!room) {
+      return c.json({ error: 'room is required' }, 400);
+    }
+
+    // Role-based permissions
+    const permissions: Record<string, { canPublish: boolean; canSubscribe: boolean; canPublishData: boolean; canAdmin: boolean }> = {
+      host: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: true },
+      presenter: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: false },
+      guest: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: false },
+      viewer: { canPublish: false, canSubscribe: true, canPublishData: false, canAdmin: false },
+      student: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: false },
+    };
+
+    // For voice rooms, everyone can publish audio but not video
+    // For webinars, only host/presenter can publish
+    let perms = permissions[role] || permissions.viewer;
+
+    if (room_type === 'voice') {
+      // Voice rooms: audio publish allowed, video not needed
+      perms = { ...perms, canPublish: role !== 'viewer' };
+    } else if (room_type === 'webinar') {
+      // Webinar: only host and presenter can publish
+      perms = { ...perms, canPublish: role === 'host' || role === 'presenter' };
+    } else if (room_type === 'classroom') {
+      // Classroom: students can publish (for raise hand, Q&A)
+      perms = { ...perms, canPublishData: true };
+    }
+
+    // Build metadata
+    const metadata = JSON.stringify({
+      role,
+      roomType: room_type,
+      joinedAt: new Date().toISOString(),
+    });
+
+    const token = await generateLiveKitToken({
+      apiKey: config.apiKey,
+      apiSecret: config.apiSecret,
+      identity: identity || 'participant',
+      name: name || '',
+      room,
+      canPublish: perms.canPublish,
+      canSubscribe: perms.canSubscribe,
+      canPublishData: perms.canPublishData,
+      canAdmin: perms.canAdmin,
+      ttl,
+      metadata,
+    });
+
+    return c.json({
+      success: true,
+      token,
+      url: config.url,
+      room,
+      identity: identity || 'participant',
+      role,
+      permissions: perms,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// ENHANCED WEBHOOK — Full event processing with attendance tracking
+// ═══════════════════════════════════════════════════
+
+// The existing POST /livekit/webhook is already handling basic events.
+// This section adds enhanced processing via the attendance system.
+
+// GET /livekit/health — Health check for LiveKit + Calls
+instructorRoutes.get('/livekit/health', async (c) => {
+  try {
+    const config = await getLiveKitConfig(c.env.KV_CONFIG);
+
+    let livekitStatus: 'configured' | 'not_configured' | 'error' = config ? 'configured' : 'not_configured';
+
+    // Try to check Cloudflare Calls availability
+    let callsStatus: 'configured' | 'not_configured' = 'not_configured';
+    try {
+      const { isCallsAvailable } = await import('../lib/cloudflare-calls');
+      const available = await isCallsAvailable(c.env.KV_CONFIG, c.env);
+      callsStatus = available ? 'configured' : 'not_configured';
+    } catch {}
+
+    return c.json({
+      success: true,
+      livekit: {
+        status: livekitStatus,
+        url: config?.url || null,
+      },
+      cloudflareCalls: {
+        status: callsStatus,
+      },
+      fallback: callsStatus === 'configured' ? 'available' : 'unavailable',
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
 export default instructorRoutes;
