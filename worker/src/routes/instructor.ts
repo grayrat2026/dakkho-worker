@@ -3802,7 +3802,7 @@ instructorRoutes.post('/livekit/token-role', instructorOrAdminMiddleware, async 
 // The existing POST /livekit/webhook is already handling basic events.
 // This section adds enhanced processing via the attendance system.
 
-// GET /livekit/health — Health check for LiveKit + Calls
+// GET /livekit/health — Health check for LiveKit + Calls + Realtime
 instructorRoutes.get('/livekit/health', async (c) => {
   try {
     const config = await getLiveKitConfig(c.env.KV_CONFIG);
@@ -3811,10 +3811,14 @@ instructorRoutes.get('/livekit/health', async (c) => {
 
     // Try to check Cloudflare Calls availability
     let callsStatus: 'configured' | 'not_configured' = 'not_configured';
+    let realtimeStatus: 'configured' | 'not_configured' = 'not_configured';
     try {
-      const { isCallsAvailable } = await import('../lib/cloudflare-calls');
+      const { isCallsAvailable, getRealtimeConfig } = await import('../lib/cloudflare-calls');
       const available = await isCallsAvailable(c.env.KV_CONFIG, c.env);
       callsStatus = available ? 'configured' : 'not_configured';
+
+      const realtimeConfig = await getRealtimeConfig(c.env.KV_CONFIG);
+      realtimeStatus = realtimeConfig ? 'configured' : 'not_configured';
     } catch {}
 
     return c.json({
@@ -3826,10 +3830,84 @@ instructorRoutes.get('/livekit/health', async (c) => {
       cloudflareCalls: {
         status: callsStatus,
       },
+      realtime: {
+        status: realtimeStatus,
+      },
       fallback: callsStatus === 'configured' ? 'available' : 'unavailable',
     });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// DAKKHO REALTIME — Cloudflare Calls "Dakkho Realtime" App
+// ═══════════════════════════════════════════════════
+
+// POST /realtime/session — Create a Dakkho Realtime session
+instructorRoutes.post('/realtime/session', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const { getRealtimeClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
+
+    const body = await c.req.json();
+    const { room, ttl, maxParticipants } = body;
+
+    if (!room) {
+      return c.json({ error: 'room is required' }, 400);
+    }
+
+    const clientConfig = await getRealtimeClientConfig(c.env.KV_CONFIG, room, { ttl, maxParticipants });
+    if (!clientConfig) {
+      return c.json({ error: 'Dakkho Realtime is not configured. Add DAKKHO_REALTIME_APP_ID and DAKKHO_REALTIME_API_TOKEN to KV.' }, 503);
+    }
+
+    const authRole = c.get('authRole');
+    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+
+    // Track the session
+    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, room, instructorId || 'admin');
+
+    return c.json({
+      success: true,
+      provider: 'dakkho-realtime',
+      sessionId: clientConfig.sessionId,
+      url: clientConfig.url,
+      iceServers: clientConfig.iceServers,
+      appId: clientConfig.appId,
+      room,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /realtime/config — Get public Dakkho Realtime configuration
+instructorRoutes.get('/realtime/config', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const { getRealtimeConfig } = await import('../lib/cloudflare-calls');
+    const config = await getRealtimeConfig(c.env.KV_CONFIG);
+
+    if (!config) {
+      return c.json({ configured: false, appId: null });
+    }
+
+    return c.json({
+      configured: true,
+      appId: config.appId,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /realtime/status — Quick check if Dakkho Realtime is available
+instructorRoutes.get('/realtime/status', async (c) => {
+  try {
+    const { getRealtimeConfig } = await import('../lib/cloudflare-calls');
+    const config = await getRealtimeConfig(c.env.KV_CONFIG);
+    return c.json({ available: config !== null });
+  } catch (error) {
+    return c.json({ available: false });
   }
 });
 

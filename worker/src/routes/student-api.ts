@@ -374,6 +374,49 @@ studentApiRoutes.get('/live-classes/:id/calls-session', studentAuthMiddleware, a
   }
 });
 
+// GET /realtime/session — Dakkho Realtime session for students
+studentApiRoutes.get('/realtime/session', studentAuthMiddleware, async (c) => {
+  try {
+    const studentId = c.get('studentId');
+    const room = c.req.query('room');
+
+    if (!room) {
+      return c.json({ error: 'room query parameter is required' }, 400);
+    }
+
+    const { getRealtimeClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
+    const clientConfig = await getRealtimeClientConfig(c.env.KV_CONFIG, room);
+    if (!clientConfig) {
+      return c.json({ error: 'Dakkho Realtime is not configured' }, 503);
+    }
+
+    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, room, `student-${studentId}`);
+
+    return c.json({
+      success: true,
+      provider: 'dakkho-realtime',
+      sessionId: clientConfig.sessionId,
+      url: clientConfig.url,
+      iceServers: clientConfig.iceServers,
+      appId: clientConfig.appId,
+      room,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /realtime/status — Check if Dakkho Realtime is available
+studentApiRoutes.get('/realtime/status', async (c) => {
+  try {
+    const { getRealtimeConfig } = await import('../lib/cloudflare-calls');
+    const config = await getRealtimeConfig(c.env.KV_CONFIG);
+    return c.json({ available: config !== null, appId: config?.appId || null });
+  } catch (error) {
+    return c.json({ available: false });
+  }
+});
+
 // ─── Coupons ───
 
 studentApiRoutes.get('/coupons/validate', async (c) => {
