@@ -70,7 +70,15 @@ export function parseDeepLink(url: string): DeepLinkResult {
     }
 
     // /live → live-sessions
-    if (pathname === '/live' || pathname.startsWith('/live')) {
+    // /live/join/{id} → live-class-join with liveClassId
+    if (pathname === '/live') {
+      return { page: 'live-sessions', params: {} };
+    }
+    const liveJoinMatch = pathname.match(/^\/live\/join\/([^/]+)/);
+    if (liveJoinMatch) {
+      return { page: 'live-class-join', params: { liveClassId: liveJoinMatch[1] } };
+    }
+    if (pathname.startsWith('/live')) {
       return { page: 'live-sessions', params: {} };
     }
 

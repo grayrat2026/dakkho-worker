@@ -35,6 +35,7 @@ import { WatchHistoryPage } from './history/WatchHistoryPage';
 import { DownloadsPage } from './downloads/DownloadsPage';
 import { CertificatesPage } from './certificates/CertificatesPage';
 import { LiveSessionsPage } from './live/LiveSessionsPage';
+import { LiveClassJoinPage } from './live/LiveClassJoinPage';
 import { AchievementsPage } from './achievements/AchievementsPage';
 import { AssignmentPage } from './assignment/AssignmentPage';
 import { DiscussionPage } from './discussion/DiscussionPage';
@@ -179,6 +180,7 @@ function PageRouter() {
     downloads: <DownloadsPage />,
     certificates: <CertificatesPage />,
     'live-sessions': <LiveSessionsPage />,
+    'live-class-join': <LiveClassJoinPage />,
     achievements: <AchievementsPage />,
     assignment: <AssignmentPage />,
     discussion: <DiscussionPage />,
