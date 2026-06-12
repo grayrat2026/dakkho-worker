@@ -328,3 +328,31 @@ Stage Summary:
 - Deployed to https://dakkho-instructor.pages.dev
 - Pushed to https://github.com/grayrat2026/dakkho-instructor
 - README includes full documentation of features and architecture
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix Profile page 404 on refresh, add LiveKit conferencing, push to GitHub
+
+Work Log:
+- Fixed Profile page 404 on refresh: Root cause was Cloudflare Pages _redirects not working for Direct Upload deployments. Created a Cloudflare Pages Function (functions/[[path]].js) that intercepts all non-static routes and serves index.html with 200 status
+- Fixed profile course count showing 0: Profile API returns total_courses: 0 even with 3 courses. Updated Profile.tsx to use coursesData.total and dashboardData.dashboard.courseCount as primary sources
+- Added _headers file for proper Cache-Control (no-cache for HTML, immutable for static assets)
+- Added LiveKit integration: Created livekit.ts helper library using Web Crypto API for JWT generation
+- Added LiveKit backend endpoints: GET/POST /instructor/livekit/token, POST /instructor/livekit/webhook, GET /instructor/livekit/config
+- Added student LiveKit token endpoint: GET /api/live-classes/:id/livekit-token
+- Modified schedule creation to auto-generate LiveKit rooms when platform is 'livekit'
+- Stored all LiveKit credentials in Workers KV (LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL, LIVEKIT_WEBHOOK_SECRET)
+- Created LiveClassRoom.tsx component with full video conference UI using @livekit/components-react
+- Added live-class-room page route and URL parsing for /live-room/:roomName
+- Deployed backend Worker and Instructor app to Cloudflare Pages
+- Pushed all changes to GitHub
+
+Stage Summary:
+- Profile page 404 on refresh: FIXED with Cloudflare Pages Function
+- Profile course count: FIXED with real courses API data
+- LiveKit integration: COMPLETE (backend + frontend)
+- All routes return 200 on refresh (tested)
+- LiveKit token generation verified working
+- Deployed to https://dakkho-instructor.pages.dev
+- GitHub: https://github.com/grayrat2026/dakkho-instructor
