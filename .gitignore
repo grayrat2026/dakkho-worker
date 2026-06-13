@@ -79,6 +79,8 @@ worklog.md
 supabase/.branches/
 supabase/.temp/worker/.wrangler/
 
+.dev.vars
+
 # Wrangler local state
 **/.wrangler/
 student-app/pages-proxy/
