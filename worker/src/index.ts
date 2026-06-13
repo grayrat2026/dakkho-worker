@@ -50,6 +50,7 @@ import { aboutPublicRoutes, aboutAdminRoutes } from './routes/about';
 import { supportPublicRoutes, supportAdminRoutes, telegramWebhookRoutes } from './routes/support';
 import videoStreamingRoutes from './routes/video-streaming';
 import unifiedAuthRoutes from './routes/unified-auth';
+import errorMonitorRoutes from './routes/error-monitor';
 
 // R2 file serving (no auth needed — public access for images/videos)
 import { getFile, getBucketForType } from './lib/r2';
@@ -142,6 +143,7 @@ app.route('/api', studentApiRoutes);
 // Admin about page management
 app.route('/admin/about', aboutAdminRoutes);
 app.route('/admin/support', supportAdminRoutes);
+app.route('/admin/errors', errorMonitorRoutes);
 
 // ─── Public R2 File Serving ───
 // Serves files from R2 buckets — no auth required.
@@ -182,8 +184,21 @@ app.notFound((c) => c.json({ error: 'Not found' }, 404));
 
 // ─── Global Error Handler ───
 
-app.onError((err, c) => {
+app.onError(async (err, c) => {
   console.error('Unhandled error:', err);
+
+  // Log to KV error monitoring
+  try {
+    const { logError } = await import('./lib/error-monitor');
+    await logError(c.env.KV_CONFIG, {
+      error: err,
+      route: c.req.path,
+      method: c.req.method,
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+    });
+  } catch {}
+
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 

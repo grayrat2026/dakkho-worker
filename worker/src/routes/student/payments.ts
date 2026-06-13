@@ -13,6 +13,7 @@ import {
   rateLimit,
   type StudentAuthVariables,
 } from './helpers';
+import { logError } from '../../lib/error-monitor';
 
 const routes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -51,6 +52,16 @@ routes.post('/payments/submit', async (c) => {
 
     return c.json({ success: true, message: 'Payment submitted for verification' });
   } catch (error) {
+    const auth = await getStudentAuth(c).catch(() => null);
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/payments/submit',
+      method: 'POST',
+      userId: auth?.userId,
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -193,6 +204,16 @@ routes.post('/payments/create', async (c) => {
       payment_id: paymentId,
     });
   } catch (error) {
+    const auth = await getStudentAuth(c).catch(() => null);
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/payments/create',
+      method: 'POST',
+      userId: auth?.userId,
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -289,6 +310,16 @@ routes.post('/payments/verify', async (c) => {
       });
     }
   } catch (error) {
+    const auth = await getStudentAuth(c).catch(() => null);
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/payments/verify',
+      method: 'POST',
+      userId: auth?.userId,
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -412,6 +443,15 @@ routes.post('/payments/piprapay/webhook', async (c) => {
   } catch (error) {
     // Always return 200 to PipraPay so they don't retry unnecessarily
     console.error('PipraPay webhook error:', error);
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/payments/piprapay/webhook',
+      method: 'POST',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+      metadata: { source: 'piprapay-webhook' },
+    });
     return c.json({ success: true, error: 'Internal error' });
   }
 });

@@ -21,6 +21,7 @@ import {
   rateLimit,
   type StudentAuthVariables,
 } from './helpers';
+import { logError } from '../../lib/error-monitor';
 
 const routes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -139,6 +140,14 @@ routes.post('/auth/signup', async (c) => {
       },
     });
   } catch (error) {
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/auth/signup',
+      method: 'POST',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -223,6 +232,14 @@ routes.post('/auth/login', async (c) => {
     });
   } catch (error) {
     const msg = getErrorMessage(error);
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/auth/login',
+      method: 'POST',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 401,
+    });
     return c.json({ error: msg.includes('Invalid') ? msg : 'Invalid email or password' }, 401);
   }
 });

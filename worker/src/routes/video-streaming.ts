@@ -14,6 +14,7 @@ import { studentAuthMiddleware } from '../lib/student-auth-middleware';
 import type { StudentAuthVariables } from '../lib/student-auth-middleware';
 import { getErrorMessage } from '../lib/utils';
 import { rateLimit } from '../lib/rate-limit';
+import { logError } from '../lib/error-monitor';
 
 const videoStreamingRoutes = new Hono<{
   Bindings: Env;
@@ -126,6 +127,16 @@ videoStreamingRoutes.post('/session/:videoId', studentAuthMiddleware, async (c) 
       processingStatus: video.processing_status || 'pending',
     });
   } catch (error) {
+    const userId = c.get('studentId') as string | undefined;
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/video/stream/session/:videoId',
+      method: 'POST',
+      userId,
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -203,6 +214,14 @@ videoStreamingRoutes.get('/playlist/:videoId', async (c) => {
       },
     });
   } catch (error) {
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/video/stream/playlist/:videoId',
+      method: 'GET',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -268,6 +287,14 @@ videoStreamingRoutes.get('/variant/:videoId/:quality/playlist.m3u8', async (c) =
       },
     });
   } catch (error) {
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/video/stream/variant/:videoId/:quality/playlist.m3u8',
+      method: 'GET',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -334,6 +361,14 @@ videoStreamingRoutes.get('/seg/:videoId/:quality/:segFile', async (c) => {
 
     return new Response(object.body, { headers });
   } catch (error) {
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/video/stream/seg/:videoId/:quality/:segFile',
+      method: 'GET',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
@@ -394,6 +429,14 @@ videoStreamingRoutes.get('/info/:videoId', async (c) => {
       },
     });
   } catch (error) {
+    await logError(c.env.KV_CONFIG, {
+      error,
+      route: '/api/video/stream/info/:videoId',
+      method: 'GET',
+      ip: c.req.header('CF-Connecting-IP'),
+      userAgent: c.req.header('User-Agent'),
+      statusCode: 500,
+    });
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
