@@ -167,8 +167,8 @@ routes.post('/auth/login', async (c) => {
 
     // Look up user in D1
     const user = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, password_hash, institute_id, technology, email_verified, is_active FROM users WHERE email = ? AND is_active = 1'
-    ).bind(email).first<{ id: string; email: string; full_name: string; role: string; password_hash: string; institute_id: number | null; technology: string | null; email_verified: number; is_active: number }>();
+      'SELECT id, email, full_name, role, password_hash, institute_id, technology, email_verified, is_active, avatar_url FROM users WHERE email = ? AND is_active = 1'
+    ).bind(email).first<{ id: string; email: string; full_name: string; role: string; password_hash: string; institute_id: number | null; technology: string | null; email_verified: number; is_active: number; avatar_url: string | null }>();
 
     if (!user) {
       return c.json({ error: 'Invalid email or password' }, 401);
@@ -226,6 +226,7 @@ routes.post('/auth/login', async (c) => {
         technology: user.technology || null,
         technologyName: technologyName || null,
         emailVerified: !!user.email_verified,
+        avatarUrl: user.avatar_url || '',
         packages: userPackages,
         themeMode,
       },
