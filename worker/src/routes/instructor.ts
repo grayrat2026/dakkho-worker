@@ -2545,6 +2545,52 @@ instructorRoutes.delete('/videos/:id', instructorOrAdminMiddleware, async (c) =>
   }
 });
 
+// GET /videos/search — Search instructor's uploaded videos by title
+instructorRoutes.get('/videos/search', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const instructorId = c.get('instructor')?.id || c.get('user')?.id;
+    if (!instructorId) {
+      return c.json({ error: 'Instructor ID required' }, 401);
+    }
+
+    const q = c.req.query('q') || '';
+    const courseId = c.req.query('courseId') || '';
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '20');
+    const offset = (page - 1) * limit;
+
+    // Build query to search videos in courses owned by this instructor
+    let where = `WHERE v.course_id IN (SELECT id FROM courses WHERE instructor_id = ? UNION SELECT course_id FROM course_instructors WHERE instructor_id = ?)`;
+    const params: unknown[] = [instructorId, instructorId];
+
+    if (q) {
+      where += ' AND v.title LIKE ?';
+      params.push(`%${q}%`);
+    }
+
+    if (courseId) {
+      where += ' AND v.course_id = ?';
+      params.push(courseId);
+    }
+
+    const countResult = await c.env.DB.prepare(
+      `SELECT COUNT(*) as total FROM videos v ${where}`
+    ).bind(...params).first();
+    const total = (countResult as any)?.total || 0;
+
+    const result = await c.env.DB.prepare(
+      `SELECT v.* FROM videos v ${where} ORDER BY v.created_at DESC LIMIT ? OFFSET ?`
+    ).bind(...params, limit, offset).all();
+
+    const videos = result.results.map((r: any) => formatVideoRow(r));
+
+    return c.json({ videos, total });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return c.json({ error: message }, 500);
+  }
+});
+
 // ═══════════════════════════════════════════════════
 // RESOURCES CRUD (course_resources for courses instructor owns)
 // ═══════════════════════════════════════════════════

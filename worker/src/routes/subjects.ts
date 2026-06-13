@@ -50,7 +50,28 @@ subjectRoutes.get('/', async (c) => {
       `SELECT * FROM subjects ${where} ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
 
-    return c.json({ documents: result.results, total });
+    // After fetching subjects, add technologies from junction table
+    const subjects = result.results as Record<string, unknown>[];
+    const subjectsWithTech = await Promise.all(subjects.map(async (subject) => {
+      const subjectId = String(subject.id);
+      try {
+        const techResult = await c.env.DB.prepare(
+          `SELECT st.technology_id, t.name as technology_name FROM subject_technologies st 
+           JOIN technologies t ON st.technology_id = t.id 
+           WHERE st.subject_id = ?`
+        ).bind(subjectId).all();
+        return {
+          ...subject,
+          technology_ids: techResult.results.map((r: any) => r.technology_id),
+          technology_names: techResult.results.map((r: any) => r.technology_name),
+        };
+      } catch {
+        // Junction table might not exist yet
+        return subject;
+      }
+    }));
+
+    return c.json({ documents: subjectsWithTech, total });
   } catch (error) {
     const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
@@ -93,6 +114,16 @@ subjectRoutes.post('/', async (c) => {
       data.course_count || 0,
       data.is_active !== undefined ? (data.is_active ? 1 : 0) : 1
     ).run();
+
+    // Handle multiple technology_ids
+    const technologyIds = (rawData as any).technology_ids as number[] || (data.technology_id ? [Number(data.technology_id)] : []);
+    for (const techId of technologyIds) {
+      try {
+        await c.env.DB.prepare(
+          'INSERT INTO subject_technologies (id, subject_id, technology_id) VALUES (?, ?, ?)'
+        ).bind(crypto.randomUUID(), id, techId).run();
+      } catch {}
+    }
 
     const created = await c.env.DB.prepare('SELECT * FROM subjects WHERE id = ?').bind(id).first();
 
@@ -154,6 +185,23 @@ subjectRoutes.put('/', async (c) => {
       `UPDATE subjects SET ${setClauses.join(', ')} WHERE id = ?`
     ).bind(...setValues).run();
 
+    // Update technology associations if provided
+    if (rawUpdates.technology_ids !== undefined) {
+      const techIds = rawUpdates.technology_ids as number[];
+      // Delete existing associations
+      await c.env.DB.prepare(
+        'DELETE FROM subject_technologies WHERE subject_id = ?'
+      ).bind(String(subjectId)).run();
+      // Insert new associations
+      for (const techId of techIds) {
+        try {
+          await c.env.DB.prepare(
+            'INSERT INTO subject_technologies (id, subject_id, technology_id) VALUES (?, ?, ?)'
+          ).bind(crypto.randomUUID(), String(subjectId), techId).run();
+        } catch {}
+      }
+    }
+
     const updated = await c.env.DB.prepare('SELECT * FROM subjects WHERE id = ?').bind(String(subjectId)).first();
 
     const user = c.get('user');
@@ -179,6 +227,59 @@ subjectRoutes.delete('/', async (c) => {
 
     const user = c.get('user');
     await logAudit(c.env, user.id, 'DELETE_SUBJECT', 'subjects', id);
+
+    return c.json({ success: true });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return c.json({ error: message }, 500);
+  }
+});
+
+// GET /:subjectId/technologies — Get technologies for a subject
+subjectRoutes.get('/:subjectId/technologies', async (c) => {
+  try {
+    const subjectId = c.req.param('subjectId');
+    const result = await c.env.DB.prepare(
+      `SELECT st.id, st.technology_id, t.name as technology_name, t.short_code 
+       FROM subject_technologies st 
+       JOIN technologies t ON st.technology_id = t.id 
+       WHERE st.subject_id = ?`
+    ).bind(subjectId).all();
+    return c.json({ technologies: result.results });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return c.json({ error: message }, 500);
+  }
+});
+
+// POST /:subjectId/technologies — Add technology to subject
+subjectRoutes.post('/:subjectId/technologies', async (c) => {
+  try {
+    const subjectId = c.req.param('subjectId');
+    const { technologyId } = await c.req.json<{ technologyId: number }>();
+    if (!technologyId) return c.json({ error: 'technologyId required' }, 400);
+
+    const id = crypto.randomUUID();
+    await c.env.DB.prepare(
+      'INSERT INTO subject_technologies (id, subject_id, technology_id) VALUES (?, ?, ?)'
+    ).bind(id, subjectId, technologyId).run();
+
+    return c.json({ success: true, id });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return c.json({ error: message }, 500);
+  }
+});
+
+// DELETE /:subjectId/technologies/:technologyId — Remove technology from subject
+subjectRoutes.delete('/:subjectId/technologies/:technologyId', async (c) => {
+  try {
+    const subjectId = c.req.param('subjectId');
+    const technologyId = c.req.param('technologyId');
+
+    await c.env.DB.prepare(
+      'DELETE FROM subject_technologies WHERE subject_id = ? AND technology_id = ?'
+    ).bind(subjectId, Number(technologyId)).run();
 
     return c.json({ success: true });
   } catch (error) {
