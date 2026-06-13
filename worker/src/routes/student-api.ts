@@ -1848,6 +1848,8 @@ studentApiRoutes.post('/payments/create', async (c) => {
             } else if (cp.discount_type === 'flat') {
               finalAmount = Math.max(0, finalAmount - cp.discount_value);
             }
+            // Round to nearest whole number (569.06 → 569, 678.697 → 679)
+            finalAmount = Math.round(finalAmount);
             // Increment coupon usage
             await c.env.DB.prepare(
               'UPDATE coupons SET usage_count = usage_count + 1 WHERE code = ?'
