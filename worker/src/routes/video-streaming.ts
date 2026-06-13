@@ -1,7 +1,7 @@
 /**
  * Video Streaming & Processing Routes
  * ─────────────────────────────────────
- * - Tokenized HLS streaming for students
+ * - Tokenized HLS streaming for students (HMAC-signed tokens)
  * - Processing status updates from VPS transcoder
  * - Segment proxy with auth validation
  */
@@ -13,28 +13,56 @@ import { adminAuthMiddleware } from '../lib/auth';
 import { studentAuthMiddleware } from '../lib/student-auth-middleware';
 import type { StudentAuthVariables } from '../lib/student-auth-middleware';
 import { getErrorMessage } from '../lib/utils';
+import { rateLimit } from '../lib/rate-limit';
 
 const videoStreamingRoutes = new Hono<{
   Bindings: Env;
   Variables: AuthVariables & StudentAuthVariables;
 }>();
 
-// ─── Token Generation Helpers ───
+// ─── Token Generation Helpers (HMAC-signed) ───
 
-function generateStreamToken(videoId: string, sessionId: string, expiry: number, secret: string): string {
-  // Simple HMAC-like token using Web Crypto
-  const data = `${videoId}:${sessionId}:${expiry}`;
-  // Use a simple encoding for now — in production, use proper HMAC
-  const encoded = btoa(JSON.stringify({ v: videoId, s: sessionId, e: expiry }));
-  return encoded;
+async function generateStreamToken(
+  videoId: string,
+  sessionId: string,
+  userId: string,
+  ip: string,
+  expiry: number,
+  secret: string
+): Promise<string> {
+  const payload = JSON.stringify({ v: videoId, s: sessionId, u: userId, i: ip, e: expiry });
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  return btoa(payload) + '.' + sigB64;
 }
 
-function validateStreamToken(token: string, videoId: string): { valid: boolean; sessionId?: string; expiry?: number } {
+async function validateStreamToken(
+  token: string,
+  videoId: string,
+  secret: string
+): Promise<{ valid: boolean; sessionId?: string; userId?: string; ip?: string; expiry?: number }> {
   try {
-    const decoded = JSON.parse(atob(token));
-    if (decoded.v !== videoId) return { valid: false };
-    if (decoded.e && Date.now() > decoded.e) return { valid: false };
-    return { valid: true, sessionId: decoded.s, expiry: decoded.e };
+    const [payloadB64, sigB64] = token.split('.');
+    if (!payloadB64 || !sigB64) return { valid: false };
+
+    // Verify HMAC signature
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+    );
+    const sigBytes = new Uint8Array(Array.from(atob(sigB64), c => c.charCodeAt(0)));
+    const valid = await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(atob(payloadB64)));
+    if (!valid) return { valid: false };
+
+    const payload = JSON.parse(atob(payloadB64));
+    if (payload.v !== videoId) return { valid: false };
+    if (payload.e && Date.now() > payload.e) return { valid: false };
+
+    return { valid: true, sessionId: payload.s, userId: payload.u, ip: payload.i, expiry: payload.e };
   } catch {
     return { valid: false };
   }
@@ -45,8 +73,13 @@ function validateStreamToken(token: string, videoId: string): { valid: boolean; 
 // POST /session/:videoId — Create streaming session
 videoStreamingRoutes.post('/session/:videoId', studentAuthMiddleware, async (c) => {
   try {
+    // Rate limit session creation
+    const limited = await rateLimit(c, 'stream');
+    if (limited) return limited;
+
     const videoId = c.req.param('videoId');
     const userId = c.get('studentId') as string;
+    const ip = c.req.header('CF-Connecting-IP') || 'unknown';
 
     // Check enrollment
     const video = await c.env.DB.prepare(
@@ -70,17 +103,18 @@ videoStreamingRoutes.post('/session/:videoId', studentAuthMiddleware, async (c) 
 
     // Create streaming session
     const sessionId = crypto.randomUUID();
-    const expiry = Date.now() + (10 * 60 * 1000); // 10 minutes
-    const token = generateStreamToken(videoId, sessionId, expiry, 'dakkho-stream-secret');
+    const expiry = Date.now() + (30 * 60 * 1000); // 30 minutes
+    const token = await generateStreamToken(videoId, sessionId, userId, ip, expiry, c.env.ADMIN_SECRET_KEY);
 
-    // Store session in KV (auto-expire in 15 minutes)
+    // Store session in KV (auto-expire in 35 minutes)
     await c.env.KV_CONFIG.put(`stream:${sessionId}`, JSON.stringify({
       videoId,
       userId,
       token,
+      ip,
       expiry,
       createdAt: Date.now(),
-    }), { expirationTtl: 900 }); // 15 min
+    }), { expirationTtl: 2100 }); // 35 min
 
     return c.json({
       success: true,
@@ -100,11 +134,10 @@ videoStreamingRoutes.post('/session/:videoId', studentAuthMiddleware, async (c) 
 videoStreamingRoutes.get('/playlist/:videoId', async (c) => {
   try {
     const videoId = c.req.param('videoId');
-    const session = c.req.query('session') || '';
     const token = c.req.query('token') || '';
 
-    // Validate token
-    const validation = validateStreamToken(token, videoId);
+    // Validate token (HMAC signature + expiry + videoId)
+    const validation = await validateStreamToken(token, videoId, c.env.ADMIN_SECRET_KEY);
     if (!validation.valid || !validation.sessionId) {
       return c.json({ error: 'Invalid or expired token' }, 403);
     }
@@ -120,6 +153,17 @@ videoStreamingRoutes.get('/playlist/:videoId', async (c) => {
       return c.json({ error: 'Invalid session' }, 403);
     }
 
+    // Verify userId from token matches session
+    if (validation.userId && parsed.userId !== validation.userId) {
+      return c.json({ error: 'Invalid session' }, 403);
+    }
+
+    // Log IP mismatch for monitoring (not enforced — mobile users may switch networks)
+    const requestIp = c.req.header('CF-Connecting-IP') || 'unknown';
+    if (validation.ip && validation.ip !== 'unknown' && validation.ip !== requestIp) {
+      console.warn(`[STREAM] IP mismatch for session ${validation.sessionId}: token IP=${validation.ip}, request IP=${requestIp}`);
+    }
+
     // Get video info
     const video = await c.env.DB.prepare(
       'SELECT hls_ready, available_qualities FROM videos WHERE id = ?'
@@ -132,8 +176,8 @@ videoStreamingRoutes.get('/playlist/:videoId', async (c) => {
     const qualities: string[] = JSON.parse(video.available_qualities || '["360p"]');
 
     // Generate tokenized segment URLs
-    const segExpiry = Math.floor(Date.now() / 1000) + 300; // 5 minutes
-    const segToken = generateStreamToken(videoId, validation.sessionId, segExpiry * 1000, 'dakkho-stream-secret');
+    const segExpiry = Math.floor(Date.now() / 1000) + 600; // 10 minutes
+    const segToken = await generateStreamToken(videoId, validation.sessionId, parsed.userId, requestIp, segExpiry * 1000, c.env.ADMIN_SECRET_KEY);
 
     const workerUrl = new URL(c.req.url).origin;
 
@@ -168,17 +212,16 @@ videoStreamingRoutes.get('/variant/:videoId/:quality/playlist.m3u8', async (c) =
   try {
     const videoId = c.req.param('videoId');
     const quality = c.req.param('quality');
-    const session = c.req.query('session') || '';
     const token = c.req.query('token') || '';
     const exp = c.req.query('exp') || '';
 
-    // Validate token
-    const validation = validateStreamToken(token, videoId);
+    // Validate token (HMAC signature + expiry + videoId)
+    const validation = await validateStreamToken(token, videoId, c.env.ADMIN_SECRET_KEY);
     if (!validation.valid) {
       return c.json({ error: 'Invalid or expired token' }, 403);
     }
 
-    // Check expiry
+    // Check expiry from query param
     if (exp && Math.floor(Date.now() / 1000) > parseInt(exp)) {
       return c.json({ error: 'Token expired' }, 403);
     }
@@ -187,6 +230,12 @@ videoStreamingRoutes.get('/variant/:videoId/:quality/playlist.m3u8', async (c) =
     const sessionData = await c.env.KV_CONFIG.get(`stream:${validation.sessionId}`);
     if (!sessionData) {
       return c.json({ error: 'Session expired' }, 401);
+    }
+
+    // Log IP mismatch for monitoring
+    const requestIp = c.req.header('CF-Connecting-IP') || 'unknown';
+    if (validation.ip && validation.ip !== 'unknown' && validation.ip !== requestIp) {
+      console.warn(`[STREAM] IP mismatch for session ${validation.sessionId}: token IP=${validation.ip}, request IP=${requestIp}`);
     }
 
     // Fetch the actual playlist from R2
@@ -202,8 +251,9 @@ videoStreamingRoutes.get('/variant/:videoId/:quality/playlist.m3u8', async (c) =
 
     // Replace relative segment references with tokenized absolute URLs
     const workerUrl = new URL(c.req.url).origin;
-    const segExpiry = Math.floor(Date.now() / 1000) + 300;
-    const segToken = generateStreamToken(videoId, validation.sessionId!, segExpiry * 1000, 'dakkho-stream-secret');
+    const segExpiry = Math.floor(Date.now() / 1000) + 600; // 10 minutes
+    const parsedSession = JSON.parse(sessionData);
+    const segToken = await generateStreamToken(videoId, validation.sessionId!, parsedSession.userId, requestIp, segExpiry * 1000, c.env.ADMIN_SECRET_KEY);
 
     playlist = playlist.replace(
       /seg_(\d+)\.ts/g,
@@ -228,17 +278,16 @@ videoStreamingRoutes.get('/seg/:videoId/:quality/:segFile', async (c) => {
     const videoId = c.req.param('videoId');
     const quality = c.req.param('quality');
     const segFile = c.req.param('segFile');
-    const session = c.req.query('session') || '';
     const token = c.req.query('token') || '';
     const exp = c.req.query('exp') || '';
 
-    // Validate token
-    const validation = validateStreamToken(token, videoId);
+    // Validate token (HMAC signature + expiry + videoId)
+    const validation = await validateStreamToken(token, videoId, c.env.ADMIN_SECRET_KEY);
     if (!validation.valid) {
       return c.json({ error: 'Invalid token' }, 403);
     }
 
-    // Check expiry
+    // Check expiry from query param
     if (exp && Math.floor(Date.now() / 1000) > parseInt(exp)) {
       return c.json({ error: 'Token expired' }, 403);
     }
@@ -254,6 +303,17 @@ videoStreamingRoutes.get('/seg/:videoId/:quality/:segFile', async (c) => {
       return c.json({ error: 'Invalid session for this video' }, 403);
     }
 
+    // Verify userId from token matches session
+    if (validation.userId && parsed.userId !== validation.userId) {
+      return c.json({ error: 'Invalid session' }, 403);
+    }
+
+    // Log IP mismatch for monitoring
+    const requestIp = c.req.header('CF-Connecting-IP') || 'unknown';
+    if (validation.ip && validation.ip !== 'unknown' && validation.ip !== requestIp) {
+      console.warn(`[STREAM] IP mismatch for session ${validation.sessionId}: token IP=${validation.ip}, request IP=${requestIp}`);
+    }
+
     // Fetch segment from R2
     const key = `${videoId}/hls/${quality}/${segFile}`;
     const object = await c.env.R2_VIDEOS.get(key);
@@ -265,7 +325,7 @@ videoStreamingRoutes.get('/seg/:videoId/:quality/:segFile', async (c) => {
     // Return with caching headers
     const headers = new Headers();
     headers.set('Content-Type', 'video/mp2t');
-    headers.set('Cache-Control', 'private, max-age=300'); // 5 min browser cache
+    headers.set('Cache-Control', 'private, max-age=600'); // 10 min browser cache
     headers.set('Access-Control-Allow-Origin', c.req.header('origin') || '*');
 
     if (object.httpMetadata?.contentType) {

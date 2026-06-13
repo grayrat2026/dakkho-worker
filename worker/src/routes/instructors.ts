@@ -127,7 +127,16 @@ instructorRoutes.put('/', async (c) => {
     const updated = await c.env.DB.prepare('SELECT * FROM instructors WHERE id = ?').bind(String(instructorId)).first();
 
     const user = c.get('user');
-    await logAudit(c.env, user.id, 'UPDATE_INSTRUCTOR', 'instructors', String(instructorId), updates);
+    // Specific audit logging for instructor approval/rejection (is_active toggle)
+    if (updates.is_active !== undefined) {
+      if (updates.is_active === 1 || updates.is_active === true) {
+        await logAudit(c.env, user.id, 'APPROVE_INSTRUCTOR', 'instructors', String(instructorId), updates);
+      } else {
+        await logAudit(c.env, user.id, 'DEACTIVATE_INSTRUCTOR', 'instructors', String(instructorId), updates);
+      }
+    } else {
+      await logAudit(c.env, user.id, 'UPDATE_INSTRUCTOR', 'instructors', String(instructorId), updates);
+    }
 
     return c.json({ document: updated });
   } catch (error) {

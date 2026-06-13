@@ -73,6 +73,38 @@ export function createRateLimitKey(prefix: string, identifier: string): string {
   return `${prefix}:${identifier}`;
 }
 
+/**
+ * Simple rate-limit helper for use inside route handlers.
+ * Usage: `const limited = await rateLimit(c, 'auth'); if (limited) return limited;`
+ * Returns a 429 Response if rate-limited, or null if OK.
+ */
+export async function rateLimit(c: any, preset: string): Promise<Response | null> {
+  const config = RATE_LIMITS[preset];
+  if (!config) return null; // unknown preset → skip
+
+  const kv = c.env.KV_CONFIG as KVNamespace;
+  const authHeader = c.req.header('Authorization');
+  const ip = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || 'unknown';
+  const identifier = authHeader ? authHeader.replace('Bearer ', '').substring(0, 20) : ip;
+
+  const key = createRateLimitKey(preset, identifier);
+  const result = await checkRateLimit(kv, key, config);
+
+  // Add rate limit headers
+  c.header('X-RateLimit-Remaining', result.remaining.toString());
+  c.header('X-RateLimit-Reset', result.resetAt.toString());
+
+  if (!result.allowed) {
+    return c.json({
+      error: 'Too many requests',
+      code: 'RATE_LIMITED',
+      retryAfter: Math.ceil((result.resetAt - Date.now()) / 1000),
+    }, 429);
+  }
+
+  return null;
+}
+
 // Hono middleware factory for rate limiting
 export function rateLimitMiddleware(prefix: string, config: RateLimitConfig) {
   return async (c: any, next: any) => {

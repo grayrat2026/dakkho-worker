@@ -43,4 +43,8 @@ export interface Env {
   // PipraPay (optional - plug & play)
   PIPRAPAY_API_KEY?: string;
   PIPRAPAY_BASE_URL?: string;
+
+  // LiveKit (server-side token generation)
+  LIVEKIT_API_KEY: string;
+  LIVEKIT_API_SECRET: string;
 }

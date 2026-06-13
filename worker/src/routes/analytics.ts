@@ -1,6 +1,7 @@
 /**
  * Analytics routes — GET /, GET /charts
  * D1-only: All stat aggregation via SQL COUNT queries
+ * KV-cached: 5-minute TTL on dashboard endpoints
  */
 
 import { Hono } from 'hono';
@@ -14,9 +15,16 @@ const analyticsRoutes = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 // Apply auth middleware
 analyticsRoutes.use('*', adminAuthMiddleware);
 
-// GET / — Get analytics stats
+// GET / — Get analytics stats (KV-cached for 5 min)
 analyticsRoutes.get('/', async (c) => {
   try {
+    // Check KV cache first
+    const cacheKey = 'analytics:dashboard:all';
+    const cached = await c.env.KV_CONFIG.get(cacheKey);
+    if (cached) {
+      return c.json(JSON.parse(cached));
+    }
+
     const [
       usersCount,
       coursesCount,
@@ -63,21 +71,33 @@ analyticsRoutes.get('/', async (c) => {
       // Ignore D1 errors
     }
 
-    return c.json({
+    const result = {
       stats,
       recentEnrollments: recentEnrollments.results,
       popularCourses: popularCourses.results,
       recentLogs,
-    });
+    };
+
+    // Cache result for 5 minutes
+    await c.env.KV_CONFIG.put(cacheKey, JSON.stringify(result), { expirationTtl: 300 });
+
+    return c.json(result);
   } catch (error) {
     const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 
-// GET /charts — Get chart data (real analytics from database)
+// GET /charts — Get chart data (KV-cached for 5 min)
 analyticsRoutes.get('/charts', async (c) => {
   try {
+    // Check KV cache first
+    const cacheKey = 'analytics:charts:all';
+    const cached = await c.env.KV_CONFIG.get(cacheKey);
+    if (cached) {
+      return c.json(JSON.parse(cached));
+    }
+
     const now = new Date();
 
     // Month names for the last 6 months
@@ -152,11 +172,16 @@ analyticsRoutes.get('/charts', async (c) => {
       userGrowthWithBaseline.push({ month: monthNames[i], users: cum });
     }
 
-    return c.json({
+    const result = {
       enrollmentTrend,
       courseDistribution,
       userGrowth: userGrowthWithBaseline,
-    });
+    };
+
+    // Cache result for 5 minutes
+    await c.env.KV_CONFIG.put(cacheKey, JSON.stringify(result), { expirationTtl: 300 });
+
+    return c.json(result);
   } catch (error) {
     const message = getErrorMessage(error);
     return c.json({ error: message }, 500);

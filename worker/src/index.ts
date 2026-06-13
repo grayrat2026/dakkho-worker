@@ -34,7 +34,7 @@ import eventRoutes from './routes/events';
 import liveClassRoutes from './routes/live-classes';
 import paymentRoutes from './routes/payments';
 import instituteRequestRoutes from './routes/institute-requests';
-import studentApiRoutes from './routes/student-api';
+import studentApiRoutes from './routes/student';
 import pushRoutes from './routes/push';
 import techRoutes from './routes/technologies';
 import subjectRoutes from './routes/subjects';

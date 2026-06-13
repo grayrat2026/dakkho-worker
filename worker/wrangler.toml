@@ -53,6 +53,8 @@ PIPRAPAY_BASE_URL = "https://pay.dakkho.pro.bd"
 # ONE_SIGNAL_APP_ID
 # ONE_SIGNAL_REST_API_KEY
 # PIPRAPAY_API_KEY
+# LIVEKIT_API_KEY
+# LIVEKIT_API_SECRET
 
 # Cron Triggers
 [triggers]
