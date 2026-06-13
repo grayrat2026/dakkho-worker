@@ -15,7 +15,6 @@ import { DEFAULT_CONFIG, type ServerConfig } from '../lib/types';
 import { getBucketForType, getPublicUrl } from '../lib/r2';
 import { getErrorMessage, generateId, getSessionExpiry } from '../lib/utils';
 import { hashPassword, verifyPassword } from '../lib/auth-password';
-import { getLiveKitConfig, generateLiveKitToken } from '../lib/livekit';
 
 const studentApiRoutes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -233,194 +232,13 @@ studentApiRoutes.get('/events', async (c) => {
 
 studentApiRoutes.get('/live-classes', async (c) => {
   try {
-    // Only show live classes for published, existing courses
-    // or standalone classes (no course_id)
-    const result = await c.env.DB.prepare(`
-      SELECT lcs.* FROM live_class_schedules lcs
-      LEFT JOIN courses c ON lcs.course_id = c.id
-      WHERE lcs.is_active = 1
-        AND lcs.status IN ('scheduled', 'live')
-        AND (lcs.course_id IS NULL OR (c.id IS NOT NULL AND c.is_published = 1))
-      ORDER BY lcs.scheduled_at ASC
-    `).all();
+    const result = await c.env.DB.prepare(
+      "SELECT * FROM live_class_schedules WHERE is_active = 1 AND status IN ('scheduled', 'live') ORDER BY scheduled_at ASC"
+    ).all();
 
     return c.json({ liveClasses: result.results });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /live-classes/:id/livekit-token — Generate a LiveKit token for a student to join a class
-studentApiRoutes.get('/live-classes/:id/livekit-token', studentAuthMiddleware, async (c) => {
-  try {
-    const studentId = c.get('studentId');
-    const scheduleId = c.req.param('id');
-
-    // Find the schedule
-    const schedule = await c.env.DB.prepare(
-      'SELECT * FROM live_class_schedules WHERE id = ? AND is_active = 1'
-    ).bind(scheduleId).first();
-
-    if (!schedule) {
-      return c.json({ error: 'Live class not found' }, 404);
-    }
-
-    const s = schedule as any;
-    if (s.platform !== 'livekit' && !s.meeting_url?.startsWith('livekit://')) {
-      return c.json({ error: 'This class does not use LiveKit', externalUrl: s.meeting_url }, 400);
-    }
-
-    if (s.status === 'completed' || s.status === 'cancelled') {
-      return c.json({ error: 'This class has ended' }, 400);
-    }
-
-    // Verify student is enrolled in the course
-    if (s.course_id) {
-      const enrollment = await c.env.DB.prepare(
-        'SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?'
-      ).bind(studentId, s.course_id).first();
-
-      if (!enrollment) {
-        return c.json({ error: 'You must be enrolled in this course to join the live class' }, 403);
-      }
-    }
-
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit is not configured' }, 503);
-    }
-
-    // Extract room name from meeting_url
-    const roomName = s.meeting_url?.replace('livekit://', '') || `dakkho-class-${s.id}`;
-
-    // Get student name for display (from users table, not students table)
-    const student = await c.env.DB.prepare(
-      'SELECT full_name FROM users WHERE id = ?'
-    ).bind(studentId).first();
-    const studentName = (student as any)?.full_name || 'Student';
-
-    const token = await generateLiveKitToken({
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-      identity: `student-${studentId}`,
-      name: studentName,
-      room: roomName,
-      canPublish: true,
-      canSubscribe: true,
-      canPublishData: true,
-      canAdmin: false, // Students are not room admins
-      ttl: 6 * 60 * 60,
-    });
-
-    return c.json({
-      success: true,
-      token,
-      url: config.url,
-      room: roomName,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ─── Live Class Calls Fallback ───
-
-// GET /live-classes/:id/calls-session — Cloudflare Calls fallback for students
-studentApiRoutes.get('/live-classes/:id/calls-session', studentAuthMiddleware, async (c) => {
-  try {
-    const studentId = c.get('studentId');
-    const scheduleId = c.req.param('id');
-
-    const schedule = await c.env.DB.prepare(
-      'SELECT * FROM live_class_schedules WHERE id = ? AND is_active = 1'
-    ).bind(scheduleId).first();
-
-    if (!schedule) {
-      return c.json({ error: 'Live class not found' }, 404);
-    }
-
-    const s = schedule as any;
-    if (s.status === 'completed' || s.status === 'cancelled') {
-      return c.json({ error: 'This class has ended' }, 400);
-    }
-
-    // Verify enrollment
-    if (s.course_id) {
-      const enrollment = await c.env.DB.prepare(
-        'SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?'
-      ).bind(studentId, s.course_id).first();
-      if (!enrollment) {
-        return c.json({ error: 'You must be enrolled in this course' }, 403);
-      }
-    }
-
-    const { getCallsConfig, getCallsClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
-    const config = await getCallsConfig(c.env.KV_CONFIG, c.env);
-    if (!config) {
-      return c.json({ error: 'Cloudflare Calls fallback is not configured' }, 503);
-    }
-
-    const roomName = s.meeting_url?.replace('livekit://', '') || `dakkho-class-${s.id}`;
-    const clientConfig = await getCallsClientConfig(config, roomName);
-    if (!clientConfig) {
-      return c.json({ error: 'Failed to create fallback session' }, 500);
-    }
-
-    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, roomName, `student-${studentId}`);
-
-    return c.json({
-      success: true,
-      provider: 'cloudflare-calls',
-      sessionId: clientConfig.sessionId,
-      url: clientConfig.url,
-      iceServers: clientConfig.iceServers,
-      room: roomName,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /realtime/session — Dakkho Realtime session for students
-studentApiRoutes.get('/realtime/session', studentAuthMiddleware, async (c) => {
-  try {
-    const studentId = c.get('studentId');
-    const room = c.req.query('room');
-
-    if (!room) {
-      return c.json({ error: 'room query parameter is required' }, 400);
-    }
-
-    const { getRealtimeClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
-    const clientConfig = await getRealtimeClientConfig(c.env.KV_CONFIG, room);
-    if (!clientConfig) {
-      return c.json({ error: 'Dakkho Realtime is not configured' }, 503);
-    }
-
-    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, room, `student-${studentId}`);
-
-    return c.json({
-      success: true,
-      provider: 'dakkho-realtime',
-      sessionId: clientConfig.sessionId,
-      url: clientConfig.url,
-      iceServers: clientConfig.iceServers,
-      appId: clientConfig.appId,
-      room,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /realtime/status — Check if Dakkho Realtime is available
-studentApiRoutes.get('/realtime/status', async (c) => {
-  try {
-    const { getRealtimeConfig } = await import('../lib/cloudflare-calls');
-    const config = await getRealtimeConfig(c.env.KV_CONFIG);
-    return c.json({ available: config !== null, appId: config?.appId || null });
-  } catch (error) {
-    return c.json({ available: false });
   }
 });
 
@@ -3094,6 +2912,109 @@ studentAuthenticated.put('/preferences', async (c) => {
   }
 });
 
+// GET /student/learning-stats — Learning stats for the current student
+studentAuthenticated.get('/student/learning-stats', async (c) => {
+  try {
+    const userId = c.get('userId') as string;
+    const range = c.req.query('range') || '30d';
+
+    // Calculate date range
+    const days = range === '7d' ? 7 : range === '90d' ? 90 : 30;
+
+    // Get daily activity data
+    const dailyData: Array<{ date: string; videos: number; activities: number }> = [];
+    try {
+      const rows = await c.env.DB.prepare(`
+        SELECT DATE(created_at) as day,
+               COUNT(CASE WHEN activity_type = 'video_watch' THEN 1 END) as videos,
+               COUNT(*) as activities
+        FROM student_activity
+        WHERE user_id = ? AND created_at >= datetime('now', '-${days} days')
+        GROUP BY DATE(created_at)
+        ORDER BY day ASC
+      `).bind(userId).all();
+      for (const row of (rows.results || []) as any[]) {
+        dailyData.push({ date: row.day, videos: row.videos || 0, activities: row.activities || 0 });
+      }
+    } catch {}
+
+    // Get subject progress from enrollments
+    const subjectProgress: Array<{ subject: string; progress: number }> = [];
+    try {
+      const rows = await c.env.DB.prepare(`
+        SELECT t.name as technology, e.progress
+        FROM enrollments e
+        INNER JOIN courses c ON e.course_id = c.id
+        LEFT JOIN technologies t ON c.technology_id = t.id
+        WHERE e.user_id = ?
+      `).bind(userId).all();
+      for (const row of (rows.results || []) as any[]) {
+        subjectProgress.push({ subject: row.technology || 'General', progress: row.progress || 0 });
+      }
+    } catch {}
+
+    // Get overview stats
+    let hoursWatched = 0;
+    let coursesEnrolled = 0;
+    let certificates = 0;
+    let currentStreak = 0;
+
+    try {
+      const watchStats = await c.env.DB.prepare(
+        "SELECT SUM(CASE WHEN metadata LIKE '%watchMinutes%' THEN CAST(json_extract(metadata, '$.watchMinutes') AS REAL) ELSE 0 END) as total_minutes FROM student_activity WHERE user_id = ? AND activity_type = 'video_watch'"
+      ).bind(userId).first<{ total_minutes: number }>();
+      hoursWatched = Math.round((watchStats?.total_minutes || 0) / 60 * 10) / 10;
+    } catch {}
+
+    try {
+      const enrollCount = await c.env.DB.prepare(
+        'SELECT COUNT(*) as total FROM enrollments WHERE user_id = ?'
+      ).bind(userId).first<{ total: number }>();
+      coursesEnrolled = enrollCount?.total || 0;
+    } catch {}
+
+    try {
+      const certCount = await c.env.DB.prepare(
+        "SELECT COUNT(*) as total FROM certificates WHERE user_id = ? AND status = 'issued'"
+      ).bind(userId).first<{ total: number }>();
+      certificates = certCount?.total || 0;
+    } catch {}
+
+    try {
+      const streakRows = await c.env.DB.prepare(
+        "SELECT DATE(created_at) as day FROM student_activity WHERE user_id = ? GROUP BY DATE(created_at) ORDER BY day DESC LIMIT 30"
+      ).bind(userId).all();
+      const activeDays = (streakRows.results || []).map((r: any) => r.day);
+      const today = new Date().toISOString().split('T')[0];
+      let streak = 0;
+      let checkDate = new Date();
+      // If no activity today, start checking from yesterday
+      if (!activeDays.includes(today)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+      for (let i = 0; i < 60; i++) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (activeDays.includes(dateStr)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      currentStreak = streak;
+    } catch {}
+
+    return c.json({
+      dailyData,
+      subjectProgress,
+      overview: { hoursWatched, coursesEnrolled, certificates, currentStreak },
+      range,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
 // Mount authenticated routes
 studentApiRoutes.route('/', studentAuthenticated);
 
@@ -3561,6 +3482,89 @@ studentApiRoutes.post('/student/upload-avatar', studentAuthMiddleware, async (c)
     ).bind(avatarUrl, new Date().toISOString(), userId).run();
 
     return c.json({ success: true, avatarUrl });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /student/change-password — Change student password (requires current password)
+studentApiRoutes.post('/student/change-password', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const { currentPassword, newPassword } = await c.req.json();
+
+    if (!currentPassword || !newPassword) {
+      return c.json({ error: 'currentPassword and newPassword are required' }, 400);
+    }
+
+    if (newPassword.length < 8) {
+      return c.json({ error: 'New password must be at least 8 characters' }, 400);
+    }
+
+    // Get current password hash
+    const user = await c.env.DB.prepare(
+      'SELECT password_hash FROM users WHERE id = ?'
+    ).bind(userId).first<{ password_hash: string }>();
+
+    if (!user?.password_hash) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Verify current password
+    const validPassword = await verifyPassword(currentPassword, user.password_hash);
+    if (!validPassword) {
+      return c.json({ error: 'Current password is incorrect' }, 401);
+    }
+
+    // Hash and save new password
+    const newHash = await hashPassword(newPassword);
+    await c.env.DB.prepare(
+      'UPDATE users SET password_hash = ?, updated_at = datetime(\'now\') WHERE id = ?'
+    ).bind(newHash, userId).run();
+
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /student/delete-account — Delete student account (requires password verification)
+studentApiRoutes.post('/student/delete-account', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const { password, reason, feedback } = await c.req.json();
+
+    if (!password) {
+      return c.json({ error: 'Password is required to delete your account' }, 400);
+    }
+
+    // Verify password
+    const user = await c.env.DB.prepare(
+      'SELECT password_hash FROM users WHERE id = ?'
+    ).bind(userId).first<{ password_hash: string }>();
+
+    if (!user?.password_hash) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    const validPassword = await verifyPassword(password, user.password_hash);
+    if (!validPassword) {
+      return c.json({ error: 'Password is incorrect' }, 401);
+    }
+
+    // Delete user and related data
+    // Delete enrollments first
+    await c.env.DB.prepare('DELETE FROM enrollments WHERE user_id = ?').bind(userId).run();
+    // Delete watch history
+    await c.env.DB.prepare('DELETE FROM watch_history WHERE user_id = ?').bind(userId).run();
+    // Delete student sessions
+    await c.env.DB.prepare('DELETE FROM student_sessions WHERE user_id = ?').bind(userId).run();
+    // Delete notification tokens
+    await c.env.DB.prepare('DELETE FROM notification_tokens WHERE user_id = ?').bind(userId).run();
+    // Finally delete the user
+    await c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+
+    return c.json({ success: true });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }

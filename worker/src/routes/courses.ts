@@ -240,17 +240,6 @@ courseRoutes.put('/', async (c) => {
       `UPDATE courses SET ${setClauses.join(', ')} WHERE id = ?`
     ).bind(...setValues).run();
 
-    // If course is being unpublished, cancel all related live classes
-    if (updates.is_published !== undefined && !updates.is_published) {
-      try {
-        await c.env.DB.prepare(
-          "UPDATE live_class_schedules SET status = 'cancelled', is_active = 0, updated_at = datetime('now') WHERE course_id = ? AND is_active = 1"
-        ).bind(String(courseId)).run();
-      } catch (cancelErr) {
-        console.error('Failed to cancel live classes on unpublish:', cancelErr);
-      }
-    }
-
     // Save junction table entries for multiple categories, instructors, subjects
     const categoryIds = rawData.category_ids ? JSON.parse(String(rawData.category_ids)) : (rawData.category_id ? [rawData.category_id] : []);
     const instructorIds = rawData.instructor_ids ? JSON.parse(String(rawData.instructor_ids)) : (rawData.instructor_id ? [rawData.instructor_id] : []);
@@ -349,38 +338,6 @@ courseRoutes.delete('/', async (c) => {
     if (!courseId) {
       return c.json({ error: 'Course ID required' }, 400);
     }
-
-    // Cascade delete related records before deleting the course
-    const cascadeTables = [
-      'DELETE FROM videos WHERE course_id = ?',
-      'DELETE FROM lessons WHERE course_id = ?',
-      'DELETE FROM chapters WHERE course_id = ?',
-      'DELETE FROM course_resources WHERE course_id = ?',
-      'DELETE FROM course_instructors WHERE course_id = ?',
-      'DELETE FROM course_categories WHERE course_id = ?',
-      'DELETE FROM course_subjects WHERE course_id = ?',
-      'DELETE FROM course_learning_points WHERE course_id = ?',
-      'DELETE FROM course_packages WHERE course_id = ?',
-      'DELETE FROM watch_progress WHERE course_id = ?',
-    ];
-
-    for (const sql of cascadeTables) {
-      try {
-        await c.env.DB.prepare(sql).bind(courseId).run();
-      } catch {}
-    }
-
-    // Cancel and deactivate all related live classes (don't hard-delete)
-    try {
-      await c.env.DB.prepare(
-        "UPDATE live_class_schedules SET status = 'cancelled', is_active = 0, updated_at = datetime('now') WHERE course_id = ? AND is_active = 1"
-      ).bind(courseId).run();
-    } catch {}
-
-    // Delete enrollments (orphaned enrollment records)
-    try {
-      await c.env.DB.prepare('DELETE FROM enrollments WHERE course_id = ?').bind(courseId).run();
-    } catch {}
 
     await c.env.DB.prepare('DELETE FROM courses WHERE id = ?').bind(courseId).run();
 

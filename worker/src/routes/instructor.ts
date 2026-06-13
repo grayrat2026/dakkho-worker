@@ -20,7 +20,6 @@ import { validateInstructorSession, deleteInstructorSession, createInstructorSes
 import { authenticateUser, hashPassword, verifyPassword } from '../lib/auth-password';
 import { getErrorMessage, generateId, getSessionExpiry } from '../lib/utils';
 import { getPublicUrl } from '../lib/r2';
-import { getLiveKitConfig, generateLiveKitToken, generateRoomName, verifyLiveKitWebhook } from '../lib/livekit';
 
 const instructorRoutes = new Hono<{ Bindings: Env; Variables: InstructorOrAdminAuthVariables }>();
 
@@ -42,7 +41,7 @@ function formatCourseRow(row: Record<string, unknown>): Record<string, unknown> 
     $id: row.id,
     $createdAt: row.created_at,
     isPublished: row.is_published,
-    price: row.price_bdt,
+    price: row.price_bdt ?? row.price,
     instructorId: row.instructor_id,
   };
 }
@@ -640,11 +639,11 @@ instructorRoutes.get('/courses', instructorOrAdminMiddleware, async (c) => {
       'SELECT * FROM courses WHERE instructor_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(instructorId, limit, offset).all();
 
-    // Also check course_subjects D1 table for courses assigned to this instructor
+    // Also check course_instructors D1 table for courses assigned to this instructor
     let coursesFromSubjects: string[] = [];
     try {
       const subjectResult = await c.env.DB.prepare(
-        'SELECT DISTINCT course_id FROM course_subjects WHERE instructor_id = ?'
+        'SELECT DISTINCT course_id FROM course_instructors WHERE instructor_id = ?'
       ).bind(instructorId).all<{ course_id: string }>();
       coursesFromSubjects = subjectResult.results.map(r => r.course_id);
     } catch {}
@@ -1153,7 +1152,7 @@ instructorRoutes.post('/courses', instructorOrAdminMiddleware, async (c) => {
     if (idError) return idError;
 
     const body = await c.req.json();
-    const { title, description, level, language, price, technology_id, category_id, tags, semester, what_you_learn } = body;
+    const { title, description, level, language, price, technology_id, category_id, tags, semester, what_you_learn, subject_ids } = body;
 
     if (!title) {
       return c.json({ error: 'title is required' }, 400);
@@ -1192,6 +1191,19 @@ instructorRoutes.post('/courses', instructorOrAdminMiddleware, async (c) => {
         VALUES (?, ?, 0, ?)
       `).bind(courseId, instructorId, now).run();
     } catch {}
+
+    // Link subjects if provided (subject_ids array)
+    if (Array.isArray(subject_ids) && subject_ids.length > 0) {
+      try {
+        for (let i = 0; i < subject_ids.length; i++) {
+          const subjectId = subject_ids[i];
+          await c.env.DB.prepare(`
+            INSERT OR IGNORE INTO course_subjects (course_id, subject_id, sort_order, created_at)
+            VALUES (?, ?, ?, ?)
+          `).bind(courseId, subjectId, i, now).run();
+        }
+      } catch {}
+    }
 
     // Auto-create default course packages (single + friend)
     const packageName = title || 'Course';
@@ -1343,7 +1355,6 @@ instructorRoutes.delete('/courses/:id', instructorOrAdminMiddleware, async (c) =
       'DELETE FROM course_subjects WHERE course_id = ?',
       'DELETE FROM course_learning_points WHERE course_id = ?',
       'DELETE FROM course_packages WHERE course_id = ?',
-      'DELETE FROM watch_progress WHERE course_id = ?',
     ];
 
     for (const sql of relatedTables) {
@@ -1351,13 +1362,6 @@ instructorRoutes.delete('/courses/:id', instructorOrAdminMiddleware, async (c) =
         await c.env.DB.prepare(sql).bind(courseId).run();
       } catch {}
     }
-
-    // Cancel and deactivate all related live classes (soft delete)
-    try {
-      await c.env.DB.prepare(
-        "UPDATE live_class_schedules SET status = 'cancelled', is_active = 0, updated_at = datetime('now') WHERE course_id = ? AND is_active = 1"
-      ).bind(courseId).run();
-    } catch {}
 
     // Delete the course itself
     await c.env.DB.prepare('DELETE FROM courses WHERE id = ?').bind(courseId).run();
@@ -2110,249 +2114,6 @@ instructorRoutes.get('/support/tickets', instructorOrAdminMiddleware, async (c) 
 });
 
 // ═══════════════════════════════════════════════════
-// DASHBOARD ROUTE (instructorOrAdmin)
-// ═══════════════════════════════════════════════════
-
-// GET /dashboard — Dashboard stats
-instructorRoutes.get('/dashboard', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const authRole = c.get('authRole');
-    let instructorId: string;
-
-    if (authRole === 'admin') {
-      instructorId = c.req.query('instructorId') || '';
-      if (!instructorId) {
-        return c.json({ error: 'instructorId query param required for admin access' }, 400);
-      }
-    } else {
-      instructorId = c.get('instructorId');
-    }
-
-    // Get course count from D1 courses table
-    let courseCount = 0;
-    try {
-      const courseCountResult = await c.env.DB.prepare(
-        'SELECT COUNT(*) as total FROM courses WHERE instructor_id = ?'
-      ).bind(instructorId).first<{ total: number }>();
-      courseCount = courseCountResult?.total || 0;
-    } catch {}
-
-    // Also count from course_subjects
-    let subjectCourseCount = 0;
-    try {
-      const subjectResult = await c.env.DB.prepare(
-        'SELECT COUNT(DISTINCT course_id) as count FROM course_subjects WHERE instructor_id = ?'
-      ).bind(instructorId).first<{ count: number }>();
-      subjectCourseCount = subjectResult?.count || 0;
-    } catch {}
-    courseCount = Math.max(courseCount, subjectCourseCount);
-
-    // Total students across all courses — get all course IDs for this instructor
-    let totalStudents = 0;
-    try {
-      // Get enrollment count for courses where instructor_id matches in courses table
-      const studentCountResult = await c.env.DB.prepare(`
-        SELECT COUNT(DISTINCT e.user_id) as total
-        FROM enrollments e
-        INNER JOIN courses c ON e.course_id = c.id
-        WHERE c.instructor_id = ?
-      `).bind(instructorId).first<{ total: number }>();
-      totalStudents = studentCountResult?.total || 0;
-
-      // Also add students from course_subjects assigned courses
-      const subjectStudentResult = await c.env.DB.prepare(`
-        SELECT COUNT(DISTINCT e.user_id) as total
-        FROM enrollments e
-        INNER JOIN course_subjects cs ON e.course_id = cs.course_id
-        WHERE cs.instructor_id = ?
-      `).bind(instructorId).first<{ total: number }>();
-      totalStudents = Math.max(totalStudents, subjectStudentResult?.total || 0);
-    } catch {}
-
-    // Upcoming live classes
-    let upcomingClasses = 0;
-    try {
-      const classResult = await c.env.DB.prepare(
-        "SELECT COUNT(*) as count FROM live_class_schedules WHERE instructor_id = ? AND scheduled_at > datetime('now') AND is_active = 1"
-      ).bind(instructorId).first<{ count: number }>();
-      upcomingClasses = classResult?.count || 0;
-    } catch {}
-
-    // Review stats
-    let avgRating = 0;
-    let totalReviews = 0;
-    try {
-      const ratingStats = await c.env.DB.prepare(
-        'SELECT AVG(rating) as avg, COUNT(*) as count FROM instructor_reviews WHERE instructor_id = ?'
-      ).bind(instructorId).first<{ avg: number; count: number }>();
-      avgRating = ratingStats?.avg ? Math.round(ratingStats.avg * 10) / 10 : 0;
-      totalReviews = ratingStats?.count || 0;
-    } catch {}
-
-    // Revenue — get all course IDs for this instructor and sum payments
-    let totalRevenue = 0;
-    try {
-      // Revenue from courses where instructor_id matches directly
-      const directRevenue = await c.env.DB.prepare(`
-        SELECT COALESCE(SUM(p.amount), 0) as total
-        FROM payments p
-        INNER JOIN courses c ON p.course_id = c.id
-        WHERE c.instructor_id = ? AND p.status = 'completed'
-      `).bind(instructorId).first<{ total: number }>();
-      totalRevenue = directRevenue?.total || 0;
-
-      // Also add revenue from course_subjects assigned courses
-      const subjectRevenue = await c.env.DB.prepare(`
-        SELECT COALESCE(SUM(p.amount), 0) as total
-        FROM payments p
-        INNER JOIN course_subjects cs ON p.course_id = cs.course_id
-        WHERE cs.instructor_id = ? AND p.status = 'completed'
-      `).bind(instructorId).first<{ total: number }>();
-      totalRevenue = Math.max(totalRevenue, subjectRevenue?.total || 0);
-    } catch {}
-
-    return c.json({
-      success: true,
-      dashboard: {
-        courseCount,
-        totalStudents,
-        upcomingClasses,
-        avgRating,
-        totalReviews,
-        totalRevenue,
-      },
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
-// COURSE CRUD (Create, Update — instructors can only manage their own courses)
-// ═══════════════════════════════════════════════════
-
-// POST /courses — Create a new course (instructor is auto-assigned)
-instructorRoutes.post('/courses', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-
-    if (!instructorId) {
-      return c.json({ error: 'instructorId is required' }, 400);
-    }
-
-    const body = await c.req.json();
-    const { title, description, slug, technology_id, semester, level, price_bdt, is_published, thumbnail_url } = body;
-
-    if (!title) {
-      return c.json({ error: 'title is required' }, 400);
-    }
-
-    const courseId = generateId();
-    const courseSlug = slug || slugify(title);
-    const now = new Date().toISOString();
-
-    await c.env.DB.prepare(`
-      INSERT INTO courses (id, title, slug, description, technology_id, semester, level, price_bdt, is_published, instructor_id, thumbnail_url, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      courseId, title, courseSlug, description || null, technology_id || null,
-      semester || null, level || null, price_bdt || 0, is_published ? 1 : 0,
-      instructorId, thumbnail_url || null, now, now
-    ).run();
-
-    // Auto-create course_instructors junction entry
-    try {
-      await c.env.DB.prepare(`
-        INSERT INTO course_instructors (course_id, instructor_id, sort_order, created_at)
-        VALUES (?, ?, 0, ?)
-      `).bind(courseId, instructorId, now).run();
-    } catch {}
-
-    // Auto-create a "single" course_package with the same price
-    try {
-      await c.env.DB.prepare(`
-        INSERT INTO course_packages (course_id, name, price_bdt, original_price, package_type, features, is_active, sort_order, created_at, updated_at)
-        VALUES (?, 'Single', ?, ?, 'single', '', 1, 0, ?, ?)
-      `).bind(courseId, price_bdt || 0, price_bdt || 0, now, now).run();
-    } catch {}
-
-    const row = await c.env.DB.prepare('SELECT * FROM courses WHERE id = ?').bind(courseId).first();
-    const course = formatCourseRow(row as Record<string, unknown>);
-
-    return c.json({ success: true, course }, 201);
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// PUT /courses/:id — Update course (only if instructor owns it)
-instructorRoutes.put('/courses/:id', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-    const courseId = c.req.param('id');
-
-    if (!instructorId) {
-      return c.json({ error: 'instructorId is required' }, 400);
-    }
-
-    // Verify ownership
-    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
-    if (!owns) {
-      return c.json({ error: 'You do not own this course' }, 403);
-    }
-
-    const body = await c.req.json();
-
-    const fieldMapping: Record<string, string> = {
-      title: 'title',
-      slug: 'slug',
-      description: 'description',
-      technology_id: 'technology_id',
-      technologyId: 'technology_id',
-      semester: 'semester',
-      level: 'level',
-      price_bdt: 'price_bdt',
-      priceBdt: 'price_bdt',
-      is_published: 'is_published',
-      isPublished: 'is_published',
-      thumbnail_url: 'thumbnail_url',
-      thumbnailUrl: 'thumbnail_url',
-    };
-
-    const setClauses: string[] = [];
-    const params: unknown[] = [];
-
-    for (const [bodyField, dbColumn] of Object.entries(fieldMapping)) {
-      if (body[bodyField] !== undefined) {
-        setClauses.push(`${dbColumn} = ?`);
-        params.push(body[bodyField]);
-      }
-    }
-
-    if (setClauses.length === 0) {
-      return c.json({ error: 'No valid fields to update' }, 400);
-    }
-
-    setClauses.push('updated_at = ?');
-    params.push(new Date().toISOString());
-    params.push(courseId);
-
-    await c.env.DB.prepare(
-      `UPDATE courses SET ${setClauses.join(', ')} WHERE id = ?`
-    ).bind(...params).run();
-
-    const row = await c.env.DB.prepare('SELECT * FROM courses WHERE id = ?').bind(courseId).first();
-    const course = formatCourseRow(row as Record<string, unknown>);
-
-    return c.json({ success: true, course });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
 // CHAPTERS CRUD (within courses instructor owns)
 // ═══════════════════════════════════════════════════
 
@@ -2964,7 +2725,6 @@ instructorRoutes.delete('/resources/:id', instructorOrAdminMiddleware, async (c)
 // ═══════════════════════════════════════════════════
 
 // POST /schedule — Create live class (verify course ownership if course_id provided)
-// If platform is 'livekit' or not specified, auto-generates a LiveKit room URL
 instructorRoutes.post('/schedule', instructorOrAdminMiddleware, async (c) => {
   try {
     const authRole = c.get('authRole');
@@ -2975,10 +2735,10 @@ instructorRoutes.post('/schedule', instructorOrAdminMiddleware, async (c) => {
     }
 
     const body = await c.req.json();
-    let { title, course_id, scheduled_at, duration_minutes, meeting_url, platform, description } = body;
+    const { title, course_id, scheduled_at, duration_minutes, meeting_url, platform, description } = body;
 
-    if (!title || !scheduled_at || !duration_minutes) {
-      return c.json({ error: 'title, scheduled_at, and duration_minutes are required' }, 400);
+    if (!title || !scheduled_at || !duration_minutes || !meeting_url) {
+      return c.json({ error: 'title, scheduled_at, duration_minutes, and meeting_url are required' }, 400);
     }
 
     // Verify course ownership if course_id provided
@@ -2991,46 +2751,12 @@ instructorRoutes.post('/schedule', instructorOrAdminMiddleware, async (c) => {
 
     const now = new Date().toISOString();
 
-    // Auto-generate LiveKit room if platform is livekit or no meeting_url provided
-    const usePlatform = platform || 'livekit';
-    let livekitRoomName = '';
-
-    if (usePlatform === 'livekit' || !meeting_url) {
-      // We'll create the schedule first, then generate the room name from the ID
-      const result = await c.env.DB.prepare(`
-        INSERT INTO live_class_schedules (title, course_id, instructor_id, scheduled_at, duration_minutes, meeting_url, platform, description, is_active, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-      `).bind(
-        title, course_id || null, instructorId, scheduled_at,
-        duration_minutes, '', usePlatform,
-        description || null, now, now
-      ).run();
-
-      const insertedId = result.meta?.last_row_id;
-
-      // Generate LiveKit room name from schedule ID
-      livekitRoomName = generateRoomName(insertedId);
-      const livekitUrl = `livekit://${livekitRoomName}`;
-
-      // Update the meeting_url with the LiveKit room reference
-      await c.env.DB.prepare(
-        'UPDATE live_class_schedules SET meeting_url = ? WHERE rowid = ?'
-      ).bind(livekitUrl, insertedId).run();
-
-      const row = await c.env.DB.prepare(
-        'SELECT * FROM live_class_schedules WHERE rowid = ?'
-      ).bind(insertedId).first();
-
-      return c.json({ success: true, schedule: row, livekit: { roomName: livekitRoomName } }, 201);
-    }
-
-    // External meeting URL (Zoom, Meet, etc.)
     const result = await c.env.DB.prepare(`
       INSERT INTO live_class_schedules (title, course_id, instructor_id, scheduled_at, duration_minutes, meeting_url, platform, description, is_active, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
     `).bind(
       title, course_id || null, instructorId, scheduled_at,
-      duration_minutes, meeting_url, usePlatform,
+      duration_minutes, meeting_url, platform || null,
       description || null, now, now
     ).run();
 
@@ -3200,722 +2926,298 @@ instructorRoutes.post('/support/tickets/:id/messages', instructorOrAdminMiddlewa
 });
 
 // ═══════════════════════════════════════════════════
-// LIVEKIT — In-App Video Conference Integration
+// COURSE THUMBNAIL UPLOAD (FormData to R2)
 // ═══════════════════════════════════════════════════
 
-// GET /livekit/token — Generate a LiveKit access token for the instructor
-// Query params: room (required), identity (optional, defaults to instructor ID)
-instructorRoutes.get('/livekit/token', instructorOrAdminMiddleware, async (c) => {
+// POST /courses/:id/thumbnail — Upload course thumbnail
+instructorRoutes.post('/courses/:id/thumbnail', instructorOrAdminMiddleware, async (c) => {
   try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit is not configured. Add credentials to KV.' }, 503);
-    }
-
-    const room = c.req.query('room');
-    if (!room) {
-      return c.json({ error: 'room query parameter is required' }, 400);
-    }
-
     const authRole = c.get('authRole');
     const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-    const identity = c.req.query('identity') || instructorId || 'instructor';
-    const name = c.req.query('name') || '';
-
-    // Check if the room corresponds to a valid schedule
-    const schedule = await c.env.DB.prepare(
-      'SELECT id, instructor_id, status FROM live_class_schedules WHERE meeting_url LIKE ? AND is_active = 1'
-    ).bind(`%${room}%`).first();
-
-    // Instructor can always join their own rooms; admin can join any room
-    if (schedule && schedule.instructor_id !== instructorId && authRole !== 'admin') {
-      return c.json({ error: 'You do not have access to this room' }, 403);
-    }
-
-    const token = await generateLiveKitToken({
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-      identity,
-      name,
-      room,
-      canPublish: true,
-      canSubscribe: true,
-      canPublishData: true,
-      canAdmin: true, // Instructor is room admin
-      ttl: 6 * 60 * 60, // 6 hours
-    });
-
-    return c.json({
-      success: true,
-      token,
-      url: config.url,
-      room,
-      identity,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// POST /livekit/token — Generate a LiveKit access token (POST version, for student access)
-// Body: { room: string, identity?: string, name?: string, canPublish?: boolean, canAdmin?: boolean }
-instructorRoutes.post('/livekit/token', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit is not configured. Add credentials to KV.' }, 503);
-    }
-
-    const body = await c.req.json();
-    const { room, identity, name, canPublish, canAdmin } = body;
-
-    if (!room) {
-      return c.json({ error: 'room is required' }, 400);
-    }
-
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-    const participantIdentity = identity || instructorId || 'instructor';
-    const isAdmin = canAdmin !== undefined ? canAdmin : true;
-    const canPub = canPublish !== undefined ? canPublish : true;
-
-    const token = await generateLiveKitToken({
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-      identity: participantIdentity,
-      name: name || '',
-      room,
-      canPublish: canPub,
-      canSubscribe: true,
-      canPublishData: true,
-      canAdmin: isAdmin,
-      ttl: 6 * 60 * 60,
-    });
-
-    return c.json({
-      success: true,
-      token,
-      url: config.url,
-      room,
-      identity: participantIdentity,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// POST /livekit/webhook — Receive LiveKit webhook events
-// LiveKit sends webhooks for room events (participant joined, room finished, etc.)
-// This endpoint verifies the webhook signature and updates the database
-instructorRoutes.post('/livekit/webhook', async (c) => {
-  try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit not configured' }, 503);
-    }
-
-    const body = await c.req.text();
-
-    // Verify webhook signature
-    const payload = await verifyLiveKitWebhook(body, config.apiSecret);
-    if (!payload) {
-      return c.json({ error: 'Invalid webhook signature' }, 401);
-    }
-
-    const event = payload.event as string;
-    const room = payload.room as Record<string, unknown> | undefined;
-    const now = new Date().toISOString();
-
-    // Handle room events
-    if (room) {
-      const roomName = room.name as string;
-
-      switch (event) {
-        case 'room_finished':
-          // Update schedule status to completed when room ends
-          await c.env.DB.prepare(
-            "UPDATE live_class_schedules SET status = 'completed', updated_at = ? WHERE meeting_url LIKE ? AND is_active = 1"
-          ).bind(now, `%${roomName}%`).run();
-          break;
-
-        case 'room_started':
-          // Update schedule status to live when room starts
-          await c.env.DB.prepare(
-            "UPDATE live_class_schedules SET status = 'live', updated_at = ? WHERE meeting_url LIKE ? AND is_active = 1"
-          ).bind(now, `%${roomName}%`).run();
-          break;
-
-        case 'participant_joined':
-          // Could track participant join events for analytics
-          break;
-
-        case 'participant_left':
-          // Could track participant leave events
-          break;
-      }
-    }
-
-    return c.json({ success: true, event });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /livekit/config — Get LiveKit public config (URL only, no secrets)
-instructorRoutes.get('/livekit/config', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ configured: false, url: null });
-    }
-    return c.json({ configured: true, url: config.url });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
-// CLOUDFLARE CALLS — Emergency Fallback when LiveKit limits are reached
-// ═══════════════════════════════════════════════════
-
-// POST /livekit/calls-session — Create a Cloudflare Calls session as fallback
-instructorRoutes.post('/livekit/calls-session', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const { getCallsConfig, getCallsClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
-
-    const config = await getCallsConfig(c.env.KV_CONFIG, c.env);
-    if (!config) {
-      return c.json({ error: 'Cloudflare Calls is not configured. Add CF_CALLS_APP_ID and CF_ACCOUNT_ID to KV.' }, 503);
-    }
-
-    const body = await c.req.json();
-    const room = body.room;
-    if (!room) {
-      return c.json({ error: 'room is required' }, 400);
-    }
-
-    const clientConfig = await getCallsClientConfig(config, room);
-    if (!clientConfig) {
-      return c.json({ error: 'Failed to create Cloudflare Calls session' }, 500);
-    }
-
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-
-    // Track the session
-    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, room, instructorId || 'admin');
-
-    return c.json({
-      success: true,
-      provider: 'cloudflare-calls',
-      sessionId: clientConfig.sessionId,
-      url: clientConfig.url,
-      iceServers: clientConfig.iceServers,
-      room,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /livekit/calls-status — Check if Cloudflare Calls fallback is available
-instructorRoutes.get('/livekit/calls-status', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const { isCallsAvailable } = await import('../lib/cloudflare-calls');
-    const available = await isCallsAvailable(c.env.KV_CONFIG, c.env);
-    return c.json({ available });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
-// ROOM MANAGEMENT — Enhanced LiveKit room operations
-// ═══════════════════════════════════════════════════
-
-// GET /livekit/rooms — List all active rooms for this instructor
-instructorRoutes.get('/livekit/rooms', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit is not configured' }, 503);
-    }
-
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-
-    // Get all live class schedules for this instructor
-    const schedules = await c.env.DB.prepare(
-      "SELECT id, title, course_id, scheduled_at, duration_minutes, meeting_url, platform, status FROM live_class_schedules WHERE instructor_id = ? AND is_active = 1 ORDER BY scheduled_at DESC"
-    ).bind(instructorId).all();
-
-    // Also get currently live rooms
-    const liveRooms = await c.env.DB.prepare(
-      "SELECT id, title, meeting_url, status FROM live_class_schedules WHERE instructor_id = ? AND status = 'live' AND is_active = 1"
-    ).bind(instructorId).all();
-
-    return c.json({
-      success: true,
-      rooms: schedules.results,
-      activeRooms: liveRooms.results,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// POST /livekit/rooms — Create a new room with custom settings
-instructorRoutes.post('/livekit/rooms', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit is not configured' }, 503);
-    }
-
-    const body = await c.req.json();
-    const {
-      title, course_id, scheduled_at, duration_minutes,
-      description, max_participants = 100, auto_recording = false,
-      room_type = 'video', // video | voice | classroom | webinar
-    } = body;
-
-    if (!title || !scheduled_at || !duration_minutes) {
-      return c.json({ error: 'title, scheduled_at, and duration_minutes are required' }, 400);
-    }
-
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+    const courseId = c.req.param('id');
 
     if (!instructorId) {
       return c.json({ error: 'instructorId is required' }, 400);
     }
 
-    // Verify course ownership if course_id provided
-    if (course_id) {
-      const owns = await verifyCourseOwnership(c.env, course_id, instructorId);
-      if (!owns) {
-        return c.json({ error: 'You do not own this course' }, 403);
+    // Verify ownership
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
+    }
+
+    const formData = await c.req.formData();
+    const fileEntry = formData.get('thumbnail');
+    if (!fileEntry || typeof fileEntry === 'string') {
+      return c.json({ error: 'No thumbnail file provided' }, 400);
+    }
+    const file = fileEntry as unknown as Blob & { name?: string; type?: string };
+
+    // Upload to R2_THUMBNAILS bucket
+    const key = `courses/${courseId}/${Date.now()}-${file.name || 'thumbnail'}`;
+    const arrayBuffer = await file.arrayBuffer();
+    await c.env.R2_THUMBNAILS.put(key, arrayBuffer, {
+      httpMetadata: { contentType: file.type || 'image/jpeg' },
+    });
+
+    const thumbnailUrl = await getPublicUrl(c.env, 'thumbnails', key);
+
+    // Update course thumbnail_url in D1
+    await c.env.DB.prepare(
+      'UPDATE courses SET thumbnail_url = ?, updated_at = ? WHERE id = ?'
+    ).bind(thumbnailUrl, new Date().toISOString(), courseId).run();
+
+    return c.json({ success: true, thumbnail_url: thumbnailUrl });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// VIDEO UPLOAD WITH FORMDATA (video file + thumbnail + CC)
+// ═══════════════════════════════════════════════════
+
+// POST /courses/:courseId/videos/upload — Upload video with FormData (video file, thumbnail, CC)
+instructorRoutes.post('/courses/:courseId/videos/upload', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const authRole = c.get('authRole');
+    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
+    const courseId = c.req.param('courseId');
+
+    if (!instructorId) {
+      return c.json({ error: 'instructorId is required' }, 400);
+    }
+
+    // Verify ownership
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
+    }
+
+    const formData = await c.req.formData();
+
+    // Metadata fields
+    const title = formData.get('title') as string;
+    const chapter_id = (formData.get('chapter_id') as string) || null;
+    const subject_id = (formData.get('subject_id') as string) || null;
+    const lesson_type = (formData.get('lesson_type') as string) || 'video';
+    const sort_order = parseInt(formData.get('sort_order') as string) || 0;
+    const is_preview = formData.get('is_preview') === '1' ? 1 : 0;
+    const is_published = formData.get('is_published') === '1' ? 1 : 0;
+    const duration = parseInt(formData.get('duration') as string) || 0;
+    const description = (formData.get('description') as string) || null;
+
+    if (!title) {
+      return c.json({ error: 'title is required' }, 400);
+    }
+
+    let videoUrl = '';
+    let thumbnailUrl = '';
+    let ccUrl = '';
+
+    // Upload video file to R2_VIDEOS
+    const videoEntry = formData.get('video');
+    if (videoEntry && typeof videoEntry !== 'string') {
+      const videoFile = videoEntry as unknown as Blob & { name?: string; type?: string };
+      const videoKey = `courses/${courseId}/videos/${Date.now()}-${videoFile.name || 'video.mp4'}`;
+      const videoBuffer = await videoFile.arrayBuffer();
+      await c.env.R2_VIDEOS.put(videoKey, videoBuffer, {
+        httpMetadata: { contentType: videoFile.type || 'video/mp4' },
+      });
+      videoUrl = await getPublicUrl(c.env, 'videos', videoKey);
+    } else {
+      // Check for external URL
+      const externalUrl = formData.get('video_url') as string;
+      if (externalUrl) {
+        videoUrl = externalUrl;
       }
     }
 
+    // Upload thumbnail file to R2_THUMBNAILS
+    const thumbEntry = formData.get('thumbnail');
+    if (thumbEntry && typeof thumbEntry !== 'string') {
+      const thumbFile = thumbEntry as unknown as Blob & { name?: string; type?: string };
+      const thumbKey = `courses/${courseId}/thumbnails/${Date.now()}-${thumbFile.name || 'thumbnail.jpg'}`;
+      const thumbBuffer = await thumbFile.arrayBuffer();
+      await c.env.R2_THUMBNAILS.put(thumbKey, thumbBuffer, {
+        httpMetadata: { contentType: thumbFile.type || 'image/jpeg' },
+      });
+      thumbnailUrl = await getPublicUrl(c.env, 'thumbnails', thumbKey);
+    }
+
+    // Upload CC/subtitle file to R2_RESOURCES
+    const ccEntry = formData.get('cc_file');
+    if (ccEntry && typeof ccEntry !== 'string') {
+      const ccFile = ccEntry as unknown as Blob & { name?: string; type?: string };
+      const ccKey = `courses/${courseId}/subtitles/${Date.now()}-${ccFile.name || 'subtitles.vtt'}`;
+      const ccBuffer = await ccFile.arrayBuffer();
+      await c.env.R2_RESOURCES.put(ccKey, ccBuffer, {
+        httpMetadata: { contentType: ccFile.type || 'text/vtt' },
+      });
+      ccUrl = await getPublicUrl(c.env, 'resources', ccKey);
+    }
+
+    // Create video record in D1
+    const videoId = generateId();
+    const videoSlug = slugify(title);
     const now = new Date().toISOString();
 
-    // Insert schedule
-    const result = await c.env.DB.prepare(`
-      INSERT INTO live_class_schedules (
-        title, course_id, instructor_id, scheduled_at, duration_minutes,
-        meeting_url, platform, description, is_active, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'livekit', ?, 1, ?, ?)
+    await c.env.DB.prepare(`
+      INSERT INTO videos (id, course_id, title, slug, video_url, thumbnail_url, duration, sort_order, is_preview, is_published, chapter_id, subject_id, lesson_type, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      title, course_id || null, instructorId, scheduled_at,
-      duration_minutes, '', description || null, now, now
+      videoId, courseId, title, videoSlug, videoUrl || null,
+      thumbnailUrl || null, duration, sort_order, is_preview, is_published,
+      chapter_id, subject_id, lesson_type || null, now, now
     ).run();
 
-    const insertedId = result.meta?.last_row_id;
-    const roomName = generateRoomName(insertedId);
-    const livekitUrl = `livekit://${roomName}`;
-
-    // Update with room URL
-    await c.env.DB.prepare(
-      'UPDATE live_class_schedules SET meeting_url = ? WHERE rowid = ?'
-    ).bind(livekitUrl, insertedId).run();
-
-    // Store room settings in KV for later retrieval
-    await c.env.KV_CONFIG.put(
-      `ROOM_CONFIG:${roomName}`,
-      JSON.stringify({
-        roomName,
-        scheduleId: insertedId,
-        title,
-        maxParticipants: max_participants,
-        autoRecording: auto_recording,
-        roomType: room_type,
-        createdBy: instructorId,
-        createdAt: now,
-      }),
-      { expirationTtl: 7 * 24 * 3600 } // 7 days
-    );
-
-    const row = await c.env.DB.prepare(
-      'SELECT * FROM live_class_schedules WHERE rowid = ?'
-    ).bind(insertedId).first();
-
-    return c.json({
-      success: true,
-      schedule: row,
-      livekit: {
-        roomName,
-        url: livekitUrl,
-        maxParticipants: max_participants,
-        autoRecording: auto_recording,
-        roomType: room_type,
-      },
-    }, 201);
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /livekit/rooms/:roomName — Get room configuration
-instructorRoutes.get('/livekit/rooms/:roomName', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const roomName = c.req.param('roomName');
-    const configData = await c.env.KV_CONFIG.get(`ROOM_CONFIG:${roomName}`);
-
-    if (!configData) {
-      return c.json({ error: 'Room configuration not found' }, 404);
+    // If there's a CC URL, store it in course_resources as subtitle
+    if (ccUrl) {
+      const resourceId = generateId();
+      await c.env.DB.prepare(`
+        INSERT INTO course_resources (id, course_id, chapter_id, lesson_id, title, description, file_url, file_type, sort_order, uploaded_by, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
+      `).bind(
+        resourceId, courseId, chapter_id, videoId,
+        `${title} - Subtitles`, 'Closed captions / subtitles',
+        ccUrl, 'vtt', instructorId, now, now
+      ).run();
     }
 
-    const config = JSON.parse(configData);
+    const row = await c.env.DB.prepare('SELECT * FROM videos WHERE id = ?').bind(videoId).first();
+    const video = formatVideoRow(row as Record<string, unknown>);
 
-    // Also get current schedule status
-    const schedule = await c.env.DB.prepare(
-      'SELECT id, title, status, scheduled_at FROM live_class_schedules WHERE meeting_url LIKE ? AND is_active = 1'
-    ).bind(`%${roomName}%`).first();
-
-    return c.json({
-      success: true,
-      roomConfig: config,
-      schedule,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// DELETE /livekit/rooms/:roomName — Close a room
-instructorRoutes.delete('/livekit/rooms/:roomName', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const roomName = c.req.param('roomName');
-    const now = new Date().toISOString();
-
-    // Update schedule status
-    await c.env.DB.prepare(
-      "UPDATE live_class_schedules SET status = 'completed', updated_at = ? WHERE meeting_url LIKE ? AND is_active = 1"
-    ).bind(now, `%${roomName}%`).run();
-
-    // Clean up KV
-    await c.env.KV_CONFIG.delete(`ROOM_CONFIG:${roomName}`);
-
-    return c.json({ success: true, message: 'Room closed' });
+    return c.json({ success: true, video, cc_url: ccUrl || undefined }, 201);
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 
 // ═══════════════════════════════════════════════════
-// RECORDING — Manage class recordings
+// TECHNOLOGIES & SUBJECTS (read-only for instructor)
 // ═══════════════════════════════════════════════════
 
-// GET /livekit/recordings — List recordings for this instructor
-instructorRoutes.get('/livekit/recordings', instructorOrAdminMiddleware, async (c) => {
+// GET /technologies — List all technologies (for course creation dropdowns)
+instructorRoutes.get('/technologies', instructorOrAdminMiddleware, async (c) => {
   try {
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-
-    // Get completed schedules with recording URLs
-    const recordings = await c.env.DB.prepare(
-      "SELECT id, title, course_id, scheduled_at, duration_minutes, recording_url, status FROM live_class_schedules WHERE instructor_id = ? AND recording_url IS NOT NULL AND is_active = 1 ORDER BY scheduled_at DESC"
-    ).bind(instructorId).all();
-
-    return c.json({
-      success: true,
-      recordings: recordings.results,
-    });
+    const result = await c.env.DB.prepare(
+      'SELECT * FROM technologies ORDER BY name ASC'
+    ).all();
+    return c.json({ success: true, technologies: result.results });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 
-// PUT /livekit/recordings/:scheduleId — Update recording URL
-instructorRoutes.put('/livekit/recordings/:scheduleId', instructorOrAdminMiddleware, async (c) => {
+// GET /subjects — List subjects (optionally filter by technology_id)
+instructorRoutes.get('/subjects', instructorOrAdminMiddleware, async (c) => {
   try {
-    const scheduleId = c.req.param('scheduleId');
+    const technologyId = c.req.query('technology_id');
+    let query = 'SELECT * FROM subjects';
+    const params: unknown[] = [];
+
+    if (technologyId) {
+      query += ' WHERE technology_id = ?';
+      params.push(parseInt(technologyId));
+    }
+
+    query += ' ORDER BY sort_order ASC, name ASC';
+
+    const result = await c.env.DB.prepare(query).bind(...params).all();
+    return c.json({ success: true, subjects: result.results });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /courses/:id/subjects — Get subjects assigned to a course
+instructorRoutes.get('/courses/:id/subjects', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const courseId = c.req.param('id');
+    const { instructorId, error: idError } = getInstructorId(c);
+    if (idError) return idError;
+
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
+    }
+
+    let subjects: any[] = [];
+    try {
+      const result = await c.env.DB.prepare(`
+        SELECT cs.*, s.name as subject_name, s.slug as subject_slug, s.technology_id
+        FROM course_subjects cs
+        LEFT JOIN subjects s ON cs.subject_id = s.id
+        WHERE cs.course_id = ?
+        ORDER BY cs.sort_order ASC
+      `).bind(courseId).all();
+      subjects = result.results as any[];
+    } catch {}
+
+    return c.json({ success: true, subjects });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /courses/:id/subjects — Add subject to course
+instructorRoutes.post('/courses/:id/subjects', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const courseId = c.req.param('id');
+    const { instructorId, error: idError } = getInstructorId(c);
+    if (idError) return idError;
+
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
+    }
+
     const body = await c.req.json();
-    const { recording_url } = body;
+    const { subject_id, sort_order } = body;
 
-    if (!recording_url) {
-      return c.json({ error: 'recording_url is required' }, 400);
+    if (!subject_id) {
+      return c.json({ error: 'subject_id is required' }, 400);
     }
 
     const now = new Date().toISOString();
-    await c.env.DB.prepare(
-      'UPDATE live_class_schedules SET recording_url = ?, updated_at = ? WHERE id = ? AND is_active = 1'
-    ).bind(recording_url, now, scheduleId).run();
 
-    return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
-// ATTENDANCE — Track participant attendance in live classes
-// ═══════════════════════════════════════════════════
-
-// GET /livekit/attendance/:roomName — Get attendance for a room
-instructorRoutes.get('/livekit/attendance/:roomName', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const roomName = c.req.param('roomName');
-
-    // Get attendance data from KV
-    const attendanceData = await c.env.KV_CONFIG.get(`ATTENDANCE:${roomName}`);
-    if (!attendanceData) {
-      return c.json({ success: true, attendance: [], total: 0 });
-    }
-
-    const attendance = JSON.parse(attendanceData);
-    return c.json({
-      success: true,
-      attendance: attendance.participants || [],
-      total: (attendance.participants || []).length,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// POST /livekit/attendance/:roomName — Record attendance for a participant
-instructorRoutes.post('/livekit/attendance/:roomName', async (c) => {
-  try {
-    const roomName = c.req.param('roomName');
-    const body = await c.req.json();
-    const { identity, name, role, event } = body; // event: 'join' | 'leave'
-
-    if (!identity || !event) {
-      return c.json({ error: 'identity and event are required' }, 400);
-    }
-
-    // Get existing attendance
-    const existing = await c.env.KV_CONFIG.get(`ATTENDANCE:${roomName}`);
-    const attendance = existing ? JSON.parse(existing) : { participants: {} };
-
-    const now = new Date().toISOString();
-
-    if (event === 'join') {
-      attendance.participants[identity] = {
-        identity,
-        name: name || identity,
-        role: role || 'participant',
-        joinedAt: now,
-        leftAt: null,
-        duration: 0,
-      };
-    } else if (event === 'leave') {
-      if (attendance.participants[identity]) {
-        attendance.participants[identity].leftAt = now;
-        const joinedAt = new Date(attendance.participants[identity].joinedAt).getTime();
-        attendance.participants[identity].duration = Math.floor((Date.now() - joinedAt) / 1000);
+    try {
+      await c.env.DB.prepare(`
+        INSERT INTO course_subjects (course_id, subject_id, sort_order, created_at)
+        VALUES (?, ?, ?, ?)
+      `).bind(courseId, subject_id, sort_order || 0, now).run();
+    } catch (err: any) {
+      if (err?.message?.includes('UNIQUE') || err?.message?.includes('duplicate')) {
+        return c.json({ error: 'Subject already added to this course' }, 400);
       }
     }
 
-    await c.env.KV_CONFIG.put(
-      `ATTENDANCE:${roomName}`,
-      JSON.stringify(attendance),
-      { expirationTtl: 7 * 24 * 3600 } // 7 days
-    );
-
-    return c.json({ success: true });
+    return c.json({ success: true, message: 'Subject added to course' }, 201);
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 
-// ═══════════════════════════════════════════════════
-// TOKEN WITH ROLE — Enhanced token generation with role-based access
-// ═══════════════════════════════════════════════════
-
-// POST /livekit/token-role — Generate token with specific role and permissions
-instructorRoutes.post('/livekit/token-role', instructorOrAdminMiddleware, async (c) => {
+// DELETE /courses/:id/subjects/:subjectId — Remove subject from course
+instructorRoutes.delete('/courses/:id/subjects/:subjectId', instructorOrAdminMiddleware, async (c) => {
   try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-    if (!config) {
-      return c.json({ error: 'LiveKit is not configured' }, 503);
+    const courseId = c.req.param('id');
+    const subjectId = c.req.param('subjectId');
+    const { instructorId, error: idError } = getInstructorId(c);
+    if (idError) return idError;
+
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
     }
 
-    const body = await c.req.json();
-    const {
-      room, identity, name, role = 'viewer',
-      room_type = 'video', // video | voice | classroom | webinar
-      ttl = 6 * 60 * 60,
-    } = body;
+    await c.env.DB.prepare(
+      'DELETE FROM course_subjects WHERE course_id = ? AND subject_id = ?'
+    ).bind(courseId, subjectId).run();
 
-    if (!room) {
-      return c.json({ error: 'room is required' }, 400);
-    }
-
-    // Role-based permissions
-    const permissions: Record<string, { canPublish: boolean; canSubscribe: boolean; canPublishData: boolean; canAdmin: boolean }> = {
-      host: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: true },
-      presenter: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: false },
-      guest: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: false },
-      viewer: { canPublish: false, canSubscribe: true, canPublishData: false, canAdmin: false },
-      student: { canPublish: true, canSubscribe: true, canPublishData: true, canAdmin: false },
-    };
-
-    // For voice rooms, everyone can publish audio but not video
-    // For webinars, only host/presenter can publish
-    let perms = permissions[role] || permissions.viewer;
-
-    if (room_type === 'voice') {
-      // Voice rooms: audio publish allowed, video not needed
-      perms = { ...perms, canPublish: role !== 'viewer' };
-    } else if (room_type === 'webinar') {
-      // Webinar: only host and presenter can publish
-      perms = { ...perms, canPublish: role === 'host' || role === 'presenter' };
-    } else if (room_type === 'classroom') {
-      // Classroom: students can publish (for raise hand, Q&A)
-      perms = { ...perms, canPublishData: true };
-    }
-
-    // Build metadata
-    const metadata = JSON.stringify({
-      role,
-      roomType: room_type,
-      joinedAt: new Date().toISOString(),
-    });
-
-    const token = await generateLiveKitToken({
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-      identity: identity || 'participant',
-      name: name || '',
-      room,
-      canPublish: perms.canPublish,
-      canSubscribe: perms.canSubscribe,
-      canPublishData: perms.canPublishData,
-      canAdmin: perms.canAdmin,
-      ttl,
-      metadata,
-    });
-
-    return c.json({
-      success: true,
-      token,
-      url: config.url,
-      room,
-      identity: identity || 'participant',
-      role,
-      permissions: perms,
-    });
+    return c.json({ success: true, message: 'Subject removed from course' });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
-// ENHANCED WEBHOOK — Full event processing with attendance tracking
-// ═══════════════════════════════════════════════════
-
-// The existing POST /livekit/webhook is already handling basic events.
-// This section adds enhanced processing via the attendance system.
-
-// GET /livekit/health — Health check for LiveKit + Calls + Realtime
-instructorRoutes.get('/livekit/health', async (c) => {
-  try {
-    const config = await getLiveKitConfig(c.env.KV_CONFIG);
-
-    let livekitStatus: 'configured' | 'not_configured' | 'error' = config ? 'configured' : 'not_configured';
-
-    // Try to check Cloudflare Calls availability
-    let callsStatus: 'configured' | 'not_configured' = 'not_configured';
-    let realtimeStatus: 'configured' | 'not_configured' = 'not_configured';
-    try {
-      const { isCallsAvailable, getRealtimeConfig } = await import('../lib/cloudflare-calls');
-      const available = await isCallsAvailable(c.env.KV_CONFIG, c.env);
-      callsStatus = available ? 'configured' : 'not_configured';
-
-      const realtimeConfig = await getRealtimeConfig(c.env.KV_CONFIG);
-      realtimeStatus = realtimeConfig ? 'configured' : 'not_configured';
-    } catch {}
-
-    return c.json({
-      success: true,
-      livekit: {
-        status: livekitStatus,
-        url: config?.url || null,
-      },
-      cloudflareCalls: {
-        status: callsStatus,
-      },
-      realtime: {
-        status: realtimeStatus,
-      },
-      fallback: callsStatus === 'configured' ? 'available' : 'unavailable',
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// ═══════════════════════════════════════════════════
-// DAKKHO REALTIME — Cloudflare Calls "Dakkho Realtime" App
-// ═══════════════════════════════════════════════════
-
-// POST /realtime/session — Create a Dakkho Realtime session
-instructorRoutes.post('/realtime/session', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const { getRealtimeClientConfig, trackCallsSession } = await import('../lib/cloudflare-calls');
-
-    const body = await c.req.json();
-    const { room, ttl, maxParticipants } = body;
-
-    if (!room) {
-      return c.json({ error: 'room is required' }, 400);
-    }
-
-    const clientConfig = await getRealtimeClientConfig(c.env.KV_CONFIG, room, { ttl, maxParticipants });
-    if (!clientConfig) {
-      return c.json({ error: 'Dakkho Realtime is not configured. Add DAKKHO_REALTIME_APP_ID and DAKKHO_REALTIME_API_TOKEN to KV.' }, 503);
-    }
-
-    const authRole = c.get('authRole');
-    const instructorId = authRole === 'admin' ? c.req.query('instructorId')! : c.get('instructorId');
-
-    // Track the session
-    await trackCallsSession(c.env.KV_CONFIG, clientConfig.sessionId, room, instructorId || 'admin');
-
-    return c.json({
-      success: true,
-      provider: 'dakkho-realtime',
-      sessionId: clientConfig.sessionId,
-      url: clientConfig.url,
-      iceServers: clientConfig.iceServers,
-      appId: clientConfig.appId,
-      room,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /realtime/config — Get public Dakkho Realtime configuration
-instructorRoutes.get('/realtime/config', instructorOrAdminMiddleware, async (c) => {
-  try {
-    const { getRealtimeConfig } = await import('../lib/cloudflare-calls');
-    const config = await getRealtimeConfig(c.env.KV_CONFIG);
-
-    if (!config) {
-      return c.json({ configured: false, appId: null });
-    }
-
-    return c.json({
-      configured: true,
-      appId: config.appId,
-    });
-  } catch (error) {
-    return c.json({ error: getErrorMessage(error) }, 500);
-  }
-});
-
-// GET /realtime/status — Quick check if Dakkho Realtime is available
-instructorRoutes.get('/realtime/status', async (c) => {
-  try {
-    const { getRealtimeConfig } = await import('../lib/cloudflare-calls');
-    const config = await getRealtimeConfig(c.env.KV_CONFIG);
-    return c.json({ available: config !== null });
-  } catch (error) {
-    return c.json({ available: false });
   }
 });
 

@@ -1,6 +1,5 @@
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
@@ -9,1080 +8,21 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// node_modules/unenv/dist/runtime/_internal/utils.mjs
-// @__NO_SIDE_EFFECTS__
-function createNotImplementedError(name) {
-  return new Error(`[unenv] ${name} is not implemented yet!`);
-}
-// @__NO_SIDE_EFFECTS__
-function notImplemented(name) {
-  const fn = /* @__PURE__ */ __name(() => {
-    throw /* @__PURE__ */ createNotImplementedError(name);
-  }, "fn");
-  return Object.assign(fn, { __unenv__: true });
-}
-// @__NO_SIDE_EFFECTS__
-function notImplementedClass(name) {
-  return class {
-    __unenv__ = true;
-    constructor() {
-      throw new Error(`[unenv] ${name} is not implemented yet!`);
-    }
-  };
-}
-var init_utils = __esm({
-  "node_modules/unenv/dist/runtime/_internal/utils.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    __name(createNotImplementedError, "createNotImplementedError");
-    __name(notImplemented, "notImplemented");
-    __name(notImplementedClass, "notImplementedClass");
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs
-var _timeOrigin, _performanceNow, nodeTiming, PerformanceEntry, PerformanceMark, PerformanceMeasure, PerformanceResourceTiming, PerformanceObserverEntryList, Performance, PerformanceObserver, performance;
-var init_performance = __esm({
-  "node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_utils();
-    _timeOrigin = globalThis.performance?.timeOrigin ?? Date.now();
-    _performanceNow = globalThis.performance?.now ? globalThis.performance.now.bind(globalThis.performance) : () => Date.now() - _timeOrigin;
-    nodeTiming = {
-      name: "node",
-      entryType: "node",
-      startTime: 0,
-      duration: 0,
-      nodeStart: 0,
-      v8Start: 0,
-      bootstrapComplete: 0,
-      environment: 0,
-      loopStart: 0,
-      loopExit: 0,
-      idleTime: 0,
-      uvMetricsInfo: {
-        loopCount: 0,
-        events: 0,
-        eventsWaiting: 0
-      },
-      detail: void 0,
-      toJSON() {
-        return this;
-      }
-    };
-    PerformanceEntry = class {
-      static {
-        __name(this, "PerformanceEntry");
-      }
-      __unenv__ = true;
-      detail;
-      entryType = "event";
-      name;
-      startTime;
-      constructor(name, options) {
-        this.name = name;
-        this.startTime = options?.startTime || _performanceNow();
-        this.detail = options?.detail;
-      }
-      get duration() {
-        return _performanceNow() - this.startTime;
-      }
-      toJSON() {
-        return {
-          name: this.name,
-          entryType: this.entryType,
-          startTime: this.startTime,
-          duration: this.duration,
-          detail: this.detail
-        };
-      }
-    };
-    PerformanceMark = class PerformanceMark2 extends PerformanceEntry {
-      static {
-        __name(this, "PerformanceMark");
-      }
-      entryType = "mark";
-      constructor() {
-        super(...arguments);
-      }
-      get duration() {
-        return 0;
-      }
-    };
-    PerformanceMeasure = class extends PerformanceEntry {
-      static {
-        __name(this, "PerformanceMeasure");
-      }
-      entryType = "measure";
-    };
-    PerformanceResourceTiming = class extends PerformanceEntry {
-      static {
-        __name(this, "PerformanceResourceTiming");
-      }
-      entryType = "resource";
-      serverTiming = [];
-      connectEnd = 0;
-      connectStart = 0;
-      decodedBodySize = 0;
-      domainLookupEnd = 0;
-      domainLookupStart = 0;
-      encodedBodySize = 0;
-      fetchStart = 0;
-      initiatorType = "";
-      name = "";
-      nextHopProtocol = "";
-      redirectEnd = 0;
-      redirectStart = 0;
-      requestStart = 0;
-      responseEnd = 0;
-      responseStart = 0;
-      secureConnectionStart = 0;
-      startTime = 0;
-      transferSize = 0;
-      workerStart = 0;
-      responseStatus = 0;
-    };
-    PerformanceObserverEntryList = class {
-      static {
-        __name(this, "PerformanceObserverEntryList");
-      }
-      __unenv__ = true;
-      getEntries() {
-        return [];
-      }
-      getEntriesByName(_name, _type) {
-        return [];
-      }
-      getEntriesByType(type) {
-        return [];
-      }
-    };
-    Performance = class {
-      static {
-        __name(this, "Performance");
-      }
-      __unenv__ = true;
-      timeOrigin = _timeOrigin;
-      eventCounts = /* @__PURE__ */ new Map();
-      _entries = [];
-      _resourceTimingBufferSize = 0;
-      navigation = void 0;
-      timing = void 0;
-      timerify(_fn, _options) {
-        throw createNotImplementedError("Performance.timerify");
-      }
-      get nodeTiming() {
-        return nodeTiming;
-      }
-      eventLoopUtilization() {
-        return {};
-      }
-      markResourceTiming() {
-        return new PerformanceResourceTiming("");
-      }
-      onresourcetimingbufferfull = null;
-      now() {
-        if (this.timeOrigin === _timeOrigin) {
-          return _performanceNow();
-        }
-        return Date.now() - this.timeOrigin;
-      }
-      clearMarks(markName) {
-        this._entries = markName ? this._entries.filter((e) => e.name !== markName) : this._entries.filter((e) => e.entryType !== "mark");
-      }
-      clearMeasures(measureName) {
-        this._entries = measureName ? this._entries.filter((e) => e.name !== measureName) : this._entries.filter((e) => e.entryType !== "measure");
-      }
-      clearResourceTimings() {
-        this._entries = this._entries.filter((e) => e.entryType !== "resource" || e.entryType !== "navigation");
-      }
-      getEntries() {
-        return this._entries;
-      }
-      getEntriesByName(name, type) {
-        return this._entries.filter((e) => e.name === name && (!type || e.entryType === type));
-      }
-      getEntriesByType(type) {
-        return this._entries.filter((e) => e.entryType === type);
-      }
-      mark(name, options) {
-        const entry = new PerformanceMark(name, options);
-        this._entries.push(entry);
-        return entry;
-      }
-      measure(measureName, startOrMeasureOptions, endMark) {
-        let start;
-        let end;
-        if (typeof startOrMeasureOptions === "string") {
-          start = this.getEntriesByName(startOrMeasureOptions, "mark")[0]?.startTime;
-          end = this.getEntriesByName(endMark, "mark")[0]?.startTime;
-        } else {
-          start = Number.parseFloat(startOrMeasureOptions?.start) || this.now();
-          end = Number.parseFloat(startOrMeasureOptions?.end) || this.now();
-        }
-        const entry = new PerformanceMeasure(measureName, {
-          startTime: start,
-          detail: {
-            start,
-            end
-          }
-        });
-        this._entries.push(entry);
-        return entry;
-      }
-      setResourceTimingBufferSize(maxSize) {
-        this._resourceTimingBufferSize = maxSize;
-      }
-      addEventListener(type, listener, options) {
-        throw createNotImplementedError("Performance.addEventListener");
-      }
-      removeEventListener(type, listener, options) {
-        throw createNotImplementedError("Performance.removeEventListener");
-      }
-      dispatchEvent(event) {
-        throw createNotImplementedError("Performance.dispatchEvent");
-      }
-      toJSON() {
-        return this;
-      }
-    };
-    PerformanceObserver = class {
-      static {
-        __name(this, "PerformanceObserver");
-      }
-      __unenv__ = true;
-      static supportedEntryTypes = [];
-      _callback = null;
-      constructor(callback) {
-        this._callback = callback;
-      }
-      takeRecords() {
-        return [];
-      }
-      disconnect() {
-        throw createNotImplementedError("PerformanceObserver.disconnect");
-      }
-      observe(options) {
-        throw createNotImplementedError("PerformanceObserver.observe");
-      }
-      bind(fn) {
-        return fn;
-      }
-      runInAsyncScope(fn, thisArg, ...args) {
-        return fn.call(thisArg, ...args);
-      }
-      asyncId() {
-        return 0;
-      }
-      triggerAsyncId() {
-        return 0;
-      }
-      emitDestroy() {
-        return this;
-      }
-    };
-    performance = globalThis.performance && "addEventListener" in globalThis.performance ? globalThis.performance : new Performance();
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/perf_hooks.mjs
-var init_perf_hooks = __esm({
-  "node_modules/unenv/dist/runtime/node/perf_hooks.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_performance();
-  }
-});
-
-// node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs
-var init_performance2 = __esm({
-  "node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs"() {
-    init_perf_hooks();
-    if (!("__unenv__" in performance)) {
-      const proto = Performance.prototype;
-      for (const key of Object.getOwnPropertyNames(proto)) {
-        if (key !== "constructor" && !(key in performance)) {
-          const desc = Object.getOwnPropertyDescriptor(proto, key);
-          if (desc) {
-            Object.defineProperty(performance, key, desc);
-          }
-        }
-      }
-    }
-    globalThis.performance = performance;
-    globalThis.Performance = Performance;
-    globalThis.PerformanceEntry = PerformanceEntry;
-    globalThis.PerformanceMark = PerformanceMark;
-    globalThis.PerformanceMeasure = PerformanceMeasure;
-    globalThis.PerformanceObserver = PerformanceObserver;
-    globalThis.PerformanceObserverEntryList = PerformanceObserverEntryList;
-    globalThis.PerformanceResourceTiming = PerformanceResourceTiming;
-  }
-});
-
-// node_modules/unenv/dist/runtime/mock/noop.mjs
-var noop_default;
-var init_noop = __esm({
-  "node_modules/unenv/dist/runtime/mock/noop.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    noop_default = Object.assign(() => {
-    }, { __unenv__: true });
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/console.mjs
-import { Writable } from "node:stream";
-var _console, _ignoreErrors, _stderr, _stdout, log, info, trace, debug, table, error, warn, createTask, clear, count, countReset, dir, dirxml, group, groupEnd, groupCollapsed, profile, profileEnd, time, timeEnd, timeLog, timeStamp, Console, _times, _stdoutErrorHandler, _stderrErrorHandler;
-var init_console = __esm({
-  "node_modules/unenv/dist/runtime/node/console.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_noop();
-    init_utils();
-    _console = globalThis.console;
-    _ignoreErrors = true;
-    _stderr = new Writable();
-    _stdout = new Writable();
-    log = _console?.log ?? noop_default;
-    info = _console?.info ?? log;
-    trace = _console?.trace ?? info;
-    debug = _console?.debug ?? log;
-    table = _console?.table ?? log;
-    error = _console?.error ?? log;
-    warn = _console?.warn ?? error;
-    createTask = _console?.createTask ?? /* @__PURE__ */ notImplemented("console.createTask");
-    clear = _console?.clear ?? noop_default;
-    count = _console?.count ?? noop_default;
-    countReset = _console?.countReset ?? noop_default;
-    dir = _console?.dir ?? noop_default;
-    dirxml = _console?.dirxml ?? noop_default;
-    group = _console?.group ?? noop_default;
-    groupEnd = _console?.groupEnd ?? noop_default;
-    groupCollapsed = _console?.groupCollapsed ?? noop_default;
-    profile = _console?.profile ?? noop_default;
-    profileEnd = _console?.profileEnd ?? noop_default;
-    time = _console?.time ?? noop_default;
-    timeEnd = _console?.timeEnd ?? noop_default;
-    timeLog = _console?.timeLog ?? noop_default;
-    timeStamp = _console?.timeStamp ?? noop_default;
-    Console = _console?.Console ?? /* @__PURE__ */ notImplementedClass("console.Console");
-    _times = /* @__PURE__ */ new Map();
-    _stdoutErrorHandler = noop_default;
-    _stderrErrorHandler = noop_default;
-  }
-});
-
-// node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs
-var workerdConsole, assert, clear2, context, count2, countReset2, createTask2, debug2, dir2, dirxml2, error2, group2, groupCollapsed2, groupEnd2, info2, log2, profile2, profileEnd2, table2, time2, timeEnd2, timeLog2, timeStamp2, trace2, warn2, console_default;
-var init_console2 = __esm({
-  "node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_console();
-    workerdConsole = globalThis["console"];
-    ({
-      assert,
-      clear: clear2,
-      context: (
-        // @ts-expect-error undocumented public API
-        context
-      ),
-      count: count2,
-      countReset: countReset2,
-      createTask: (
-        // @ts-expect-error undocumented public API
-        createTask2
-      ),
-      debug: debug2,
-      dir: dir2,
-      dirxml: dirxml2,
-      error: error2,
-      group: group2,
-      groupCollapsed: groupCollapsed2,
-      groupEnd: groupEnd2,
-      info: info2,
-      log: log2,
-      profile: profile2,
-      profileEnd: profileEnd2,
-      table: table2,
-      time: time2,
-      timeEnd: timeEnd2,
-      timeLog: timeLog2,
-      timeStamp: timeStamp2,
-      trace: trace2,
-      warn: warn2
-    } = workerdConsole);
-    Object.assign(workerdConsole, {
-      Console,
-      _ignoreErrors,
-      _stderr,
-      _stderrErrorHandler,
-      _stdout,
-      _stdoutErrorHandler,
-      _times
-    });
-    console_default = workerdConsole;
-  }
-});
-
-// node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-console
-var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console = __esm({
-  "node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-console"() {
-    init_console2();
-    globalThis.console = console_default;
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs
-var hrtime;
-var init_hrtime = __esm({
-  "node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    hrtime = /* @__PURE__ */ Object.assign(/* @__PURE__ */ __name(function hrtime2(startTime) {
-      const now = Date.now();
-      const seconds = Math.trunc(now / 1e3);
-      const nanos = now % 1e3 * 1e6;
-      if (startTime) {
-        let diffSeconds = seconds - startTime[0];
-        let diffNanos = nanos - startTime[0];
-        if (diffNanos < 0) {
-          diffSeconds = diffSeconds - 1;
-          diffNanos = 1e9 + diffNanos;
-        }
-        return [diffSeconds, diffNanos];
-      }
-      return [seconds, nanos];
-    }, "hrtime"), { bigint: /* @__PURE__ */ __name(function bigint() {
-      return BigInt(Date.now() * 1e6);
-    }, "bigint") });
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs
-var ReadStream;
-var init_read_stream = __esm({
-  "node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    ReadStream = class {
-      static {
-        __name(this, "ReadStream");
-      }
-      fd;
-      isRaw = false;
-      isTTY = false;
-      constructor(fd) {
-        this.fd = fd;
-      }
-      setRawMode(mode) {
-        this.isRaw = mode;
-        return this;
-      }
-    };
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs
-var WriteStream;
-var init_write_stream = __esm({
-  "node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    WriteStream = class {
-      static {
-        __name(this, "WriteStream");
-      }
-      fd;
-      columns = 80;
-      rows = 24;
-      isTTY = false;
-      constructor(fd) {
-        this.fd = fd;
-      }
-      clearLine(dir3, callback) {
-        callback && callback();
-        return false;
-      }
-      clearScreenDown(callback) {
-        callback && callback();
-        return false;
-      }
-      cursorTo(x, y, callback) {
-        callback && typeof callback === "function" && callback();
-        return false;
-      }
-      moveCursor(dx, dy, callback) {
-        callback && callback();
-        return false;
-      }
-      getColorDepth(env2) {
-        return 1;
-      }
-      hasColors(count3, env2) {
-        return false;
-      }
-      getWindowSize() {
-        return [this.columns, this.rows];
-      }
-      write(str, encoding, cb) {
-        if (str instanceof Uint8Array) {
-          str = new TextDecoder().decode(str);
-        }
-        try {
-          console.log(str);
-        } catch {
-        }
-        cb && typeof cb === "function" && cb();
-        return false;
-      }
-    };
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/tty.mjs
-var init_tty = __esm({
-  "node_modules/unenv/dist/runtime/node/tty.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_read_stream();
-    init_write_stream();
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs
-var NODE_VERSION;
-var init_node_version = __esm({
-  "node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    NODE_VERSION = "22.14.0";
-  }
-});
-
-// node_modules/unenv/dist/runtime/node/internal/process/process.mjs
-import { EventEmitter } from "node:events";
-var Process;
-var init_process = __esm({
-  "node_modules/unenv/dist/runtime/node/internal/process/process.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_tty();
-    init_utils();
-    init_node_version();
-    Process = class _Process extends EventEmitter {
-      static {
-        __name(this, "Process");
-      }
-      env;
-      hrtime;
-      nextTick;
-      constructor(impl) {
-        super();
-        this.env = impl.env;
-        this.hrtime = impl.hrtime;
-        this.nextTick = impl.nextTick;
-        for (const prop of [...Object.getOwnPropertyNames(_Process.prototype), ...Object.getOwnPropertyNames(EventEmitter.prototype)]) {
-          const value = this[prop];
-          if (typeof value === "function") {
-            this[prop] = value.bind(this);
-          }
-        }
-      }
-      // --- event emitter ---
-      emitWarning(warning, type, code) {
-        console.warn(`${code ? `[${code}] ` : ""}${type ? `${type}: ` : ""}${warning}`);
-      }
-      emit(...args) {
-        return super.emit(...args);
-      }
-      listeners(eventName) {
-        return super.listeners(eventName);
-      }
-      // --- stdio (lazy initializers) ---
-      #stdin;
-      #stdout;
-      #stderr;
-      get stdin() {
-        return this.#stdin ??= new ReadStream(0);
-      }
-      get stdout() {
-        return this.#stdout ??= new WriteStream(1);
-      }
-      get stderr() {
-        return this.#stderr ??= new WriteStream(2);
-      }
-      // --- cwd ---
-      #cwd = "/";
-      chdir(cwd2) {
-        this.#cwd = cwd2;
-      }
-      cwd() {
-        return this.#cwd;
-      }
-      // --- dummy props and getters ---
-      arch = "";
-      platform = "";
-      argv = [];
-      argv0 = "";
-      execArgv = [];
-      execPath = "";
-      title = "";
-      pid = 200;
-      ppid = 100;
-      get version() {
-        return `v${NODE_VERSION}`;
-      }
-      get versions() {
-        return { node: NODE_VERSION };
-      }
-      get allowedNodeEnvironmentFlags() {
-        return /* @__PURE__ */ new Set();
-      }
-      get sourceMapsEnabled() {
-        return false;
-      }
-      get debugPort() {
-        return 0;
-      }
-      get throwDeprecation() {
-        return false;
-      }
-      get traceDeprecation() {
-        return false;
-      }
-      get features() {
-        return {};
-      }
-      get release() {
-        return {};
-      }
-      get connected() {
-        return false;
-      }
-      get config() {
-        return {};
-      }
-      get moduleLoadList() {
-        return [];
-      }
-      constrainedMemory() {
-        return 0;
-      }
-      availableMemory() {
-        return 0;
-      }
-      uptime() {
-        return 0;
-      }
-      resourceUsage() {
-        return {};
-      }
-      // --- noop methods ---
-      ref() {
-      }
-      unref() {
-      }
-      // --- unimplemented methods ---
-      umask() {
-        throw createNotImplementedError("process.umask");
-      }
-      getBuiltinModule() {
-        return void 0;
-      }
-      getActiveResourcesInfo() {
-        throw createNotImplementedError("process.getActiveResourcesInfo");
-      }
-      exit() {
-        throw createNotImplementedError("process.exit");
-      }
-      reallyExit() {
-        throw createNotImplementedError("process.reallyExit");
-      }
-      kill() {
-        throw createNotImplementedError("process.kill");
-      }
-      abort() {
-        throw createNotImplementedError("process.abort");
-      }
-      dlopen() {
-        throw createNotImplementedError("process.dlopen");
-      }
-      setSourceMapsEnabled() {
-        throw createNotImplementedError("process.setSourceMapsEnabled");
-      }
-      loadEnvFile() {
-        throw createNotImplementedError("process.loadEnvFile");
-      }
-      disconnect() {
-        throw createNotImplementedError("process.disconnect");
-      }
-      cpuUsage() {
-        throw createNotImplementedError("process.cpuUsage");
-      }
-      setUncaughtExceptionCaptureCallback() {
-        throw createNotImplementedError("process.setUncaughtExceptionCaptureCallback");
-      }
-      hasUncaughtExceptionCaptureCallback() {
-        throw createNotImplementedError("process.hasUncaughtExceptionCaptureCallback");
-      }
-      initgroups() {
-        throw createNotImplementedError("process.initgroups");
-      }
-      openStdin() {
-        throw createNotImplementedError("process.openStdin");
-      }
-      assert() {
-        throw createNotImplementedError("process.assert");
-      }
-      binding() {
-        throw createNotImplementedError("process.binding");
-      }
-      // --- attached interfaces ---
-      permission = { has: /* @__PURE__ */ notImplemented("process.permission.has") };
-      report = {
-        directory: "",
-        filename: "",
-        signal: "SIGUSR2",
-        compact: false,
-        reportOnFatalError: false,
-        reportOnSignal: false,
-        reportOnUncaughtException: false,
-        getReport: /* @__PURE__ */ notImplemented("process.report.getReport"),
-        writeReport: /* @__PURE__ */ notImplemented("process.report.writeReport")
-      };
-      finalization = {
-        register: /* @__PURE__ */ notImplemented("process.finalization.register"),
-        unregister: /* @__PURE__ */ notImplemented("process.finalization.unregister"),
-        registerBeforeExit: /* @__PURE__ */ notImplemented("process.finalization.registerBeforeExit")
-      };
-      memoryUsage = Object.assign(() => ({
-        arrayBuffers: 0,
-        rss: 0,
-        external: 0,
-        heapTotal: 0,
-        heapUsed: 0
-      }), { rss: /* @__PURE__ */ __name(() => 0, "rss") });
-      // --- undefined props ---
-      mainModule = void 0;
-      domain = void 0;
-      // optional
-      send = void 0;
-      exitCode = void 0;
-      channel = void 0;
-      getegid = void 0;
-      geteuid = void 0;
-      getgid = void 0;
-      getgroups = void 0;
-      getuid = void 0;
-      setegid = void 0;
-      seteuid = void 0;
-      setgid = void 0;
-      setgroups = void 0;
-      setuid = void 0;
-      // internals
-      _events = void 0;
-      _eventsCount = void 0;
-      _exiting = void 0;
-      _maxListeners = void 0;
-      _debugEnd = void 0;
-      _debugProcess = void 0;
-      _fatalException = void 0;
-      _getActiveHandles = void 0;
-      _getActiveRequests = void 0;
-      _kill = void 0;
-      _preload_modules = void 0;
-      _rawDebug = void 0;
-      _startProfilerIdleNotifier = void 0;
-      _stopProfilerIdleNotifier = void 0;
-      _tickCallback = void 0;
-      _disconnect = void 0;
-      _handleQueue = void 0;
-      _pendingMessage = void 0;
-      _channel = void 0;
-      _send = void 0;
-      _linkedBinding = void 0;
-    };
-  }
-});
-
-// node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs
-var globalProcess, getBuiltinModule, workerdProcess, unenvProcess, exit, features, platform, _channel, _debugEnd, _debugProcess, _disconnect, _events, _eventsCount, _exiting, _fatalException, _getActiveHandles, _getActiveRequests, _handleQueue, _kill, _linkedBinding, _maxListeners, _pendingMessage, _preload_modules, _rawDebug, _send, _startProfilerIdleNotifier, _stopProfilerIdleNotifier, _tickCallback, abort, addListener, allowedNodeEnvironmentFlags, arch, argv, argv0, assert2, availableMemory, binding, channel, chdir, config, connected, constrainedMemory, cpuUsage, cwd, debugPort, disconnect, dlopen, domain, emit, emitWarning, env, eventNames, execArgv, execPath, exitCode, finalization, getActiveResourcesInfo, getegid, geteuid, getgid, getgroups, getMaxListeners, getuid, hasUncaughtExceptionCaptureCallback, hrtime3, initgroups, kill, listenerCount, listeners, loadEnvFile, mainModule, memoryUsage, moduleLoadList, nextTick, off, on, once, openStdin, permission, pid, ppid, prependListener, prependOnceListener, rawListeners, reallyExit, ref, release, removeAllListeners, removeListener, report, resourceUsage, send, setegid, seteuid, setgid, setgroups, setMaxListeners, setSourceMapsEnabled, setuid, setUncaughtExceptionCaptureCallback, sourceMapsEnabled, stderr, stdin, stdout, throwDeprecation, title, traceDeprecation, umask, unref, uptime, version, versions, _process, process_default;
-var init_process2 = __esm({
-  "node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_hrtime();
-    init_process();
-    globalProcess = globalThis["process"];
-    getBuiltinModule = globalProcess.getBuiltinModule;
-    workerdProcess = getBuiltinModule("node:process");
-    unenvProcess = new Process({
-      env: globalProcess.env,
-      hrtime,
-      // `nextTick` is available from workerd process v1
-      nextTick: workerdProcess.nextTick
-    });
-    ({ exit, features, platform } = workerdProcess);
-    ({
-      _channel,
-      _debugEnd,
-      _debugProcess,
-      _disconnect,
-      _events,
-      _eventsCount,
-      _exiting,
-      _fatalException,
-      _getActiveHandles,
-      _getActiveRequests,
-      _handleQueue,
-      _kill,
-      _linkedBinding,
-      _maxListeners,
-      _pendingMessage,
-      _preload_modules,
-      _rawDebug,
-      _send,
-      _startProfilerIdleNotifier,
-      _stopProfilerIdleNotifier,
-      _tickCallback,
-      abort,
-      addListener,
-      allowedNodeEnvironmentFlags,
-      arch,
-      argv,
-      argv0,
-      assert: assert2,
-      availableMemory,
-      binding,
-      channel,
-      chdir,
-      config,
-      connected,
-      constrainedMemory,
-      cpuUsage,
-      cwd,
-      debugPort,
-      disconnect,
-      dlopen,
-      domain,
-      emit,
-      emitWarning,
-      env,
-      eventNames,
-      execArgv,
-      execPath,
-      exitCode,
-      finalization,
-      getActiveResourcesInfo,
-      getegid,
-      geteuid,
-      getgid,
-      getgroups,
-      getMaxListeners,
-      getuid,
-      hasUncaughtExceptionCaptureCallback,
-      hrtime: hrtime3,
-      initgroups,
-      kill,
-      listenerCount,
-      listeners,
-      loadEnvFile,
-      mainModule,
-      memoryUsage,
-      moduleLoadList,
-      nextTick,
-      off,
-      on,
-      once,
-      openStdin,
-      permission,
-      pid,
-      ppid,
-      prependListener,
-      prependOnceListener,
-      rawListeners,
-      reallyExit,
-      ref,
-      release,
-      removeAllListeners,
-      removeListener,
-      report,
-      resourceUsage,
-      send,
-      setegid,
-      seteuid,
-      setgid,
-      setgroups,
-      setMaxListeners,
-      setSourceMapsEnabled,
-      setuid,
-      setUncaughtExceptionCaptureCallback,
-      sourceMapsEnabled,
-      stderr,
-      stdin,
-      stdout,
-      throwDeprecation,
-      title,
-      traceDeprecation,
-      umask,
-      unref,
-      uptime,
-      version,
-      versions
-    } = unenvProcess);
-    _process = {
-      abort,
-      addListener,
-      allowedNodeEnvironmentFlags,
-      hasUncaughtExceptionCaptureCallback,
-      setUncaughtExceptionCaptureCallback,
-      loadEnvFile,
-      sourceMapsEnabled,
-      arch,
-      argv,
-      argv0,
-      chdir,
-      config,
-      connected,
-      constrainedMemory,
-      availableMemory,
-      cpuUsage,
-      cwd,
-      debugPort,
-      dlopen,
-      disconnect,
-      emit,
-      emitWarning,
-      env,
-      eventNames,
-      execArgv,
-      execPath,
-      exit,
-      finalization,
-      features,
-      getBuiltinModule,
-      getActiveResourcesInfo,
-      getMaxListeners,
-      hrtime: hrtime3,
-      kill,
-      listeners,
-      listenerCount,
-      memoryUsage,
-      nextTick,
-      on,
-      off,
-      once,
-      pid,
-      platform,
-      ppid,
-      prependListener,
-      prependOnceListener,
-      rawListeners,
-      release,
-      removeAllListeners,
-      removeListener,
-      report,
-      resourceUsage,
-      setMaxListeners,
-      setSourceMapsEnabled,
-      stderr,
-      stdin,
-      stdout,
-      title,
-      throwDeprecation,
-      traceDeprecation,
-      umask,
-      uptime,
-      version,
-      versions,
-      // @ts-expect-error old API
-      domain,
-      initgroups,
-      moduleLoadList,
-      reallyExit,
-      openStdin,
-      assert: assert2,
-      binding,
-      send,
-      exitCode,
-      channel,
-      getegid,
-      geteuid,
-      getgid,
-      getgroups,
-      getuid,
-      setegid,
-      seteuid,
-      setgid,
-      setgroups,
-      setuid,
-      permission,
-      mainModule,
-      _events,
-      _eventsCount,
-      _exiting,
-      _maxListeners,
-      _debugEnd,
-      _debugProcess,
-      _fatalException,
-      _getActiveHandles,
-      _getActiveRequests,
-      _kill,
-      _preload_modules,
-      _rawDebug,
-      _startProfilerIdleNotifier,
-      _stopProfilerIdleNotifier,
-      _tickCallback,
-      _disconnect,
-      _handleQueue,
-      _pendingMessage,
-      _channel,
-      _send,
-      _linkedBinding
-    };
-    process_default = _process;
-  }
-});
-
-// node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process
-var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process = __esm({
-  "node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process"() {
-    init_process2();
-    globalThis.process = process_default;
-  }
-});
-
 // src/lib/resend.ts
 var resend_exports = {};
 __export(resend_exports, {
   sendEmail: () => sendEmail,
   sendTestEmail: () => sendTestEmail
 });
-async function sendEmail(env2, to, subject, html) {
+async function sendEmail(env, to, subject, html) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${env2.RESEND_API_KEY}`,
+      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from: env2.RESEND_FROM_EMAIL,
+      from: env.RESEND_FROM_EMAIL,
       to: Array.isArray(to) ? to : [to],
       subject,
       html
@@ -1094,9 +34,9 @@ async function sendEmail(env2, to, subject, html) {
   }
   return res.json();
 }
-async function sendTestEmail(env2, to) {
+async function sendTestEmail(env, to) {
   return sendEmail(
-    env2,
+    env,
     to,
     "DAKKHO Admin - Test Email",
     `
@@ -1117,11 +57,6 @@ async function sendTestEmail(env2, to) {
 var init_resend = __esm({
   "src/lib/resend.ts"() {
     "use strict";
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    __name(sendEmail, "sendEmail");
-    __name(sendTestEmail, "sendTestEmail");
   }
 });
 
@@ -1144,20 +79,20 @@ __export(payment_exports, {
 function getSSLCommerzBaseURL(sandbox) {
   return sandbox ? "https://sandbox.sslcommerz.com" : "https://securepay.sslcommerz.com";
 }
-async function createSSLCommerzSession(env2, params) {
-  if (!env2.SSLCOMMERZ_STORE_ID || !env2.SSLCOMMERZ_STORE_PASSWORD) {
+async function createSSLCommerzSession(env, params) {
+  if (!env.SSLCOMMERZ_STORE_ID || !env.SSLCOMMERZ_STORE_PASSWORD) {
     return { error: "SSLCommerz not configured. Set store credentials in Admin Panel." };
   }
-  const config2 = {
-    store_id: env2.SSLCOMMERZ_STORE_ID,
-    store_password: env2.SSLCOMMERZ_STORE_PASSWORD,
+  const config = {
+    store_id: env.SSLCOMMERZ_STORE_ID,
+    store_password: env.SSLCOMMERZ_STORE_PASSWORD,
     sandbox: true
     // Will read from payment_config
   };
-  const baseURL = getSSLCommerzBaseURL(config2.sandbox);
+  const baseURL = getSSLCommerzBaseURL(config.sandbox);
   const body = new URLSearchParams({
-    store_id: config2.store_id,
-    store_passwd: config2.store_password,
+    store_id: config.store_id,
+    store_passwd: config.store_password,
     total_amount: params.total_amount.toString(),
     currency: params.currency,
     tran_id: params.tran_id,
@@ -1188,18 +123,18 @@ async function createSSLCommerzSession(env2, params) {
     } else {
       return { error: result.failedreason || "SSLCommerz session creation failed" };
     }
-  } catch (error3) {
-    return { error: error3 instanceof Error ? error3.message : "SSLCommerz request failed" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "SSLCommerz request failed" };
   }
 }
-async function verifySSLCommerzPayment(env2, tranId, valId) {
-  if (!env2.SSLCOMMERZ_STORE_ID || !env2.SSLCOMMERZ_STORE_PASSWORD) {
+async function verifySSLCommerzPayment(env, tranId, valId) {
+  if (!env.SSLCOMMERZ_STORE_ID || !env.SSLCOMMERZ_STORE_PASSWORD) {
     return false;
   }
   const baseURL = getSSLCommerzBaseURL(true);
   try {
     const response = await fetch(
-      `${baseURL}/validator/api/validationserverAPI.php?val_id=${valId}&store_id=${env2.SSLCOMMERZ_STORE_ID}&store_passwd=${env2.SSLCOMMERZ_STORE_PASSWORD}&v=1&format=json`
+      `${baseURL}/validator/api/validationserverAPI.php?val_id=${valId}&store_id=${env.SSLCOMMERZ_STORE_ID}&store_passwd=${env.SSLCOMMERZ_STORE_PASSWORD}&v=1&format=json`
     );
     const result = await response.json();
     return result.status === "VALID" || result.status === "VALIDATED";
@@ -1210,8 +145,8 @@ async function verifySSLCommerzPayment(env2, tranId, valId) {
 function getBkashBaseURL(sandbox) {
   return sandbox ? "https://tokenized.sandbox.bka.sh/v1.2.0-beta" : "https://tokenized.pay.bka.sh/v1.2.0-beta";
 }
-async function getBkashToken(env2) {
-  if (!env2.BKASH_USERNAME || !env2.BKASH_PASSWORD || !env2.BKASH_APP_KEY || !env2.BKASH_APP_SECRET) {
+async function getBkashToken(env) {
+  if (!env.BKASH_USERNAME || !env.BKASH_PASSWORD || !env.BKASH_APP_KEY || !env.BKASH_APP_SECRET) {
     return null;
   }
   const baseURL = getBkashBaseURL(true);
@@ -1220,12 +155,12 @@ async function getBkashToken(env2) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        username: env2.BKASH_USERNAME,
-        password: env2.BKASH_PASSWORD
+        username: env.BKASH_USERNAME,
+        password: env.BKASH_PASSWORD
       },
       body: JSON.stringify({
-        app_key: env2.BKASH_APP_KEY,
-        app_secret: env2.BKASH_APP_SECRET
+        app_key: env.BKASH_APP_KEY,
+        app_secret: env.BKASH_APP_SECRET
       })
     });
     const result = await response.json();
@@ -1234,8 +169,8 @@ async function getBkashToken(env2) {
     return null;
   }
 }
-async function createBkashPayment(env2, params) {
-  const token = await getBkashToken(env2);
+async function createBkashPayment(env, params) {
+  const token = await getBkashToken(env);
   if (!token) {
     return { error: "bKash not configured. Set credentials in Admin Panel." };
   }
@@ -1246,7 +181,7 @@ async function createBkashPayment(env2, params) {
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
-        "x-app-key": env2.BKASH_APP_KEY
+        "x-app-key": env.BKASH_APP_KEY
       },
       body: JSON.stringify({
         mode: "0011",
@@ -1267,12 +202,12 @@ async function createBkashPayment(env2, params) {
     } else {
       return { error: result.errorMessage || "bKash payment creation failed" };
     }
-  } catch (error3) {
-    return { error: error3 instanceof Error ? error3.message : "bKash request failed" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "bKash request failed" };
   }
 }
-async function executeBkashPayment(env2, paymentID) {
-  const token = await getBkashToken(env2);
+async function executeBkashPayment(env, paymentID) {
+  const token = await getBkashToken(env);
   if (!token) {
     return { error: "bKash not configured" };
   }
@@ -1283,7 +218,7 @@ async function executeBkashPayment(env2, paymentID) {
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
-        "x-app-key": env2.BKASH_APP_KEY
+        "x-app-key": env.BKASH_APP_KEY
       },
       body: JSON.stringify({ paymentID })
     });
@@ -1296,29 +231,29 @@ async function executeBkashPayment(env2, paymentID) {
     } else {
       return { error: result.errorMessage || "bKash payment execution failed" };
     }
-  } catch (error3) {
-    return { error: error3 instanceof Error ? error3.message : "bKash execution failed" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "bKash execution failed" };
   }
 }
-function getPipraPayBaseURL(env2) {
-  return env2.PIPRAPAY_BASE_URL || "https://pay.dakkho.pro.bd";
+function getPipraPayBaseURL(env) {
+  return env.PIPRAPAY_BASE_URL || "https://pay.dakkho.pro.bd";
 }
-function getPipraPayHeaders(env2) {
+function getPipraPayHeaders(env) {
   return {
     "Content-Type": "application/json",
-    "MHS-PIPRAPAY-API-KEY": env2.PIPRAPAY_API_KEY || ""
+    "MHS-PIPRAPAY-API-KEY": env.PIPRAPAY_API_KEY || ""
   };
 }
-async function verifyPipraPayWebhookSignature(env2, body, signatureHeader) {
+async function verifyPipraPayWebhookSignature(env, body, signatureHeader) {
   if (!signatureHeader) {
     return { valid: true, reason: "No signature header \u2014 consider enabling webhook signing in PipraPay dashboard" };
   }
-  if (!env2.PIPRAPAY_API_KEY) {
+  if (!env.PIPRAPAY_API_KEY) {
     return { valid: false, reason: "PIPRAPAY_API_KEY not configured \u2014 cannot verify webhook signature" };
   }
   try {
     const encoder = new TextEncoder();
-    const keyData = encoder.encode(env2.PIPRAPAY_API_KEY);
+    const keyData = encoder.encode(env.PIPRAPAY_API_KEY);
     const data = encoder.encode(body);
     const cryptoKey = await crypto.subtle.importKey(
       "raw",
@@ -1340,19 +275,19 @@ async function verifyPipraPayWebhookSignature(env2, body, signatureHeader) {
       return { valid: false, reason: "Signature verification failed \u2014 computed HMAC does not match" };
     }
     return { valid: true };
-  } catch (error3) {
-    return { valid: false, reason: `Signature verification error: ${error3 instanceof Error ? error3.message : "unknown"}` };
+  } catch (error) {
+    return { valid: false, reason: `Signature verification error: ${error instanceof Error ? error.message : "unknown"}` };
   }
 }
-async function createPipraPayPayment(env2, params) {
-  if (!env2.PIPRAPAY_API_KEY) {
+async function createPipraPayPayment(env, params) {
+  if (!env.PIPRAPAY_API_KEY) {
     return { error: "PipraPay not configured. Set API key in Admin Panel." };
   }
-  const baseURL = getPipraPayBaseURL(env2);
+  const baseURL = getPipraPayBaseURL(env);
   try {
     const response = await fetch(`${baseURL}/api/checkout/redirect`, {
       method: "POST",
-      headers: getPipraPayHeaders(env2),
+      headers: getPipraPayHeaders(env),
       body: JSON.stringify({
         full_name: params.full_name,
         email_address: params.email_address,
@@ -1373,19 +308,19 @@ async function createPipraPayPayment(env2, params) {
     } else {
       return { error: result.message || result.error || "PipraPay payment creation failed" };
     }
-  } catch (error3) {
-    return { error: error3 instanceof Error ? error3.message : "PipraPay request failed" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "PipraPay request failed" };
   }
 }
-async function verifyPipraPayPayment(env2, ppId) {
-  if (!env2.PIPRAPAY_API_KEY) {
+async function verifyPipraPayPayment(env, ppId) {
+  if (!env.PIPRAPAY_API_KEY) {
     return { error: "PipraPay not configured" };
   }
-  const baseURL = getPipraPayBaseURL(env2);
+  const baseURL = getPipraPayBaseURL(env);
   try {
     const response = await fetch(`${baseURL}/api/verify-payment`, {
       method: "POST",
-      headers: getPipraPayHeaders(env2),
+      headers: getPipraPayHeaders(env),
       body: JSON.stringify({ pp_id: ppId })
     });
     const result = await response.json();
@@ -1403,19 +338,19 @@ async function verifyPipraPayPayment(env2, ppId) {
     } else {
       return { error: result.message || result.error || "PipraPay verification failed" };
     }
-  } catch (error3) {
-    return { error: error3 instanceof Error ? error3.message : "PipraPay verification request failed" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "PipraPay verification request failed" };
   }
 }
-async function refundPipraPayPayment(env2, ppId) {
-  if (!env2.PIPRAPAY_API_KEY) {
+async function refundPipraPayPayment(env, ppId) {
+  if (!env.PIPRAPAY_API_KEY) {
     return { error: "PipraPay not configured" };
   }
-  const baseURL = getPipraPayBaseURL(env2);
+  const baseURL = getPipraPayBaseURL(env);
   try {
     const response = await fetch(`${baseURL}/api/refund-payment`, {
       method: "POST",
-      headers: getPipraPayHeaders(env2),
+      headers: getPipraPayHeaders(env),
       body: JSON.stringify({ pp_id: ppId })
     });
     const result = await response.json();
@@ -1424,58 +359,19 @@ async function refundPipraPayPayment(env2, ppId) {
     } else {
       return { error: result.message || result.error || "PipraPay refund failed" };
     }
-  } catch (error3) {
-    return { error: error3 instanceof Error ? error3.message : "PipraPay refund request failed" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "PipraPay refund request failed" };
   }
 }
 var init_payment = __esm({
   "src/lib/payment.ts"() {
     "use strict";
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    __name(getSSLCommerzBaseURL, "getSSLCommerzBaseURL");
-    __name(createSSLCommerzSession, "createSSLCommerzSession");
-    __name(verifySSLCommerzPayment, "verifySSLCommerzPayment");
-    __name(getBkashBaseURL, "getBkashBaseURL");
-    __name(getBkashToken, "getBkashToken");
-    __name(createBkashPayment, "createBkashPayment");
-    __name(executeBkashPayment, "executeBkashPayment");
-    __name(getPipraPayBaseURL, "getPipraPayBaseURL");
-    __name(getPipraPayHeaders, "getPipraPayHeaders");
-    __name(verifyPipraPayWebhookSignature, "verifyPipraPayWebhookSignature");
-    __name(createPipraPayPayment, "createPipraPayPayment");
-    __name(verifyPipraPayPayment, "verifyPipraPayPayment");
-    __name(refundPipraPayPayment, "refundPipraPayPayment");
   }
 });
 
-// src/index.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/index.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/hono.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/hono-base.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // node_modules/hono/dist/compose.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-var compose = /* @__PURE__ */ __name((middleware, onError, onNotFound) => {
-  return (context2, next) => {
+var compose = (middleware, onError, onNotFound) => {
+  return (context, next) => {
     let index = -1;
     return dispatch(0);
     async function dispatch(i) {
@@ -1488,62 +384,40 @@ var compose = /* @__PURE__ */ __name((middleware, onError, onNotFound) => {
       let handler;
       if (middleware[i]) {
         handler = middleware[i][0][0];
-        context2.req.routeIndex = i;
+        context.req.routeIndex = i;
       } else {
         handler = i === middleware.length && next || void 0;
       }
       if (handler) {
         try {
-          res = await handler(context2, () => dispatch(i + 1));
+          res = await handler(context, () => dispatch(i + 1));
         } catch (err) {
           if (err instanceof Error && onError) {
-            context2.error = err;
-            res = await onError(err, context2);
+            context.error = err;
+            res = await onError(err, context);
             isError = true;
           } else {
             throw err;
           }
         }
       } else {
-        if (context2.finalized === false && onNotFound) {
-          res = await onNotFound(context2);
+        if (context.finalized === false && onNotFound) {
+          res = await onNotFound(context);
         }
       }
-      if (res && (context2.finalized === false || isError)) {
-        context2.res = res;
+      if (res && (context.finalized === false || isError)) {
+        context.res = res;
       }
-      return context2;
+      return context;
     }
-    __name(dispatch, "dispatch");
   };
-}, "compose");
-
-// node_modules/hono/dist/context.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/request.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/http-exception.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
+};
 
 // node_modules/hono/dist/request/constants.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var GET_MATCH_RESULT = /* @__PURE__ */ Symbol();
 
 // node_modules/hono/dist/utils/body.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-var parseBody = /* @__PURE__ */ __name(async (request, options = /* @__PURE__ */ Object.create(null)) => {
+var parseBody = async (request, options = /* @__PURE__ */ Object.create(null)) => {
   const { all = false, dot = false } = options;
   const headers = request instanceof HonoRequest ? request.raw.headers : request.headers;
   const contentType = headers.get("Content-Type");
@@ -1551,7 +425,7 @@ var parseBody = /* @__PURE__ */ __name(async (request, options = /* @__PURE__ */
     return parseFormData(request, { all, dot });
   }
   return {};
-}, "parseBody");
+};
 async function parseFormData(request, options) {
   const formData = await request.formData();
   if (formData) {
@@ -1559,7 +433,6 @@ async function parseFormData(request, options) {
   }
   return {};
 }
-__name(parseFormData, "parseFormData");
 function convertFormDataToBodyData(formData, options) {
   const form = /* @__PURE__ */ Object.create(null);
   formData.forEach((value, key) => {
@@ -1581,8 +454,7 @@ function convertFormDataToBodyData(formData, options) {
   }
   return form;
 }
-__name(convertFormDataToBodyData, "convertFormDataToBodyData");
-var handleParsingAllValues = /* @__PURE__ */ __name((form, key, value) => {
+var handleParsingAllValues = (form, key, value) => {
   if (form[key] !== void 0) {
     if (Array.isArray(form[key])) {
       ;
@@ -1597,8 +469,8 @@ var handleParsingAllValues = /* @__PURE__ */ __name((form, key, value) => {
       form[key] = [value];
     }
   }
-}, "handleParsingAllValues");
-var handleParsingNestedValues = /* @__PURE__ */ __name((form, key, value) => {
+};
+var handleParsingNestedValues = (form, key, value) => {
   if (/(?:^|\.)__proto__\./.test(key)) {
     return;
   }
@@ -1614,25 +486,22 @@ var handleParsingNestedValues = /* @__PURE__ */ __name((form, key, value) => {
       nestedForm = nestedForm[key2];
     }
   });
-}, "handleParsingNestedValues");
+};
 
 // node_modules/hono/dist/utils/url.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-var splitPath = /* @__PURE__ */ __name((path) => {
+var splitPath = (path) => {
   const paths = path.split("/");
   if (paths[0] === "") {
     paths.shift();
   }
   return paths;
-}, "splitPath");
-var splitRoutingPath = /* @__PURE__ */ __name((routePath) => {
+};
+var splitRoutingPath = (routePath) => {
   const { groups, path } = extractGroupsFromPath(routePath);
   const paths = splitPath(path);
   return replaceGroupMarks(paths, groups);
-}, "splitRoutingPath");
-var extractGroupsFromPath = /* @__PURE__ */ __name((path) => {
+};
+var extractGroupsFromPath = (path) => {
   const groups = [];
   path = path.replace(/\{[^}]+\}/g, (match2, index) => {
     const mark = `@${index}`;
@@ -1640,8 +509,8 @@ var extractGroupsFromPath = /* @__PURE__ */ __name((path) => {
     return mark;
   });
   return { groups, path };
-}, "extractGroupsFromPath");
-var replaceGroupMarks = /* @__PURE__ */ __name((paths, groups) => {
+};
+var replaceGroupMarks = (paths, groups) => {
   for (let i = groups.length - 1; i >= 0; i--) {
     const [mark] = groups[i];
     for (let j = paths.length - 1; j >= 0; j--) {
@@ -1652,9 +521,9 @@ var replaceGroupMarks = /* @__PURE__ */ __name((paths, groups) => {
     }
   }
   return paths;
-}, "replaceGroupMarks");
+};
 var patternCache = {};
-var getPattern = /* @__PURE__ */ __name((label, next) => {
+var getPattern = (label, next) => {
   if (label === "*") {
     return "*";
   }
@@ -1671,8 +540,8 @@ var getPattern = /* @__PURE__ */ __name((label, next) => {
     return patternCache[cacheKey];
   }
   return null;
-}, "getPattern");
-var tryDecode = /* @__PURE__ */ __name((str, decoder) => {
+};
+var tryDecode = (str, decoder) => {
   try {
     return decoder(str);
   } catch {
@@ -1684,9 +553,9 @@ var tryDecode = /* @__PURE__ */ __name((str, decoder) => {
       }
     });
   }
-}, "tryDecode");
-var tryDecodeURI = /* @__PURE__ */ __name((str) => tryDecode(str, decodeURI), "tryDecodeURI");
-var getPath = /* @__PURE__ */ __name((request) => {
+};
+var tryDecodeURI = (str) => tryDecode(str, decodeURI);
+var getPath = (request) => {
   const url = request.url;
   const start = url.indexOf("/", url.indexOf(":") + 4);
   let i = start;
@@ -1703,18 +572,18 @@ var getPath = /* @__PURE__ */ __name((request) => {
     }
   }
   return url.slice(start, i);
-}, "getPath");
-var getPathNoStrict = /* @__PURE__ */ __name((request) => {
+};
+var getPathNoStrict = (request) => {
   const result = getPath(request);
   return result.length > 1 && result.at(-1) === "/" ? result.slice(0, -1) : result;
-}, "getPathNoStrict");
-var mergePath = /* @__PURE__ */ __name((base, sub, ...rest) => {
+};
+var mergePath = (base, sub, ...rest) => {
   if (rest.length) {
     sub = mergePath(sub, ...rest);
   }
   return `${base?.[0] === "/" ? "" : "/"}${base}${sub === "/" ? "" : `${base?.at(-1) === "/" ? "" : "/"}${sub?.[0] === "/" ? sub.slice(1) : sub}`}`;
-}, "mergePath");
-var checkOptionalParameter = /* @__PURE__ */ __name((path) => {
+};
+var checkOptionalParameter = (path) => {
   if (path.charCodeAt(path.length - 1) !== 63 || !path.includes(":")) {
     return null;
   }
@@ -1740,8 +609,8 @@ var checkOptionalParameter = /* @__PURE__ */ __name((path) => {
     }
   });
   return results.filter((v, i, a) => a.indexOf(v) === i);
-}, "checkOptionalParameter");
-var _decodeURI = /* @__PURE__ */ __name((value) => {
+};
+var _decodeURI = (value) => {
   if (!/[%+]/.test(value)) {
     return value;
   }
@@ -1749,8 +618,8 @@ var _decodeURI = /* @__PURE__ */ __name((value) => {
     value = value.replace(/\+/g, " ");
   }
   return value.indexOf("%") !== -1 ? tryDecode(value, decodeURIComponent_) : value;
-}, "_decodeURI");
-var _getQueryParam = /* @__PURE__ */ __name((url, key, multiple) => {
+};
+var _getQueryParam = (url, key, multiple) => {
   let encoded;
   if (!multiple && key && !/[%+]/.test(key)) {
     let keyIndex2 = url.indexOf("?", 8);
@@ -1816,19 +685,16 @@ var _getQueryParam = /* @__PURE__ */ __name((url, key, multiple) => {
     }
   }
   return key ? results[key] : results;
-}, "_getQueryParam");
+};
 var getQueryParam = _getQueryParam;
-var getQueryParams = /* @__PURE__ */ __name((url, key) => {
+var getQueryParams = (url, key) => {
   return _getQueryParam(url, key, true);
-}, "getQueryParams");
+};
 var decodeURIComponent_ = decodeURIComponent;
 
 // node_modules/hono/dist/request.js
-var tryDecodeURIComponent = /* @__PURE__ */ __name((str) => tryDecode(str, decodeURIComponent_), "tryDecodeURIComponent");
+var tryDecodeURIComponent = (str) => tryDecode(str, decodeURIComponent_);
 var HonoRequest = class {
-  static {
-    __name(this, "HonoRequest");
-  }
   /**
    * `.raw` can get the raw Request object.
    *
@@ -1909,7 +775,7 @@ var HonoRequest = class {
   async parseBody(options) {
     return parseBody(this, options);
   }
-  #cachedBody = /* @__PURE__ */ __name((key) => {
+  #cachedBody = (key) => {
     const { bodyCache, raw: raw2 } = this;
     const cachedBody = bodyCache[key];
     if (cachedBody) {
@@ -1925,7 +791,7 @@ var HonoRequest = class {
       });
     }
     return bodyCache[key] = raw2[key]();
-  }, "#cachedBody");
+  };
   /**
    * `.json()` can parse Request body of type `application/json`
    *
@@ -2110,21 +976,18 @@ var HonoRequest = class {
 };
 
 // node_modules/hono/dist/utils/html.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var HtmlEscapedCallbackPhase = {
   Stringify: 1,
   BeforeStream: 2,
   Stream: 3
 };
-var raw = /* @__PURE__ */ __name((value, callbacks) => {
+var raw = (value, callbacks) => {
   const escapedString = new String(value);
   escapedString.isEscaped = true;
   escapedString.callbacks = callbacks;
   return escapedString;
-}, "raw");
-var resolveCallback = /* @__PURE__ */ __name(async (str, phase, preserveCallbacks, context2, buffer) => {
+};
+var resolveCallback = async (str, phase, preserveCallbacks, context, buffer) => {
   if (typeof str === "object" && !(str instanceof String)) {
     if (!(str instanceof Promise)) {
       str = str.toString();
@@ -2142,9 +1005,9 @@ var resolveCallback = /* @__PURE__ */ __name(async (str, phase, preserveCallback
   } else {
     buffer = [str];
   }
-  const resStr = Promise.all(callbacks.map((c) => c({ phase, buffer, context: context2 }))).then(
+  const resStr = Promise.all(callbacks.map((c) => c({ phase, buffer, context }))).then(
     (res) => Promise.all(
-      res.filter(Boolean).map((str2) => resolveCallback(str2, phase, false, context2, buffer))
+      res.filter(Boolean).map((str2) => resolveCallback(str2, phase, false, context, buffer))
     ).then(() => buffer[0])
   );
   if (preserveCallbacks) {
@@ -2152,21 +1015,18 @@ var resolveCallback = /* @__PURE__ */ __name(async (str, phase, preserveCallback
   } else {
     return resStr;
   }
-}, "resolveCallback");
+};
 
 // node_modules/hono/dist/context.js
 var TEXT_PLAIN = "text/plain; charset=UTF-8";
-var setDefaultContentType = /* @__PURE__ */ __name((contentType, headers) => {
+var setDefaultContentType = (contentType, headers) => {
   return {
     "Content-Type": contentType,
     ...headers
   };
-}, "setDefaultContentType");
-var createResponseInstance = /* @__PURE__ */ __name((body, init) => new Response(body, init), "createResponseInstance");
+};
+var createResponseInstance = (body, init) => new Response(body, init);
 var Context = class {
-  static {
-    __name(this, "Context");
-  }
   #rawRequest;
   #req;
   /**
@@ -2306,23 +1166,23 @@ var Context = class {
    * })
    * ```
    */
-  render = /* @__PURE__ */ __name((...args) => {
+  render = (...args) => {
     this.#renderer ??= (content) => this.html(content);
     return this.#renderer(...args);
-  }, "render");
+  };
   /**
    * Sets the layout for the response.
    *
    * @param layout - The layout to set.
    * @returns The layout function.
    */
-  setLayout = /* @__PURE__ */ __name((layout) => this.#layout = layout, "setLayout");
+  setLayout = (layout) => this.#layout = layout;
   /**
    * Gets the current layout for the response.
    *
    * @returns The current layout function.
    */
-  getLayout = /* @__PURE__ */ __name(() => this.#layout, "getLayout");
+  getLayout = () => this.#layout;
   /**
    * `.setRenderer()` can set the layout in the custom middleware.
    *
@@ -2344,9 +1204,9 @@ var Context = class {
    * })
    * ```
    */
-  setRenderer = /* @__PURE__ */ __name((renderer) => {
+  setRenderer = (renderer) => {
     this.#renderer = renderer;
-  }, "setRenderer");
+  };
   /**
    * `.header()` can set headers.
    *
@@ -2363,7 +1223,7 @@ var Context = class {
    * })
    * ```
    */
-  header = /* @__PURE__ */ __name((name, value, options) => {
+  header = (name, value, options) => {
     if (this.finalized) {
       this.#res = createResponseInstance(this.#res.body, this.#res);
     }
@@ -2375,10 +1235,10 @@ var Context = class {
     } else {
       headers.set(name, value);
     }
-  }, "header");
-  status = /* @__PURE__ */ __name((status) => {
+  };
+  status = (status) => {
     this.#status = status;
-  }, "status");
+  };
   /**
    * `.set()` can set the value specified by the key.
    *
@@ -2392,10 +1252,10 @@ var Context = class {
    * })
    * ```
    */
-  set = /* @__PURE__ */ __name((key, value) => {
+  set = (key, value) => {
     this.#var ??= /* @__PURE__ */ new Map();
     this.#var.set(key, value);
-  }, "set");
+  };
   /**
    * `.get()` can use the value specified by the key.
    *
@@ -2409,9 +1269,9 @@ var Context = class {
    * })
    * ```
    */
-  get = /* @__PURE__ */ __name((key) => {
+  get = (key) => {
     return this.#var ? this.#var.get(key) : void 0;
-  }, "get");
+  };
   /**
    * `.var` can access the value of a variable.
    *
@@ -2456,7 +1316,7 @@ var Context = class {
     const status = typeof arg === "number" ? arg : arg?.status ?? this.#status;
     return createResponseInstance(data, { status, headers: responseHeaders });
   }
-  newResponse = /* @__PURE__ */ __name((...args) => this.#newResponse(...args), "newResponse");
+  newResponse = (...args) => this.#newResponse(...args);
   /**
    * `.body()` can return the HTTP response.
    * You can set headers with `.header()` and set HTTP status code with `.status`.
@@ -2478,7 +1338,7 @@ var Context = class {
    * })
    * ```
    */
-  body = /* @__PURE__ */ __name((data, arg, headers) => this.#newResponse(data, arg, headers), "body");
+  body = (data, arg, headers) => this.#newResponse(data, arg, headers);
   /**
    * `.text()` can render text as `Content-Type:text/plain`.
    *
@@ -2491,13 +1351,13 @@ var Context = class {
    * })
    * ```
    */
-  text = /* @__PURE__ */ __name((text, arg, headers) => {
+  text = (text, arg, headers) => {
     return !this.#preparedHeaders && !this.#status && !arg && !headers && !this.finalized ? new Response(text) : this.#newResponse(
       text,
       arg,
       setDefaultContentType(TEXT_PLAIN, headers)
     );
-  }, "text");
+  };
   /**
    * `.json()` can render JSON as `Content-Type:application/json`.
    *
@@ -2510,17 +1370,17 @@ var Context = class {
    * })
    * ```
    */
-  json = /* @__PURE__ */ __name((object, arg, headers) => {
+  json = (object, arg, headers) => {
     return this.#newResponse(
       JSON.stringify(object),
       arg,
       setDefaultContentType("application/json", headers)
     );
-  }, "json");
-  html = /* @__PURE__ */ __name((html, arg, headers) => {
-    const res = /* @__PURE__ */ __name((html2) => this.#newResponse(html2, arg, setDefaultContentType("text/html; charset=UTF-8", headers)), "res");
+  };
+  html = (html, arg, headers) => {
+    const res = (html2) => this.#newResponse(html2, arg, setDefaultContentType("text/html; charset=UTF-8", headers));
     return typeof html === "object" ? resolveCallback(html, HtmlEscapedCallbackPhase.Stringify, false, {}).then(res) : res(html);
-  }, "html");
+  };
   /**
    * `.redirect()` can Redirect, default status code is 302.
    *
@@ -2536,7 +1396,7 @@ var Context = class {
    * })
    * ```
    */
-  redirect = /* @__PURE__ */ __name((location, status) => {
+  redirect = (location, status) => {
     const locationString = String(location);
     this.header(
       "Location",
@@ -2545,7 +1405,7 @@ var Context = class {
       !/[^\x00-\xFF]/.test(locationString) ? locationString : encodeURI(locationString)
     );
     return this.newResponse(null, status ?? 302);
-  }, "redirect");
+  };
   /**
    * `.notFound()` can return the Not Found Response.
    *
@@ -2558,48 +1418,36 @@ var Context = class {
    * })
    * ```
    */
-  notFound = /* @__PURE__ */ __name(() => {
+  notFound = () => {
     this.#notFoundHandler ??= () => createResponseInstance();
     return this.#notFoundHandler(this);
-  }, "notFound");
+  };
 };
 
 // node_modules/hono/dist/router.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var METHOD_NAME_ALL = "ALL";
 var METHOD_NAME_ALL_LOWERCASE = "all";
 var METHODS = ["get", "post", "put", "delete", "options", "patch"];
 var MESSAGE_MATCHER_IS_ALREADY_BUILT = "Can not add a route since the matcher is already built.";
 var UnsupportedPathError = class extends Error {
-  static {
-    __name(this, "UnsupportedPathError");
-  }
 };
 
 // node_modules/hono/dist/utils/constants.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var COMPOSED_HANDLER = "__COMPOSED_HANDLER";
 
 // node_modules/hono/dist/hono-base.js
-var notFoundHandler = /* @__PURE__ */ __name((c) => {
+var notFoundHandler = (c) => {
   return c.text("404 Not Found", 404);
-}, "notFoundHandler");
-var errorHandler = /* @__PURE__ */ __name((err, c) => {
+};
+var errorHandler = (err, c) => {
   if ("getResponse" in err) {
     const res = err.getResponse();
     return c.newResponse(res.body, res);
   }
   console.error(err);
   return c.text("Internal Server Error", 500);
-}, "errorHandler");
+};
 var Hono = class _Hono {
-  static {
-    __name(this, "_Hono");
-  }
   get;
   post;
   put;
@@ -2699,7 +1547,7 @@ var Hono = class _Hono {
       if (app2.errorHandler === errorHandler) {
         handler = r.handler;
       } else {
-        handler = /* @__PURE__ */ __name(async (c, next) => (await compose([], app2.errorHandler)(c, () => r.handler(c, next))).res, "handler");
+        handler = async (c, next) => (await compose([], app2.errorHandler)(c, () => r.handler(c, next))).res;
         handler[COMPOSED_HANDLER] = r.handler;
       }
       subApp.#addRoute(r.method, r.path, handler, r.basePath);
@@ -2740,10 +1588,10 @@ var Hono = class _Hono {
    * })
    * ```
    */
-  onError = /* @__PURE__ */ __name((handler) => {
+  onError = (handler) => {
     this.errorHandler = handler;
     return this;
-  }, "onError");
+  };
   /**
    * `.notFound()` allows you to customize a Not Found Response.
    *
@@ -2759,10 +1607,10 @@ var Hono = class _Hono {
    * })
    * ```
    */
-  notFound = /* @__PURE__ */ __name((handler) => {
+  notFound = (handler) => {
     this.#notFoundHandler = handler;
     return this;
-  }, "notFound");
+  };
   /**
    * `.mount()` allows you to mount applications built with other frameworks into your Hono application.
    *
@@ -2804,7 +1652,7 @@ var Hono = class _Hono {
       } else {
         optionHandler = options.optionHandler;
         if (options.replaceRequest === false) {
-          replaceRequest = /* @__PURE__ */ __name((request) => request, "replaceRequest");
+          replaceRequest = (request) => request;
         } else {
           replaceRequest = options.replaceRequest;
         }
@@ -2830,13 +1678,13 @@ var Hono = class _Hono {
         return new Request(url, request);
       };
     })();
-    const handler = /* @__PURE__ */ __name(async (c, next) => {
+    const handler = async (c, next) => {
       const res = await applicationHandler(replaceRequest(c.req.raw), ...getOptions(c));
       if (res) {
         return res;
       }
       await next();
-    }, "handler");
+    };
     this.#addRoute(METHOD_NAME_ALL, mergePath(path, "*"), handler);
     return this;
   }
@@ -2858,16 +1706,16 @@ var Hono = class _Hono {
     }
     throw err;
   }
-  #dispatch(request, executionCtx, env2, method) {
+  #dispatch(request, executionCtx, env, method) {
     if (method === "HEAD") {
-      return (async () => new Response(null, await this.#dispatch(request, executionCtx, env2, "GET")))();
+      return (async () => new Response(null, await this.#dispatch(request, executionCtx, env, "GET")))();
     }
-    const path = this.getPath(request, { env: env2 });
+    const path = this.getPath(request, { env });
     const matchResult = this.router.match(method, path);
     const c = new Context(request, {
       path,
       matchResult,
-      env: env2,
+      env,
       executionCtx,
       notFoundHandler: this.#notFoundHandler
     });
@@ -2887,13 +1735,13 @@ var Hono = class _Hono {
     const composed = compose(matchResult[0], this.errorHandler, this.#notFoundHandler);
     return (async () => {
       try {
-        const context2 = await composed(c);
-        if (!context2.finalized) {
+        const context = await composed(c);
+        if (!context.finalized) {
           throw new Error(
             "Context is not finalized. Did you forget to return a Response object or `await next()`?"
           );
         }
-        return context2.res;
+        return context.res;
       } catch (err) {
         return this.#handleError(err, c);
       }
@@ -2910,9 +1758,9 @@ var Hono = class _Hono {
    * @returns {Response | Promise<Response>} response of request
    *
    */
-  fetch = /* @__PURE__ */ __name((request, ...rest) => {
+  fetch = (request, ...rest) => {
     return this.#dispatch(request, rest[1], rest[0], request.method);
-  }, "fetch");
+  };
   /**
    * `.request()` is a useful method for testing.
    * You can pass a URL or pathname to send a GET request.
@@ -2925,7 +1773,7 @@ var Hono = class _Hono {
    * ```
    * @see https://hono.dev/docs/api/hono#request
    */
-  request = /* @__PURE__ */ __name((input, requestInit, Env, executionCtx) => {
+  request = (input, requestInit, Env, executionCtx) => {
     if (input instanceof Request) {
       return this.fetch(requestInit ? new Request(input, requestInit) : input, Env, executionCtx);
     }
@@ -2938,7 +1786,7 @@ var Hono = class _Hono {
       Env,
       executionCtx
     );
-  }, "request");
+  };
   /**
    * `.fire()` automatically adds a global fetch event listener.
    * This can be useful for environments that adhere to the Service Worker API, such as non-ES module Cloudflare Workers.
@@ -2956,31 +1804,18 @@ var Hono = class _Hono {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
    * @see https://developers.cloudflare.com/workers/reference/migrate-to-module-workers/
    */
-  fire = /* @__PURE__ */ __name(() => {
+  fire = () => {
     addEventListener("fetch", (event) => {
       event.respondWith(this.#dispatch(event.request, event, void 0, event.request.method));
     });
-  }, "fire");
+  };
 };
 
-// node_modules/hono/dist/router/reg-exp-router/index.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/router/reg-exp-router/router.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // node_modules/hono/dist/router/reg-exp-router/matcher.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var emptyParam = [];
 function match(method, path) {
   const matchers = this.buildAllMatchers();
-  const match2 = /* @__PURE__ */ __name(((method2, path2) => {
+  const match2 = ((method2, path2) => {
     const matcher = matchers[method2] || matchers[METHOD_NAME_ALL];
     const staticMatch = matcher[2][path2];
     if (staticMatch) {
@@ -2992,16 +1827,12 @@ function match(method, path) {
     }
     const index = match3.indexOf("", 1);
     return [matcher[1][index], match3];
-  }), "match2");
+  });
   this.match = match2;
   return match2(method, path);
 }
-__name(match, "match");
 
 // node_modules/hono/dist/router/reg-exp-router/node.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var LABEL_REG_EXP_STR = "[^/]+";
 var ONLY_WILDCARD_REG_EXP_STR = ".*";
 var TAIL_WILDCARD_REG_EXP_STR = "(?:|/.*)";
@@ -3026,15 +1857,11 @@ function compareKey(a, b) {
   }
   return a.length === b.length ? a < b ? -1 : 1 : b.length - a.length;
 }
-__name(compareKey, "compareKey");
 var Node = class _Node {
-  static {
-    __name(this, "_Node");
-  }
   #index;
   #varIndex;
   #children = /* @__PURE__ */ Object.create(null);
-  insert(tokens, index, paramMap, context2, pathErrorCheckOnly) {
+  insert(tokens, index, paramMap, context, pathErrorCheckOnly) {
     if (tokens.length === 0) {
       if (this.#index !== void 0) {
         throw PATH_ERROR;
@@ -3072,7 +1899,7 @@ var Node = class _Node {
         }
         node = this.#children[regexpStr] = new _Node();
         if (name !== "") {
-          node.#varIndex = context2.varIndex++;
+          node.#varIndex = context.varIndex++;
         }
       }
       if (!pathErrorCheckOnly && name !== "") {
@@ -3092,7 +1919,7 @@ var Node = class _Node {
         node = this.#children[token] = new _Node();
       }
     }
-    node.insert(restTokens, index, paramMap, context2, pathErrorCheckOnly);
+    node.insert(restTokens, index, paramMap, context, pathErrorCheckOnly);
   }
   buildRegExpStr() {
     const childKeys = Object.keys(this.#children).sort(compareKey);
@@ -3114,13 +1941,7 @@ var Node = class _Node {
 };
 
 // node_modules/hono/dist/router/reg-exp-router/trie.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var Trie = class {
-  static {
-    __name(this, "Trie");
-  }
   #context = { varIndex: 0 };
   #root = new Node();
   insert(path, index, pathErrorCheckOnly) {
@@ -3186,11 +2007,9 @@ function buildWildcardRegExp(path) {
     )}$`
   );
 }
-__name(buildWildcardRegExp, "buildWildcardRegExp");
 function clearWildcardRegExpCache() {
   wildcardRegExpCache = /* @__PURE__ */ Object.create(null);
 }
-__name(clearWildcardRegExpCache, "clearWildcardRegExpCache");
 function buildMatcherFromPreprocessedRoutes(routes) {
   const trie = new Trie();
   const handlerData = [];
@@ -3248,7 +2067,6 @@ function buildMatcherFromPreprocessedRoutes(routes) {
   }
   return [regexp, handlerMap, staticMap];
 }
-__name(buildMatcherFromPreprocessedRoutes, "buildMatcherFromPreprocessedRoutes");
 function findMiddleware(middleware, path) {
   if (!middleware) {
     return void 0;
@@ -3260,11 +2078,7 @@ function findMiddleware(middleware, path) {
   }
   return void 0;
 }
-__name(findMiddleware, "findMiddleware");
 var RegExpRouter = class {
-  static {
-    __name(this, "RegExpRouter");
-  }
   name = "RegExpRouter";
   #middleware;
   #routes;
@@ -3361,24 +2175,8 @@ var RegExpRouter = class {
   }
 };
 
-// node_modules/hono/dist/router/reg-exp-router/prepared-router.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/router/smart-router/index.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // node_modules/hono/dist/router/smart-router/router.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var SmartRouter = class {
-  static {
-    __name(this, "SmartRouter");
-  }
   name = "SmartRouter";
   #routers = [];
   #routes = [];
@@ -3432,31 +2230,15 @@ var SmartRouter = class {
   }
 };
 
-// node_modules/hono/dist/router/trie-router/index.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// node_modules/hono/dist/router/trie-router/router.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // node_modules/hono/dist/router/trie-router/node.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var emptyParams = /* @__PURE__ */ Object.create(null);
-var hasChildren = /* @__PURE__ */ __name((children) => {
+var hasChildren = (children) => {
   for (const _ in children) {
     return true;
   }
   return false;
-}, "hasChildren");
+};
 var Node2 = class _Node2 {
-  static {
-    __name(this, "_Node");
-  }
   #methods;
   #children;
   #patterns;
@@ -3625,9 +2407,6 @@ var Node2 = class _Node2 {
 
 // node_modules/hono/dist/router/trie-router/router.js
 var TrieRouter = class {
-  static {
-    __name(this, "TrieRouter");
-  }
   name = "TrieRouter";
   #node;
   constructor() {
@@ -3650,9 +2429,6 @@ var TrieRouter = class {
 
 // node_modules/hono/dist/hono.js
 var Hono2 = class extends Hono {
-  static {
-    __name(this, "Hono");
-  }
   /**
    * Creates an instance of the Hono class.
    *
@@ -3667,10 +2443,7 @@ var Hono2 = class extends Hono {
 };
 
 // node_modules/hono/dist/middleware/cors/index.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-var cors = /* @__PURE__ */ __name((options) => {
+var cors = (options) => {
   const opts = {
     origin: "*",
     allowMethods: ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH"],
@@ -3703,11 +2476,10 @@ var cors = /* @__PURE__ */ __name((options) => {
       return () => [];
     }
   })(opts.allowMethods);
-  return /* @__PURE__ */ __name(async function cors2(c, next) {
+  return async function cors2(c, next) {
     function set(key, value) {
       c.res.headers.set(key, value);
     }
-    __name(set, "set");
     const allowOrigin = await findAllowOrigin(c.req.header("origin") || "", c);
     if (allowOrigin) {
       set("Access-Control-Allow-Origin", allowOrigin);
@@ -3752,18 +2524,10 @@ var cors = /* @__PURE__ */ __name((options) => {
     if (opts.origin !== "*" || opts.credentials) {
       c.header("Vary", "Origin", { append: true });
     }
-  }, "cors2");
-}, "cors");
-
-// node_modules/hono/dist/middleware/logger/index.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
+  };
+};
 
 // node_modules/hono/dist/utils/color.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 function getColorEnabled() {
   const { process, Deno } = globalThis;
   const isNoColor = typeof Deno?.noColor === "boolean" ? Deno.noColor : process !== void 0 ? (
@@ -3772,7 +2536,6 @@ function getColorEnabled() {
   ) : false;
   return !isNoColor;
 }
-__name(getColorEnabled, "getColorEnabled");
 async function getColorEnabledAsync() {
   const { navigator } = globalThis;
   const cfWorkers = "cloudflare:workers";
@@ -3785,19 +2548,18 @@ async function getColorEnabledAsync() {
   })() : !getColorEnabled();
   return !isNoColor;
 }
-__name(getColorEnabledAsync, "getColorEnabledAsync");
 
 // node_modules/hono/dist/middleware/logger/index.js
-var humanize = /* @__PURE__ */ __name((times) => {
+var humanize = (times) => {
   const [delimiter, separator] = [",", "."];
   const orderTimes = times.map((v) => v.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1" + delimiter));
   return orderTimes.join(separator);
-}, "humanize");
-var time3 = /* @__PURE__ */ __name((start) => {
+};
+var time = (start) => {
   const delta = Date.now() - start;
   return humanize([delta < 1e3 ? delta + "ms" : Math.round(delta / 1e3) + "s"]);
-}, "time");
-var colorStatus = /* @__PURE__ */ __name(async (status) => {
+};
+var colorStatus = async (status) => {
   const colorEnabled = await getColorEnabledAsync();
   if (colorEnabled) {
     switch (status / 100 | 0) {
@@ -3812,32 +2574,23 @@ var colorStatus = /* @__PURE__ */ __name(async (status) => {
     }
   }
   return `${status}`;
-}, "colorStatus");
-async function log3(fn, prefix, method, path, status = 0, elapsed) {
+};
+async function log(fn, prefix, method, path, status = 0, elapsed) {
   const out = prefix === "<--" ? `${prefix} ${method} ${path}` : `${prefix} ${method} ${path} ${await colorStatus(status)} ${elapsed}`;
   fn(out);
 }
-__name(log3, "log");
-var logger = /* @__PURE__ */ __name((fn = console.log) => {
-  return /* @__PURE__ */ __name(async function logger2(c, next) {
+var logger = (fn = console.log) => {
+  return async function logger2(c, next) {
     const { method, url } = c.req;
     const path = url.slice(url.indexOf("/", 8));
-    await log3(fn, "<--", method, path);
+    await log(fn, "<--", method, path);
     const start = Date.now();
     await next();
-    await log3(fn, "-->", method, path, c.res.status, time3(start));
-  }, "logger2");
-}, "logger");
-
-// src/routes/auth.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
+    await log(fn, "-->", method, path, c.res.status, time(start));
+  };
+};
 
 // src/lib/auth.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 async function adminAuthMiddleware(c, next) {
   const authHeader = c.req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -3868,37 +2621,29 @@ async function adminAuthMiddleware(c, next) {
       role: session.role
     });
     await next();
-  } catch (error3) {
-    console.error("Auth middleware error:", error3);
+  } catch (error) {
+    console.error("Auth middleware error:", error);
     return c.json({ error: "Authentication failed" }, 401);
   }
 }
-__name(adminAuthMiddleware, "adminAuthMiddleware");
 
 // src/lib/utils.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 function generateId() {
   return crypto.randomUUID();
 }
-__name(generateId, "generateId");
-function getErrorMessage(error3) {
-  if (error3 instanceof Error) return error3.message;
-  if (typeof error3 === "string") return error3;
+function getErrorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
   return "Unknown error";
 }
-__name(getErrorMessage, "getErrorMessage");
 function getSessionExpiry(days = 7) {
   const expiresAt = /* @__PURE__ */ new Date();
   expiresAt.setDate(expiresAt.getDate() + days);
   return expiresAt.toISOString();
 }
-__name(getSessionExpiry, "getSessionExpiry");
 function camelToSnake(str) {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
-__name(camelToSnake, "camelToSnake");
 function normalizeKeys(data, allowedFields) {
   const allowedSet = new Set(allowedFields);
   const result = {};
@@ -3912,15 +2657,11 @@ function normalizeKeys(data, allowedFields) {
   }
   return result;
 }
-__name(normalizeKeys, "normalizeKeys");
 
 // src/lib/audit.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-async function logAudit(env2, adminId, action, resourceType, resourceId, details) {
+async function logAudit(env, adminId, action, resourceType, resourceId, details) {
   try {
-    await env2.DB.prepare(
+    await env.DB.prepare(
       `INSERT INTO audit_logs (id, action, resource_type, resource_id, user_id, details, created_at)
        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
     ).bind(
@@ -3931,16 +2672,12 @@ async function logAudit(env2, adminId, action, resourceType, resourceId, details
       adminId,
       details ? JSON.stringify(details) : "{}"
     ).run();
-  } catch (error3) {
-    console.error("Audit log failed:", error3);
+  } catch (error) {
+    console.error("Audit log failed:", error);
   }
 }
-__name(logAudit, "logAudit");
 
 // src/lib/auth-password.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var PBKDF2_ITERATIONS = 1e5;
 var SALT_LENGTH = 16;
 var KEY_LENGTH = 256;
@@ -3968,7 +2705,6 @@ async function hashPassword(password) {
   const hashHex = bufferToHex(new Uint8Array(derivedBits));
   return `${saltHex}:${hashHex}`;
 }
-__name(hashPassword, "hashPassword");
 async function verifyPassword(password, storedHash) {
   const parts = storedHash.split(":");
   if (parts.length === 1 && storedHash.length === 64) {
@@ -4004,9 +2740,8 @@ async function verifyPassword(password, storedHash) {
   const computedHash = bufferToHex(new Uint8Array(derivedBits));
   return constantTimeEqual(computedHash, hashHex);
 }
-__name(verifyPassword, "verifyPassword");
-async function authenticateUser(env2, email, password) {
-  const user = await env2.DB.prepare(
+async function authenticateUser(env, email, password) {
+  const user = await env.DB.prepare(
     "SELECT * FROM users WHERE email = ?"
   ).bind(email).first();
   if (!user) {
@@ -4019,7 +2754,7 @@ async function authenticateUser(env2, email, password) {
   if (u.password_migrated === 0) {
     const valid2 = await verifyPassword(password, u.password_hash);
     if (valid2) {
-      await env2.DB.prepare(
+      await env.DB.prepare(
         "UPDATE users SET password_migrated = 1, updated_at = ? WHERE id = ?"
       ).bind((/* @__PURE__ */ new Date()).toISOString(), u.id).run();
       return {
@@ -4048,11 +2783,9 @@ async function authenticateUser(env2, email, password) {
     needsMigration: false
   };
 }
-__name(authenticateUser, "authenticateUser");
 function bufferToHex(buffer) {
   return Array.from(buffer).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-__name(bufferToHex, "bufferToHex");
 function hexToBuffer(hex) {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
@@ -4060,7 +2793,6 @@ function hexToBuffer(hex) {
   }
   return bytes;
 }
-__name(hexToBuffer, "hexToBuffer");
 function constantTimeEqual(a, b) {
   if (a.length !== b.length) return false;
   let result = 0;
@@ -4069,7 +2801,6 @@ function constantTimeEqual(a, b) {
   }
   return result === 0;
 }
-__name(constantTimeEqual, "constantTimeEqual");
 
 // src/routes/auth.ts
 var authRoutes = new Hono2();
@@ -4118,9 +2849,9 @@ authRoutes.post("/login", async (c) => {
       token: sessionId,
       user: { id: user.id, email: user.email, name: user.full_name, role: user.role }
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Login error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Login error:", error);
     return c.json({ error: message }, 401);
   }
 });
@@ -4152,8 +2883,8 @@ authRoutes.delete("/logout", adminAuthMiddleware, async (c) => {
       "UPDATE admin_sessions SET is_active = 0 WHERE user_id = ?"
     ).bind(user.id).run();
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4165,22 +2896,14 @@ authRoutes.delete("/sessions", adminAuthMiddleware, async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CLEAR_ALL_SESSIONS", "auth", void 0, { action: "clear_all" });
     return c.json({ success: true, cleared: result.meta?.changes || 0 });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var auth_default = authRoutes;
 
-// src/routes/system.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // src/lib/r2.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 async function uploadFile(bucket, key, body, contentType) {
   const result = await bucket.put(key, body, {
     httpMetadata: {
@@ -4189,15 +2912,12 @@ async function uploadFile(bucket, key, body, contentType) {
   });
   return result;
 }
-__name(uploadFile, "uploadFile");
 async function deleteFile(bucket, key) {
   await bucket.delete(key);
 }
-__name(deleteFile, "deleteFile");
 async function getFile(bucket, key) {
   return bucket.get(key);
 }
-__name(getFile, "getFile");
 async function checkBucket(bucket) {
   try {
     const result = await bucket.list({ limit: 1 });
@@ -4206,39 +2926,37 @@ async function checkBucket(bucket) {
     return false;
   }
 }
-__name(checkBucket, "checkBucket");
-function getBucketForType(type, env2) {
+function getBucketForType(type, env) {
   switch (type) {
     case "videos":
     case "video":
-      return env2.R2_VIDEOS;
+      return env.R2_VIDEOS;
     case "thumbnails":
     case "thumbnail":
     case "images":
     case "image":
-      return env2.R2_THUMBNAILS;
+      return env.R2_THUMBNAILS;
     case "avatars":
     case "avatar":
-      return env2.R2_AVATARS;
+      return env.R2_AVATARS;
     case "covers":
     case "cover":
     case "banners":
     case "banner":
-      return env2.R2_THUMBNAILS;
+      return env.R2_THUMBNAILS;
     // covers/banners use thumbnails bucket
     case "resources":
     case "resource":
     case "documents":
     case "document":
-      return env2.R2_RESOURCES;
+      return env.R2_RESOURCES;
     case "support-attachments":
     case "support":
-      return env2.R2_SUPPORT_ATTACHMENTS;
+      return env.R2_SUPPORT_ATTACHMENTS;
     default:
-      return env2.R2_RESOURCES;
+      return env.R2_RESOURCES;
   }
 }
-__name(getBucketForType, "getBucketForType");
 var R2_PUBLIC_URLS = {
   videos: "https://pub-e746ac3cc9cc4c6ebbd8dd4365dbab79.r2.dev",
   video: "https://pub-e746ac3cc9cc4c6ebbd8dd4365dbab79.r2.dev",
@@ -4257,8 +2975,8 @@ var R2_PUBLIC_URLS = {
   documents: "https://pub-25692986d3ff446abba05633a1d20a9a.r2.dev",
   document: "https://pub-25692986d3ff446abba05633a1d20a9a.r2.dev"
 };
-function getPublicUrl(env2, bucketType, key) {
-  const envAny = env2;
+function getPublicUrl(env, bucketType, key) {
+  const envAny = env;
   const publicUrl = envAny.R2_PUBLIC_URL;
   if (publicUrl) {
     return `${publicUrl}/${key}`;
@@ -4269,7 +2987,6 @@ function getPublicUrl(env2, bucketType, key) {
   }
   return `https://pub-25692986d3ff446abba05633a1d20a9a.r2.dev/${key}`;
 }
-__name(getPublicUrl, "getPublicUrl");
 
 // src/routes/system.ts
 var systemRoutes = new Hono2();
@@ -4296,9 +3013,9 @@ systemRoutes.get("/status", async (c) => {
       avatars: { binding: c.env.R2_AVATARS, name: "dakkho-avatars" },
       resources: { binding: c.env.R2_RESOURCES, name: "dakkho-resources" }
     };
-    for (const [name, { binding: binding2, name: bucketName }] of Object.entries(buckets)) {
+    for (const [name, { binding, name: bucketName }] of Object.entries(buckets)) {
       try {
-        const ok = await checkBucket(binding2);
+        const ok = await checkBucket(binding);
         status.r2[name] = ok ? { status: "connected", message: `Bucket "${bucketName}" accessible` } : { status: "error", message: `Bucket "${bucketName}" not found or inaccessible` };
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Unknown error";
@@ -4324,8 +3041,8 @@ systemRoutes.get("/status", async (c) => {
       status.email = { status: "error", message: msg };
     }
     return c.json(status);
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4344,17 +3061,14 @@ systemRoutes.post("/api-key", adminAuthMiddleware, async (c) => {
       success: true,
       message: "API key stored in KV."
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var system_default = systemRoutes;
 
 // src/routes/users.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var userRoutes = new Hono2();
 userRoutes.use("*", adminAuthMiddleware);
 userRoutes.get("/", async (c) => {
@@ -4389,8 +3103,8 @@ userRoutes.get("/", async (c) => {
       `SELECT u.id, u.email, u.full_name, u.phone, u.bio, u.institute_id, u.technology, u.semester, u.avatar_url, u.role, u.email_verified, u.is_active, u.enrolled_course_ids, u.created_at, u.updated_at, i.name as institute_name, t.name as technology_name FROM users u LEFT JOIN institutes i ON u.institute_id = i.id LEFT JOIN technologies t ON u.technology = t.short_code ${where} ORDER BY u.created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4432,8 +3146,8 @@ userRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_USER", "users", userId, updates);
     return c.json({ document: updatedUser });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4447,8 +3161,8 @@ userRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_USER", "users", userId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4570,18 +3284,15 @@ userRoutes.post("/create-instructor", async (c) => {
       userId,
       tempPassword: body.password
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Create instructor error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Create instructor error:", error);
     return c.json({ error: message }, 500);
   }
 });
 var users_default = userRoutes;
 
 // src/routes/categories.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var categoryRoutes = new Hono2();
 categoryRoutes.use("*", adminAuthMiddleware);
 categoryRoutes.get("/", async (c) => {
@@ -4595,8 +3306,8 @@ categoryRoutes.get("/", async (c) => {
       "SELECT * FROM categories ORDER BY sort_order ASC LIMIT ?"
     ).bind(limit).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4622,8 +3333,8 @@ categoryRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_CATEGORY", "categories", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4655,8 +3366,8 @@ categoryRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_CATEGORY", "categories", String(categoryId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4670,17 +3381,14 @@ categoryRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_CATEGORY", "categories", categoryId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var categories_default = categoryRoutes;
 
 // src/routes/instructors.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var instructorRoutes = new Hono2();
 instructorRoutes.use("*", adminAuthMiddleware);
 instructorRoutes.get("/", async (c) => {
@@ -4703,8 +3411,8 @@ instructorRoutes.get("/", async (c) => {
       `SELECT * FROM instructors ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4735,8 +3443,8 @@ instructorRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_INSTRUCTOR", "instructors", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4774,8 +3482,8 @@ instructorRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_INSTRUCTOR", "instructors", String(instructorId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -4789,30 +3497,17 @@ instructorRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_INSTRUCTOR", "instructors", instructorId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var instructors_default = instructorRoutes;
 
-// src/routes/instructor.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
-// src/lib/instructor-auth-middleware.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // src/lib/instructor-auth.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-async function validateInstructorSession(env2, token) {
+async function validateInstructorSession(env, token) {
   try {
-    const session = await env2.DB.prepare(
+    const session = await env.DB.prepare(
       "SELECT user_id, email, name, avatar_url, expires_at, is_active FROM instructor_sessions WHERE id = ? AND is_active = 1"
     ).bind(token).first();
     if (!session) {
@@ -4820,7 +3515,7 @@ async function validateInstructorSession(env2, token) {
     }
     const expiresAt = new Date(session.expires_at);
     if (expiresAt < /* @__PURE__ */ new Date()) {
-      await env2.DB.prepare(
+      await env.DB.prepare(
         "UPDATE instructor_sessions SET is_active = 0 WHERE id = ?"
       ).bind(token).run();
       return { authorized: false };
@@ -4832,28 +3527,26 @@ async function validateInstructorSession(env2, token) {
       name: session.name || void 0,
       avatarUrl: session.avatar_url || void 0
     };
-  } catch (error3) {
-    console.error("Instructor session validation error:", error3);
+  } catch (error) {
+    console.error("Instructor session validation error:", error);
     return { authorized: false };
   }
 }
-__name(validateInstructorSession, "validateInstructorSession");
-async function createInstructorSession(env2, userId, email, name, ipAddress, deviceInfo, avatarUrl) {
+async function createInstructorSession(env, userId, email, name, ipAddress, deviceInfo, avatarUrl) {
   const sessionId = generateId();
   const expiresAt = getSessionExpiry(7);
-  await env2.DB.prepare(
+  await env.DB.prepare(
     "DELETE FROM instructor_sessions WHERE user_id = ?"
   ).bind(userId).run();
-  await env2.DB.prepare(
+  await env.DB.prepare(
     `INSERT INTO instructor_sessions (id, user_id, email, name, ip_address, device_info, expires_at, is_active, avatar_url)
      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`
   ).bind(sessionId, userId, email, name, ipAddress || null, deviceInfo || null, expiresAt, avatarUrl || null).run();
   return sessionId;
 }
-__name(createInstructorSession, "createInstructorSession");
-async function deleteInstructorSession(env2, token) {
+async function deleteInstructorSession(env, token) {
   try {
-    await env2.DB.prepare(
+    await env.DB.prepare(
       "UPDATE instructor_sessions SET is_active = 0 WHERE id = ?"
     ).bind(token).run();
     return true;
@@ -4861,7 +3554,6 @@ async function deleteInstructorSession(env2, token) {
     return false;
   }
 }
-__name(deleteInstructorSession, "deleteInstructorSession");
 
 // src/lib/instructor-auth-middleware.ts
 async function instructorAuthMiddleware(c, next) {
@@ -4883,12 +3575,11 @@ async function instructorAuthMiddleware(c, next) {
     c.set("instructorName", result.name || "");
     c.set("instructorAvatarUrl", result.avatarUrl || "");
     await next();
-  } catch (error3) {
-    console.error("Instructor auth middleware error:", error3);
+  } catch (error) {
+    console.error("Instructor auth middleware error:", error);
     return c.json({ error: "Authentication failed" }, 401);
   }
 }
-__name(instructorAuthMiddleware, "instructorAuthMiddleware");
 async function instructorOrAdminMiddleware(c, next) {
   const authHeader = c.req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -4931,12 +3622,11 @@ async function instructorOrAdminMiddleware(c, next) {
     c.set("adminEmail", adminSession.email);
     c.set("adminName", adminSession.name || "");
     await next();
-  } catch (error3) {
-    console.error("Instructor or admin auth middleware error:", error3);
+  } catch (error) {
+    console.error("Instructor or admin auth middleware error:", error);
     return c.json({ error: "Authentication failed" }, 401);
   }
 }
-__name(instructorOrAdminMiddleware, "instructorOrAdminMiddleware");
 
 // src/routes/instructor.ts
 var instructorRoutes2 = new Hono2();
@@ -4947,18 +3637,16 @@ function formatInstructorRow(row) {
     avatarUrl: row.avatar_url || row.avatarUrl
   };
 }
-__name(formatInstructorRow, "formatInstructorRow");
 function formatCourseRow(row) {
   return {
     ...row,
     $id: row.id,
     $createdAt: row.created_at,
     isPublished: row.is_published,
-    price: row.price_bdt,
+    price: row.price_bdt ?? row.price,
     instructorId: row.instructor_id
   };
 }
-__name(formatCourseRow, "formatCourseRow");
 function formatVideoRow(row) {
   return {
     ...row,
@@ -4966,7 +3654,6 @@ function formatVideoRow(row) {
     videoUrl: row.video_url
   };
 }
-__name(formatVideoRow, "formatVideoRow");
 function formatEnrollmentRow(row) {
   return {
     ...row,
@@ -4974,19 +3661,16 @@ function formatEnrollmentRow(row) {
     userId: row.user_id
   };
 }
-__name(formatEnrollmentRow, "formatEnrollmentRow");
 function slugify(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
-__name(slugify, "slugify");
-async function verifyCourseOwnership(env2, courseId, instructorId) {
-  const course = await env2.DB.prepare("SELECT instructor_id FROM courses WHERE id = ?").bind(courseId).first();
+async function verifyCourseOwnership(env, courseId, instructorId) {
+  const course = await env.DB.prepare("SELECT instructor_id FROM courses WHERE id = ?").bind(courseId).first();
   if (!course) return false;
   if (course.instructor_id === instructorId) return true;
-  const junction = await env2.DB.prepare("SELECT id FROM course_instructors WHERE course_id = ? AND instructor_id = ?").bind(courseId, instructorId).first();
+  const junction = await env.DB.prepare("SELECT id FROM course_instructors WHERE course_id = ? AND instructor_id = ?").bind(courseId, instructorId).first();
   return !!junction;
 }
-__name(verifyCourseOwnership, "verifyCourseOwnership");
 instructorRoutes2.post("/auth/login", async (c) => {
   try {
     const { email, password } = await c.req.json();
@@ -5014,13 +3698,13 @@ instructorRoutes2.post("/auth/login", async (c) => {
       c.req.header("user-agent") || "unknown",
       avatarUrl
     );
-    let profile3 = null;
+    let profile = null;
     try {
       const row = await c.env.DB.prepare(
         "SELECT * FROM instructors WHERE id = ?"
       ).bind(userId).first();
       if (row) {
-        profile3 = formatInstructorRow(row);
+        profile = formatInstructorRow(row);
       }
     } catch {
     }
@@ -5033,12 +3717,12 @@ instructorRoutes2.post("/auth/login", async (c) => {
         name: userName,
         role: "instructor",
         avatarUrl,
-        ...profile3 || {}
+        ...profile || {}
       }
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Instructor login error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Instructor login error:", error);
     return c.json({ error: message }, 401);
   }
 });
@@ -5119,8 +3803,8 @@ instructorRoutes2.post("/auth/reset-password", async (c) => {
     } catch {
     }
     return c.json({ success: true, message: "Password has been reset successfully. Please login with your new password." });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/auth/check", instructorAuthMiddleware, async (c) => {
@@ -5139,7 +3823,7 @@ instructorRoutes2.get("/auth/check", instructorAuthMiddleware, async (c) => {
         role: "instructor"
       }
     });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ authenticated: false }, 401);
   }
 });
@@ -5149,8 +3833,8 @@ instructorRoutes2.delete("/auth/logout", instructorAuthMiddleware, async (c) => 
     const token = authHeader?.substring(7) || "";
     await deleteInstructorSession(c.env, token);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/change-password", instructorAuthMiddleware, async (c) => {
@@ -5186,8 +3870,8 @@ instructorRoutes2.post("/change-password", instructorAuthMiddleware, async (c) =
       "UPDATE users SET password_hash = ?, password_migrated = 1, updated_at = ? WHERE id = ?"
     ).bind(newPasswordHash, (/* @__PURE__ */ new Date()).toISOString(), instructorId).run();
     return c.json({ success: true, message: "Password changed successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/dashboard", instructorOrAdminMiddleware, async (c) => {
@@ -5253,8 +3937,8 @@ instructorRoutes2.get("/dashboard", instructorOrAdminMiddleware, async (c) => {
         upcomingClasses
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/profile", instructorOrAdminMiddleware, async (c) => {
@@ -5275,10 +3959,10 @@ instructorRoutes2.get("/profile", instructorOrAdminMiddleware, async (c) => {
     if (!row) {
       return c.json({ error: "Instructor profile not found" }, 404);
     }
-    const profile3 = formatInstructorRow(row);
-    return c.json({ success: true, profile: profile3 });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+    const profile = formatInstructorRow(row);
+    return c.json({ success: true, profile });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/profile", instructorOrAdminMiddleware, async (c) => {
@@ -5340,10 +4024,10 @@ instructorRoutes2.put("/profile", instructorOrAdminMiddleware, async (c) => {
     const updatedRow = await c.env.DB.prepare(
       "SELECT * FROM instructors WHERE id = ?"
     ).bind(instructorId).first();
-    const profile3 = formatInstructorRow(updatedRow);
-    return c.json({ success: true, profile: profile3 });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+    const profile = formatInstructorRow(updatedRow);
+    return c.json({ success: true, profile });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/profile/avatar", instructorOrAdminMiddleware, async (c) => {
@@ -5395,8 +4079,8 @@ instructorRoutes2.post("/profile/avatar", instructorOrAdminMiddleware, async (c)
       }
     }
     return c.json({ success: true, avatar_url: avatarUrl });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses", instructorOrAdminMiddleware, async (c) => {
@@ -5448,8 +4132,8 @@ instructorRoutes2.get("/courses", instructorOrAdminMiddleware, async (c) => {
       ...additionalCourses.map((r) => formatCourseRow(r))
     ];
     return c.json({ courses: allCourses, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id", instructorOrAdminMiddleware, async (c) => {
@@ -5475,8 +4159,8 @@ instructorRoutes2.get("/courses/:id", instructorOrAdminMiddleware, async (c) => 
       course,
       studentCount
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/students", instructorOrAdminMiddleware, async (c) => {
@@ -5518,8 +4202,8 @@ instructorRoutes2.get("/courses/:id/students", instructorOrAdminMiddleware, asyn
       });
     }
     return c.json({ students: enrichedStudents, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/videos", instructorOrAdminMiddleware, async (c) => {
@@ -5536,8 +4220,8 @@ instructorRoutes2.get("/courses/:id/videos", instructorOrAdminMiddleware, async 
     const total = countResult?.total || 0;
     const videos = result.results.map((r) => formatVideoRow(r));
     return c.json({ videos, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/courses/:id/videos/:videoId", instructorOrAdminMiddleware, async (c) => {
@@ -5585,8 +4269,8 @@ instructorRoutes2.put("/courses/:id/videos/:videoId", instructorOrAdminMiddlewar
     ).bind(videoId).first();
     const video = formatVideoRow(updatedRow);
     return c.json({ success: true, video });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/progress", instructorOrAdminMiddleware, async (c) => {
@@ -5656,8 +4340,8 @@ instructorRoutes2.get("/courses/:id/progress", instructorOrAdminMiddleware, asyn
       averageProgress: avgProgress,
       progress: progressList
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/analytics", instructorOrAdminMiddleware, async (c) => {
@@ -5732,8 +4416,8 @@ instructorRoutes2.get("/courses/:id/analytics", instructorOrAdminMiddleware, asy
         ratingDistribution
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/schedule", instructorOrAdminMiddleware, async (c) => {
@@ -5753,8 +4437,8 @@ instructorRoutes2.get("/schedule", instructorOrAdminMiddleware, async (c) => {
       "SELECT * FROM live_class_schedules WHERE instructor_id = ? AND scheduled_at > datetime('now') AND is_active = 1 ORDER BY scheduled_at ASC LIMIT ?"
     ).bind(instructorId, limit).all();
     return c.json({ success: true, schedule: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/reviews", instructorOrAdminMiddleware, async (c) => {
@@ -5808,8 +4492,8 @@ instructorRoutes2.get("/reviews", instructorOrAdminMiddleware, async (c) => {
       page,
       limit
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 function getInstructorId(c) {
@@ -5823,25 +4507,24 @@ function getInstructorId(c) {
   }
   return { instructorId: c.get("instructorId"), error: null };
 }
-__name(getInstructorId, "getInstructorId");
 instructorRoutes2.post("/courses", instructorOrAdminMiddleware, async (c) => {
   try {
     const { instructorId, error: idError } = getInstructorId(c);
     if (idError) return idError;
     const body = await c.req.json();
-    const { title: title2, description, level, language, price, technology_id, category_id, tags, semester, what_you_learn } = body;
-    if (!title2) {
+    const { title, description, level, language, price, technology_id, category_id, tags, semester, what_you_learn, subject_ids } = body;
+    if (!title) {
       return c.json({ error: "title is required" }, 400);
     }
     const courseId = generateId();
-    const slug = slugify(title2);
+    const slug = slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     await c.env.DB.prepare(`
       INSERT INTO courses (id, title, slug, description, instructor_id, technology_id, category_id, level, language, price, tags, semester, what_you_learn, is_published, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
     `).bind(
       courseId,
-      title2,
+      title,
       slug,
       description || null,
       instructorId,
@@ -5863,7 +4546,19 @@ instructorRoutes2.post("/courses", instructorOrAdminMiddleware, async (c) => {
       `).bind(courseId, instructorId, now).run();
     } catch {
     }
-    const packageName = title2 || "Course";
+    if (Array.isArray(subject_ids) && subject_ids.length > 0) {
+      try {
+        for (let i = 0; i < subject_ids.length; i++) {
+          const subjectId = subject_ids[i];
+          await c.env.DB.prepare(`
+            INSERT OR IGNORE INTO course_subjects (course_id, subject_id, sort_order, created_at)
+            VALUES (?, ?, ?, ?)
+          `).bind(courseId, subjectId, i, now).run();
+        }
+      } catch {
+      }
+    }
+    const packageName = title || "Course";
     try {
       await c.env.DB.prepare(`
         INSERT INTO course_packages (course_id, package_type, display_name, description, price, duration_months, max_users, is_auto_assign, is_active, created_by, created_at, updated_at)
@@ -5881,8 +4576,8 @@ instructorRoutes2.post("/courses", instructorOrAdminMiddleware, async (c) => {
     const row = await c.env.DB.prepare("SELECT * FROM courses WHERE id = ?").bind(courseId).first();
     const course = formatCourseRow(row);
     return c.json({ success: true, course }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/courses/:id", instructorOrAdminMiddleware, async (c) => {
@@ -5945,8 +4640,8 @@ instructorRoutes2.put("/courses/:id", instructorOrAdminMiddleware, async (c) => 
     const updatedRow = await c.env.DB.prepare("SELECT * FROM courses WHERE id = ?").bind(courseId).first();
     const course = formatCourseRow(updatedRow);
     return c.json({ success: true, course });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/courses/:id", instructorOrAdminMiddleware, async (c) => {
@@ -5995,8 +4690,8 @@ instructorRoutes2.delete("/courses/:id", instructorOrAdminMiddleware, async (c) 
     }
     await c.env.DB.prepare("DELETE FROM courses WHERE id = ?").bind(courseId).run();
     return c.json({ success: true, message: "Course deleted successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/curriculum", instructorOrAdminMiddleware, async (c) => {
@@ -6051,8 +4746,8 @@ instructorRoutes2.get("/courses/:id/curriculum", instructorOrAdminMiddleware, as
       chapters: chaptersWithLessons,
       resources
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:id/chapters", instructorOrAdminMiddleware, async (c) => {
@@ -6065,12 +4760,12 @@ instructorRoutes2.post("/courses/:id/chapters", instructorOrAdminMiddleware, asy
       return c.json({ error: "You do not own this course or it does not exist" }, 403);
     }
     const body = await c.req.json();
-    const { title: title2, subject_id, description, sort_order } = body;
-    if (!title2) {
+    const { title, subject_id, description, sort_order } = body;
+    if (!title) {
       return c.json({ error: "title is required" }, 400);
     }
     const chapterId = generateId();
-    const slug = slugify(title2);
+    const slug = slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     let sortOrder = sort_order;
     if (sortOrder === void 0 || sortOrder === null) {
@@ -6090,7 +4785,7 @@ instructorRoutes2.post("/courses/:id/chapters", instructorOrAdminMiddleware, asy
       chapterId,
       courseId,
       subject_id || null,
-      title2,
+      title,
       slug,
       description || null,
       sortOrder,
@@ -6100,8 +4795,8 @@ instructorRoutes2.post("/courses/:id/chapters", instructorOrAdminMiddleware, asy
     const row = await c.env.DB.prepare("SELECT * FROM chapters WHERE id = ?").bind(chapterId).first();
     const chapter = { ...row, $id: row.id };
     return c.json({ success: true, chapter }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/courses/:id/chapters/:chapterId", instructorOrAdminMiddleware, async (c) => {
@@ -6149,8 +4844,8 @@ instructorRoutes2.put("/courses/:id/chapters/:chapterId", instructorOrAdminMiddl
     const updatedRow = await c.env.DB.prepare("SELECT * FROM chapters WHERE id = ?").bind(chapterId).first();
     const chapter = { ...updatedRow, $id: updatedRow.id };
     return c.json({ success: true, chapter });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/courses/:id/chapters/:chapterId", instructorOrAdminMiddleware, async (c) => {
@@ -6175,8 +4870,8 @@ instructorRoutes2.delete("/courses/:id/chapters/:chapterId", instructorOrAdminMi
     }
     await c.env.DB.prepare("DELETE FROM chapters WHERE id = ?").bind(chapterId).run();
     return c.json({ success: true, message: "Chapter deleted successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:id/lessons", instructorOrAdminMiddleware, async (c) => {
@@ -6189,8 +4884,8 @@ instructorRoutes2.post("/courses/:id/lessons", instructorOrAdminMiddleware, asyn
       return c.json({ error: "You do not own this course or it does not exist" }, 403);
     }
     const body = await c.req.json();
-    const { title: title2, chapter_id, subject_id, description, lesson_type, sort_order, is_preview, duration, video_url, thumbnail_url, document_url } = body;
-    if (!title2 || !chapter_id) {
+    const { title, chapter_id, subject_id, description, lesson_type, sort_order, is_preview, duration, video_url, thumbnail_url, document_url } = body;
+    if (!title || !chapter_id) {
       return c.json({ error: "title and chapter_id are required" }, 400);
     }
     const chapterCheck = await c.env.DB.prepare(
@@ -6201,7 +4896,7 @@ instructorRoutes2.post("/courses/:id/lessons", instructorOrAdminMiddleware, asyn
     }
     const finalSubjectId = subject_id || chapterCheck.subject_id || null;
     const lessonId = generateId();
-    const slug = slugify(title2);
+    const slug = slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     let sortOrder = sort_order;
     if (sortOrder === void 0 || sortOrder === null) {
@@ -6222,7 +4917,7 @@ instructorRoutes2.post("/courses/:id/lessons", instructorOrAdminMiddleware, asyn
       chapter_id,
       courseId,
       finalSubjectId,
-      title2,
+      title,
       slug,
       description || null,
       lesson_type || "video",
@@ -6238,8 +4933,8 @@ instructorRoutes2.post("/courses/:id/lessons", instructorOrAdminMiddleware, asyn
     const row = await c.env.DB.prepare("SELECT * FROM lessons WHERE id = ?").bind(lessonId).first();
     const lesson = { ...row, $id: row.id };
     return c.json({ success: true, lesson }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/courses/:id/lessons/:lessonId", instructorOrAdminMiddleware, async (c) => {
@@ -6300,8 +4995,8 @@ instructorRoutes2.put("/courses/:id/lessons/:lessonId", instructorOrAdminMiddlew
     const updatedRow = await c.env.DB.prepare("SELECT * FROM lessons WHERE id = ?").bind(lessonId).first();
     const lesson = { ...updatedRow, $id: updatedRow.id };
     return c.json({ success: true, lesson });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/courses/:id/lessons/:lessonId", instructorOrAdminMiddleware, async (c) => {
@@ -6322,8 +5017,8 @@ instructorRoutes2.delete("/courses/:id/lessons/:lessonId", instructorOrAdminMidd
     }
     await c.env.DB.prepare("DELETE FROM lessons WHERE id = ?").bind(lessonId).run();
     return c.json({ success: true, message: "Lesson deleted successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/resources", instructorOrAdminMiddleware, async (c) => {
@@ -6344,8 +5039,8 @@ instructorRoutes2.get("/courses/:id/resources", instructorOrAdminMiddleware, asy
     } catch {
     }
     return c.json({ success: true, resources });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:id/resources", instructorOrAdminMiddleware, async (c) => {
@@ -6358,12 +5053,12 @@ instructorRoutes2.post("/courses/:id/resources", instructorOrAdminMiddleware, as
       return c.json({ error: "You do not own this course or it does not exist" }, 403);
     }
     const formData = await c.req.formData();
-    const title2 = formData.get("title");
+    const title = formData.get("title");
     const description = formData.get("description");
     const file_type = formData.get("file_type") || "pdf";
     const chapter_id = formData.get("chapter_id") || null;
     const lesson_id = formData.get("lesson_id") || null;
-    if (!title2) {
+    if (!title) {
       return c.json({ error: "title is required" }, 400);
     }
     const fileEntry = formData.get("file");
@@ -6387,7 +5082,7 @@ instructorRoutes2.post("/courses/:id/resources", instructorOrAdminMiddleware, as
       courseId,
       chapter_id,
       lesson_id,
-      title2,
+      title,
       description || null,
       fileUrl,
       file_type,
@@ -6399,8 +5094,8 @@ instructorRoutes2.post("/courses/:id/resources", instructorOrAdminMiddleware, as
     const row = await c.env.DB.prepare("SELECT * FROM course_resources WHERE id = ?").bind(resourceId).first();
     const resource = { ...row, $id: row.id };
     return c.json({ success: true, resource }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/courses/:id/resources/:resourceId", instructorOrAdminMiddleware, async (c) => {
@@ -6431,8 +5126,8 @@ instructorRoutes2.delete("/courses/:id/resources/:resourceId", instructorOrAdmin
     }
     await c.env.DB.prepare("DELETE FROM course_resources WHERE id = ?").bind(resourceId).run();
     return c.json({ success: true, message: "Resource deleted successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/notifications", instructorOrAdminMiddleware, async (c) => {
@@ -6466,8 +5161,8 @@ instructorRoutes2.get("/notifications", instructorOrAdminMiddleware, async (c) =
     const countResult = await c.env.DB.prepare(countQuery).bind(...countParams).first();
     const total = countResult?.total || 0;
     return c.json({ success: true, notifications: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/notifications/:id/read", instructorOrAdminMiddleware, async (c) => {
@@ -6477,8 +5172,8 @@ instructorRoutes2.put("/notifications/:id/read", instructorOrAdminMiddleware, as
       "UPDATE notifications SET read = 1 WHERE id = ?"
     ).bind(notificationId).run();
     return c.json({ success: true, message: "Notification marked as read" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/notifications/read-all", instructorOrAdminMiddleware, async (c) => {
@@ -6497,8 +5192,8 @@ instructorRoutes2.put("/notifications/read-all", instructorOrAdminMiddleware, as
       "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0"
     ).bind(instructorId).run();
     return c.json({ success: true, message: "All notifications marked as read" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/support/tickets", instructorOrAdminMiddleware, async (c) => {
@@ -6546,8 +5241,8 @@ instructorRoutes2.post("/support/tickets", instructorOrAdminMiddleware, async (c
         createdAt: now
       }
     }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/support/tickets", instructorOrAdminMiddleware, async (c) => {
@@ -6575,212 +5270,8 @@ instructorRoutes2.get("/support/tickets", instructorOrAdminMiddleware, async (c)
     params.push(limit, offset);
     const result = await c.env.DB.prepare(query).bind(...params).all();
     return c.json({ success: true, tickets: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
-  }
-});
-instructorRoutes2.get("/dashboard", instructorOrAdminMiddleware, async (c) => {
-  try {
-    const authRole = c.get("authRole");
-    let instructorId;
-    if (authRole === "admin") {
-      instructorId = c.req.query("instructorId") || "";
-      if (!instructorId) {
-        return c.json({ error: "instructorId query param required for admin access" }, 400);
-      }
-    } else {
-      instructorId = c.get("instructorId");
-    }
-    let courseCount = 0;
-    try {
-      const courseCountResult = await c.env.DB.prepare(
-        "SELECT COUNT(*) as total FROM courses WHERE instructor_id = ?"
-      ).bind(instructorId).first();
-      courseCount = courseCountResult?.total || 0;
-    } catch {
-    }
-    let subjectCourseCount = 0;
-    try {
-      const subjectResult = await c.env.DB.prepare(
-        "SELECT COUNT(DISTINCT course_id) as count FROM course_instructors WHERE instructor_id = ?"
-      ).bind(instructorId).first();
-      subjectCourseCount = subjectResult?.count || 0;
-    } catch {
-    }
-    courseCount = Math.max(courseCount, subjectCourseCount);
-    let totalStudents = 0;
-    try {
-      const studentCountResult = await c.env.DB.prepare(`
-        SELECT COUNT(DISTINCT e.user_id) as total
-        FROM enrollments e
-        INNER JOIN courses c ON e.course_id = c.id
-        WHERE c.instructor_id = ?
-      `).bind(instructorId).first();
-      totalStudents = studentCountResult?.total || 0;
-      const subjectStudentResult = await c.env.DB.prepare(`
-        SELECT COUNT(DISTINCT e.user_id) as total
-        FROM enrollments e
-        INNER JOIN course_instructors ci ON e.course_id = ci.course_id
-        WHERE ci.instructor_id = ?
-      `).bind(instructorId).first();
-      totalStudents = Math.max(totalStudents, subjectStudentResult?.total || 0);
-    } catch {
-    }
-    let upcomingClasses = 0;
-    try {
-      const classResult = await c.env.DB.prepare(
-        "SELECT COUNT(*) as count FROM live_class_schedules WHERE instructor_id = ? AND scheduled_at > datetime('now') AND is_active = 1"
-      ).bind(instructorId).first();
-      upcomingClasses = classResult?.count || 0;
-    } catch {
-    }
-    let avgRating = 0;
-    let totalReviews = 0;
-    try {
-      const ratingStats = await c.env.DB.prepare(
-        "SELECT AVG(rating) as avg, COUNT(*) as count FROM instructor_reviews WHERE instructor_id = ?"
-      ).bind(instructorId).first();
-      avgRating = ratingStats?.avg ? Math.round(ratingStats.avg * 10) / 10 : 0;
-      totalReviews = ratingStats?.count || 0;
-    } catch {
-    }
-    let totalRevenue = 0;
-    try {
-      const directRevenue = await c.env.DB.prepare(`
-        SELECT COALESCE(SUM(p.amount), 0) as total
-        FROM payments p
-        INNER JOIN courses c ON p.course_id = c.id
-        WHERE c.instructor_id = ? AND p.status = 'completed'
-      `).bind(instructorId).first();
-      totalRevenue = directRevenue?.total || 0;
-      const subjectRevenue = await c.env.DB.prepare(`
-        SELECT COALESCE(SUM(p.amount), 0) as total
-        FROM payments p
-        INNER JOIN course_subjects cs ON p.course_id = cs.course_id
-        WHERE cs.instructor_id = ? AND p.status = 'completed'
-      `).bind(instructorId).first();
-      totalRevenue = Math.max(totalRevenue, subjectRevenue?.total || 0);
-    } catch {
-    }
-    return c.json({
-      success: true,
-      dashboard: {
-        courseCount,
-        totalStudents,
-        upcomingClasses,
-        avgRating,
-        totalReviews,
-        totalRevenue
-      }
-    });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
-  }
-});
-instructorRoutes2.post("/courses", instructorOrAdminMiddleware, async (c) => {
-  try {
-    const authRole = c.get("authRole");
-    const instructorId = authRole === "admin" ? c.req.query("instructorId") : c.get("instructorId");
-    if (!instructorId) {
-      return c.json({ error: "instructorId is required" }, 400);
-    }
-    const body = await c.req.json();
-    const { title: title2, description, slug, technology_id, semester, level, price_bdt, is_published, thumbnail_url } = body;
-    if (!title2) {
-      return c.json({ error: "title is required" }, 400);
-    }
-    const courseId = generateId();
-    const courseSlug = slug || slugify(title2);
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    await c.env.DB.prepare(`
-      INSERT INTO courses (id, title, slug, description, technology_id, semester, level, price_bdt, is_published, instructor_id, thumbnail_url, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      courseId,
-      title2,
-      courseSlug,
-      description || null,
-      technology_id || null,
-      semester || null,
-      level || null,
-      price_bdt || 0,
-      is_published ? 1 : 0,
-      instructorId,
-      thumbnail_url || null,
-      now,
-      now
-    ).run();
-    try {
-      await c.env.DB.prepare(`
-        INSERT INTO course_instructors (course_id, instructor_id, sort_order, created_at)
-        VALUES (?, ?, 0, ?)
-      `).bind(courseId, instructorId, now).run();
-    } catch {
-    }
-    try {
-      await c.env.DB.prepare(`
-        INSERT INTO course_packages (course_id, name, price_bdt, original_price, package_type, features, is_active, sort_order, created_at, updated_at)
-        VALUES (?, 'Single', ?, ?, 'single', '', 1, 0, ?, ?)
-      `).bind(courseId, price_bdt || 0, price_bdt || 0, now, now).run();
-    } catch {
-    }
-    const row = await c.env.DB.prepare("SELECT * FROM courses WHERE id = ?").bind(courseId).first();
-    const course = formatCourseRow(row);
-    return c.json({ success: true, course }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
-  }
-});
-instructorRoutes2.put("/courses/:id", instructorOrAdminMiddleware, async (c) => {
-  try {
-    const authRole = c.get("authRole");
-    const instructorId = authRole === "admin" ? c.req.query("instructorId") : c.get("instructorId");
-    const courseId = c.req.param("id");
-    if (!instructorId) {
-      return c.json({ error: "instructorId is required" }, 400);
-    }
-    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
-    if (!owns) {
-      return c.json({ error: "You do not own this course" }, 403);
-    }
-    const body = await c.req.json();
-    const fieldMapping = {
-      title: "title",
-      slug: "slug",
-      description: "description",
-      technology_id: "technology_id",
-      technologyId: "technology_id",
-      semester: "semester",
-      level: "level",
-      price_bdt: "price_bdt",
-      priceBdt: "price_bdt",
-      is_published: "is_published",
-      isPublished: "is_published",
-      thumbnail_url: "thumbnail_url",
-      thumbnailUrl: "thumbnail_url"
-    };
-    const setClauses = [];
-    const params = [];
-    for (const [bodyField, dbColumn] of Object.entries(fieldMapping)) {
-      if (body[bodyField] !== void 0) {
-        setClauses.push(`${dbColumn} = ?`);
-        params.push(body[bodyField]);
-      }
-    }
-    if (setClauses.length === 0) {
-      return c.json({ error: "No valid fields to update" }, 400);
-    }
-    setClauses.push("updated_at = ?");
-    params.push((/* @__PURE__ */ new Date()).toISOString());
-    params.push(courseId);
-    await c.env.DB.prepare(
-      `UPDATE courses SET ${setClauses.join(", ")} WHERE id = ?`
-    ).bind(...params).run();
-    const row = await c.env.DB.prepare("SELECT * FROM courses WHERE id = ?").bind(courseId).first();
-    const course = formatCourseRow(row);
-    return c.json({ success: true, course });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:courseId/chapters", instructorOrAdminMiddleware, async (c) => {
@@ -6790,8 +5281,8 @@ instructorRoutes2.get("/courses/:courseId/chapters", instructorOrAdminMiddleware
       "SELECT * FROM chapters WHERE course_id = ? ORDER BY sort_order ASC"
     ).bind(courseId).all();
     return c.json({ success: true, chapters: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:courseId/chapters", instructorOrAdminMiddleware, async (c) => {
@@ -6807,12 +5298,12 @@ instructorRoutes2.post("/courses/:courseId/chapters", instructorOrAdminMiddlewar
       return c.json({ error: "You do not own this course" }, 403);
     }
     const body = await c.req.json();
-    const { title: title2, slug, description, subject_id, sort_order } = body;
-    if (!title2) {
+    const { title, slug, description, subject_id, sort_order } = body;
+    if (!title) {
       return c.json({ error: "title is required" }, 400);
     }
     const chapterId = generateId();
-    const chapterSlug = slug || slugify(title2);
+    const chapterSlug = slug || slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     await c.env.DB.prepare(`
       INSERT INTO chapters (id, course_id, subject_id, title, slug, description, sort_order, is_active, created_at, updated_at)
@@ -6821,7 +5312,7 @@ instructorRoutes2.post("/courses/:courseId/chapters", instructorOrAdminMiddlewar
       chapterId,
       courseId,
       subject_id || null,
-      title2,
+      title,
       chapterSlug,
       description || null,
       sort_order || 0,
@@ -6830,8 +5321,8 @@ instructorRoutes2.post("/courses/:courseId/chapters", instructorOrAdminMiddlewar
     ).run();
     const row = await c.env.DB.prepare("SELECT * FROM chapters WHERE id = ?").bind(chapterId).first();
     return c.json({ success: true, chapter: row }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/chapters/:id", instructorOrAdminMiddleware, async (c) => {
@@ -6883,8 +5374,8 @@ instructorRoutes2.put("/chapters/:id", instructorOrAdminMiddleware, async (c) =>
     ).bind(...params).run();
     const row = await c.env.DB.prepare("SELECT * FROM chapters WHERE id = ?").bind(chapterId).first();
     return c.json({ success: true, chapter: row });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/chapters/:id", instructorOrAdminMiddleware, async (c) => {
@@ -6907,8 +5398,8 @@ instructorRoutes2.delete("/chapters/:id", instructorOrAdminMiddleware, async (c)
     }
     await c.env.DB.prepare("DELETE FROM chapters WHERE id = ?").bind(chapterId).run();
     return c.json({ success: true, message: "Chapter deleted" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:courseId/lessons", instructorOrAdminMiddleware, async (c) => {
@@ -6918,8 +5409,8 @@ instructorRoutes2.get("/courses/:courseId/lessons", instructorOrAdminMiddleware,
       "SELECT * FROM lessons WHERE course_id = ? ORDER BY sort_order ASC"
     ).bind(courseId).all();
     return c.json({ success: true, lessons: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:courseId/lessons", instructorOrAdminMiddleware, async (c) => {
@@ -6935,12 +5426,12 @@ instructorRoutes2.post("/courses/:courseId/lessons", instructorOrAdminMiddleware
       return c.json({ error: "You do not own this course" }, 403);
     }
     const body = await c.req.json();
-    const { title: title2, chapter_id, slug, description, lesson_type, sort_order, is_preview, video_url, thumbnail_url, document_url } = body;
-    if (!title2) {
+    const { title, chapter_id, slug, description, lesson_type, sort_order, is_preview, video_url, thumbnail_url, document_url } = body;
+    if (!title) {
       return c.json({ error: "title is required" }, 400);
     }
     const lessonId = generateId();
-    const lessonSlug = slug || slugify(title2);
+    const lessonSlug = slug || slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     await c.env.DB.prepare(`
       INSERT INTO lessons (id, chapter_id, course_id, subject_id, title, slug, description, lesson_type, sort_order, is_preview, is_active, duration, video_url, thumbnail_url, document_url, created_at, updated_at)
@@ -6949,7 +5440,7 @@ instructorRoutes2.post("/courses/:courseId/lessons", instructorOrAdminMiddleware
       lessonId,
       chapter_id || null,
       courseId,
-      title2,
+      title,
       lessonSlug,
       description || null,
       lesson_type || "video",
@@ -6963,8 +5454,8 @@ instructorRoutes2.post("/courses/:courseId/lessons", instructorOrAdminMiddleware
     ).run();
     const row = await c.env.DB.prepare("SELECT * FROM lessons WHERE id = ?").bind(lessonId).first();
     return c.json({ success: true, lesson: row }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/lessons/:id", instructorOrAdminMiddleware, async (c) => {
@@ -7027,8 +5518,8 @@ instructorRoutes2.put("/lessons/:id", instructorOrAdminMiddleware, async (c) => 
     ).bind(...params).run();
     const row = await c.env.DB.prepare("SELECT * FROM lessons WHERE id = ?").bind(lessonId).first();
     return c.json({ success: true, lesson: row });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/lessons/:id", instructorOrAdminMiddleware, async (c) => {
@@ -7051,8 +5542,8 @@ instructorRoutes2.delete("/lessons/:id", instructorOrAdminMiddleware, async (c) 
     }
     await c.env.DB.prepare("DELETE FROM lessons WHERE id = ?").bind(lessonId).run();
     return c.json({ success: true, message: "Lesson deleted" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:courseId/videos", instructorOrAdminMiddleware, async (c) => {
@@ -7068,12 +5559,12 @@ instructorRoutes2.post("/courses/:courseId/videos", instructorOrAdminMiddleware,
       return c.json({ error: "You do not own this course" }, 403);
     }
     const body = await c.req.json();
-    const { title: title2, video_url, slug, duration, sort_order, is_preview, is_published, thumbnail_url, lesson_id, lesson_type } = body;
-    if (!title2 || !video_url) {
+    const { title, video_url, slug, duration, sort_order, is_preview, is_published, thumbnail_url, lesson_id, lesson_type } = body;
+    if (!title || !video_url) {
       return c.json({ error: "title and video_url are required" }, 400);
     }
     const videoId = generateId();
-    const videoSlug = slug || slugify(title2);
+    const videoSlug = slug || slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     await c.env.DB.prepare(`
       INSERT INTO videos (id, course_id, title, slug, video_url, thumbnail_url, duration, sort_order, is_preview, is_published, lesson_id, lesson_type, chapter_id, subject_id, created_at, updated_at)
@@ -7081,7 +5572,7 @@ instructorRoutes2.post("/courses/:courseId/videos", instructorOrAdminMiddleware,
     `).bind(
       videoId,
       courseId,
-      title2,
+      title,
       videoSlug,
       video_url,
       thumbnail_url || null,
@@ -7097,8 +5588,8 @@ instructorRoutes2.post("/courses/:courseId/videos", instructorOrAdminMiddleware,
     const row = await c.env.DB.prepare("SELECT * FROM videos WHERE id = ?").bind(videoId).first();
     const video = formatVideoRow(row);
     return c.json({ success: true, video }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/videos/:id", instructorOrAdminMiddleware, async (c) => {
@@ -7121,8 +5612,8 @@ instructorRoutes2.delete("/videos/:id", instructorOrAdminMiddleware, async (c) =
     }
     await c.env.DB.prepare("DELETE FROM videos WHERE id = ?").bind(videoId).run();
     return c.json({ success: true, message: "Video deleted" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:courseId/resources", instructorOrAdminMiddleware, async (c) => {
@@ -7132,8 +5623,8 @@ instructorRoutes2.get("/courses/:courseId/resources", instructorOrAdminMiddlewar
       "SELECT * FROM course_resources WHERE course_id = ? ORDER BY sort_order ASC"
     ).bind(courseId).all();
     return c.json({ success: true, resources: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:courseId/resources", instructorOrAdminMiddleware, async (c) => {
@@ -7149,8 +5640,8 @@ instructorRoutes2.post("/courses/:courseId/resources", instructorOrAdminMiddlewa
       return c.json({ error: "You do not own this course" }, 403);
     }
     const body = await c.req.json();
-    const { title: title2, description, file_url, file_type, file_size, chapter_id, lesson_id, is_downloadable, sort_order } = body;
-    if (!title2 || !file_url) {
+    const { title, description, file_url, file_type, file_size, chapter_id, lesson_id, is_downloadable, sort_order } = body;
+    if (!title || !file_url) {
       return c.json({ error: "title and file_url are required" }, 400);
     }
     const resourceId = generateId();
@@ -7163,7 +5654,7 @@ instructorRoutes2.post("/courses/:courseId/resources", instructorOrAdminMiddlewa
       courseId,
       chapter_id || null,
       lesson_id || null,
-      title2,
+      title,
       description || null,
       file_url,
       file_type || null,
@@ -7176,8 +5667,8 @@ instructorRoutes2.post("/courses/:courseId/resources", instructorOrAdminMiddlewa
     ).run();
     const row = await c.env.DB.prepare("SELECT * FROM course_resources WHERE id = ?").bind(resourceId).first();
     return c.json({ success: true, resource: row }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/resources/:id", instructorOrAdminMiddleware, async (c) => {
@@ -7236,8 +5727,8 @@ instructorRoutes2.put("/resources/:id", instructorOrAdminMiddleware, async (c) =
     ).bind(...params).run();
     const row = await c.env.DB.prepare("SELECT * FROM course_resources WHERE id = ?").bind(resourceId).first();
     return c.json({ success: true, resource: row });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/resources/:id", instructorOrAdminMiddleware, async (c) => {
@@ -7260,8 +5751,8 @@ instructorRoutes2.delete("/resources/:id", instructorOrAdminMiddleware, async (c
     }
     await c.env.DB.prepare("DELETE FROM course_resources WHERE id = ?").bind(resourceId).run();
     return c.json({ success: true, message: "Resource deleted" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/schedule", instructorOrAdminMiddleware, async (c) => {
@@ -7272,8 +5763,8 @@ instructorRoutes2.post("/schedule", instructorOrAdminMiddleware, async (c) => {
       return c.json({ error: "instructorId is required" }, 400);
     }
     const body = await c.req.json();
-    const { title: title2, course_id, scheduled_at, duration_minutes, meeting_url, platform: platform2, description } = body;
-    if (!title2 || !scheduled_at || !duration_minutes || !meeting_url) {
+    const { title, course_id, scheduled_at, duration_minutes, meeting_url, platform, description } = body;
+    if (!title || !scheduled_at || !duration_minutes || !meeting_url) {
       return c.json({ error: "title, scheduled_at, duration_minutes, and meeting_url are required" }, 400);
     }
     if (course_id) {
@@ -7287,13 +5778,13 @@ instructorRoutes2.post("/schedule", instructorOrAdminMiddleware, async (c) => {
       INSERT INTO live_class_schedules (title, course_id, instructor_id, scheduled_at, duration_minutes, meeting_url, platform, description, is_active, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
     `).bind(
-      title2,
+      title,
       course_id || null,
       instructorId,
       scheduled_at,
       duration_minutes,
       meeting_url,
-      platform2 || null,
+      platform || null,
       description || null,
       now,
       now
@@ -7303,8 +5794,8 @@ instructorRoutes2.post("/schedule", instructorOrAdminMiddleware, async (c) => {
       "SELECT * FROM live_class_schedules WHERE rowid = ?"
     ).bind(insertedId).first();
     return c.json({ success: true, schedule: row }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.put("/reviews/:id/reply", instructorOrAdminMiddleware, async (c) => {
@@ -7335,8 +5826,8 @@ instructorRoutes2.put("/reviews/:id/reply", instructorOrAdminMiddleware, async (
     ).bind(reply_text, now, now, reviewId).run();
     const row = await c.env.DB.prepare("SELECT * FROM instructor_reviews WHERE id = ?").bind(reviewId).first();
     return c.json({ success: true, review: row });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/support/tickets", instructorOrAdminMiddleware, async (c) => {
@@ -7369,8 +5860,8 @@ instructorRoutes2.post("/support/tickets", instructorOrAdminMiddleware, async (c
       "SELECT * FROM support_tickets WHERE rowid = ?"
     ).bind(insertedId).first();
     return c.json({ success: true, ticket: row }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/support/tickets/:id/messages", instructorOrAdminMiddleware, async (c) => {
@@ -7414,8 +5905,8 @@ instructorRoutes2.post("/support/tickets/:id/messages", instructorOrAdminMiddlew
       "SELECT * FROM support_messages WHERE rowid = ?"
     ).bind(insertedId).first();
     return c.json({ success: true, message: row }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:id/thumbnail", instructorOrAdminMiddleware, async (c) => {
@@ -7446,8 +5937,8 @@ instructorRoutes2.post("/courses/:id/thumbnail", instructorOrAdminMiddleware, as
       "UPDATE courses SET thumbnail_url = ?, updated_at = ? WHERE id = ?"
     ).bind(thumbnailUrl, (/* @__PURE__ */ new Date()).toISOString(), courseId).run();
     return c.json({ success: true, thumbnail_url: thumbnailUrl });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMiddleware, async (c) => {
@@ -7463,7 +5954,7 @@ instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMidd
       return c.json({ error: "You do not own this course" }, 403);
     }
     const formData = await c.req.formData();
-    const title2 = formData.get("title");
+    const title = formData.get("title");
     const chapter_id = formData.get("chapter_id") || null;
     const subject_id = formData.get("subject_id") || null;
     const lesson_type = formData.get("lesson_type") || "video";
@@ -7472,7 +5963,7 @@ instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMidd
     const is_published = formData.get("is_published") === "1" ? 1 : 0;
     const duration = parseInt(formData.get("duration")) || 0;
     const description = formData.get("description") || null;
-    if (!title2) {
+    if (!title) {
       return c.json({ error: "title is required" }, 400);
     }
     let videoUrl = "";
@@ -7514,7 +6005,7 @@ instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMidd
       ccUrl = await getPublicUrl(c.env, "resources", ccKey);
     }
     const videoId = generateId();
-    const videoSlug = slugify(title2);
+    const videoSlug = slugify(title);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     await c.env.DB.prepare(`
       INSERT INTO videos (id, course_id, title, slug, video_url, thumbnail_url, duration, sort_order, is_preview, is_published, chapter_id, subject_id, lesson_type, created_at, updated_at)
@@ -7522,7 +6013,7 @@ instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMidd
     `).bind(
       videoId,
       courseId,
-      title2,
+      title,
       videoSlug,
       videoUrl || null,
       thumbnailUrl || null,
@@ -7546,7 +6037,7 @@ instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMidd
         courseId,
         chapter_id,
         videoId,
-        `${title2} - Subtitles`,
+        `${title} - Subtitles`,
         "Closed captions / subtitles",
         ccUrl,
         "vtt",
@@ -7558,8 +6049,8 @@ instructorRoutes2.post("/courses/:courseId/videos/upload", instructorOrAdminMidd
     const row = await c.env.DB.prepare("SELECT * FROM videos WHERE id = ?").bind(videoId).first();
     const video = formatVideoRow(row);
     return c.json({ success: true, video, cc_url: ccUrl || void 0 }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/technologies", instructorOrAdminMiddleware, async (c) => {
@@ -7568,8 +6059,8 @@ instructorRoutes2.get("/technologies", instructorOrAdminMiddleware, async (c) =>
       "SELECT * FROM technologies ORDER BY name ASC"
     ).all();
     return c.json({ success: true, technologies: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/subjects", instructorOrAdminMiddleware, async (c) => {
@@ -7584,8 +6075,8 @@ instructorRoutes2.get("/subjects", instructorOrAdminMiddleware, async (c) => {
     query += " ORDER BY sort_order ASC, name ASC";
     const result = await c.env.DB.prepare(query).bind(...params).all();
     return c.json({ success: true, subjects: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.get("/courses/:id/subjects", instructorOrAdminMiddleware, async (c) => {
@@ -7610,8 +6101,8 @@ instructorRoutes2.get("/courses/:id/subjects", instructorOrAdminMiddleware, asyn
     } catch {
     }
     return c.json({ success: true, subjects });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.post("/courses/:id/subjects", instructorOrAdminMiddleware, async (c) => {
@@ -7640,8 +6131,8 @@ instructorRoutes2.post("/courses/:id/subjects", instructorOrAdminMiddleware, asy
       }
     }
     return c.json({ success: true, message: "Subject added to course" }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instructorRoutes2.delete("/courses/:id/subjects/:subjectId", instructorOrAdminMiddleware, async (c) => {
@@ -7658,22 +6149,18 @@ instructorRoutes2.delete("/courses/:id/subjects/:subjectId", instructorOrAdminMi
       "DELETE FROM course_subjects WHERE course_id = ? AND subject_id = ?"
     ).bind(courseId, subjectId).run();
     return c.json({ success: true, message: "Subject removed from course" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var instructor_default = instructorRoutes2;
 
 // src/routes/courses.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var courseRoutes = new Hono2();
 courseRoutes.use("*", adminAuthMiddleware);
 function slugify2(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
-__name(slugify2, "slugify");
 courseRoutes.get("/", async (c) => {
   try {
     const page = parseInt(c.req.query("page") || "1");
@@ -7730,8 +6217,8 @@ courseRoutes.get("/", async (c) => {
       };
     }));
     return c.json({ documents: enrichedResults, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -7818,8 +6305,8 @@ courseRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_COURSE", "courses", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -7915,8 +6402,8 @@ courseRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_COURSE", "courses", String(courseId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -7930,17 +6417,14 @@ courseRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_COURSE", "courses", courseId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var courses_default = courseRoutes;
 
 // src/routes/videos.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var videoRoutes = new Hono2();
 videoRoutes.use("*", adminAuthMiddleware);
 videoRoutes.get("/", async (c) => {
@@ -7970,8 +6454,8 @@ videoRoutes.get("/", async (c) => {
       `SELECT * FROM videos ${where} ORDER BY course_id, sort_order ASC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8006,8 +6490,8 @@ videoRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_VIDEO", "videos", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8045,8 +6529,8 @@ videoRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_VIDEO", "videos", String(videoId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8060,17 +6544,14 @@ videoRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_VIDEO", "videos", videoId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var videos_default = videoRoutes;
 
 // src/routes/institutes.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var instituteRoutes = new Hono2();
 instituteRoutes.use("*", adminAuthMiddleware);
 instituteRoutes.get("/", async (c) => {
@@ -8086,8 +6567,8 @@ instituteRoutes.get("/", async (c) => {
       "SELECT * FROM institutes ORDER BY created_at DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8113,8 +6594,8 @@ instituteRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_INSTITUTE", "institutes", String(created?.id), data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8151,8 +6632,8 @@ instituteRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_INSTITUTE", "institutes", String(instituteId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8166,22 +6647,14 @@ instituteRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_INSTITUTE", "institutes", instituteId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var institutes_default = instituteRoutes;
 
-// src/routes/config.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // src/lib/types.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var DEFAULT_CONFIG = {
   featureToggles: {
     downloads: true,
@@ -8258,7 +6731,7 @@ configRoutes.get("/", async (c) => {
         configMap[row.key] = row.value;
       }
     }
-    const config2 = {
+    const config = {
       featureToggles: { ...DEFAULT_CONFIG.featureToggles, ...configMap.featureToggles },
       homePageSections: configMap.homePageSections || DEFAULT_CONFIG.homePageSections,
       sidebarVisibility: { ...DEFAULT_CONFIG.sidebarVisibility, ...configMap.sidebarVisibility },
@@ -8267,24 +6740,24 @@ configRoutes.get("/", async (c) => {
       cardStyle: configMap.cardStyle || DEFAULT_CONFIG.cardStyle,
       contentProtection: { ...DEFAULT_CONFIG.contentProtection, ...configMap.contentProtection }
     };
-    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config2), { expirationTtl: 300 });
-    return c.json(config2);
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config), { expirationTtl: 300 });
+    return c.json(config);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 configRoutes.put("/", async (c) => {
   try {
-    const config2 = await c.req.json();
+    const config = await c.req.json();
     const sections = {
-      featureToggles: config2.featureToggles,
-      homePageSections: config2.homePageSections,
-      sidebarVisibility: config2.sidebarVisibility,
-      bottomNavTabs: config2.bottomNavTabs,
-      topBarElements: config2.topBarElements,
-      cardStyle: config2.cardStyle,
-      contentProtection: config2.contentProtection
+      featureToggles: config.featureToggles,
+      homePageSections: config.homePageSections,
+      sidebarVisibility: config.sidebarVisibility,
+      bottomNavTabs: config.bottomNavTabs,
+      topBarElements: config.topBarElements,
+      cardStyle: config.cardStyle,
+      contentProtection: config.contentProtection
     };
     for (const [key, value] of Object.entries(sections)) {
       await c.env.DB.prepare(
@@ -8292,27 +6765,27 @@ configRoutes.put("/", async (c) => {
          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`
       ).bind(key, JSON.stringify(value)).run();
     }
-    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config2));
+    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config));
     await c.env.KV_CONFIG.put("config_updated_at", (/* @__PURE__ */ new Date()).toISOString());
     const user = c.get("user");
-    await logAudit(c.env, user.id, "UPDATE_CONFIG", "config", void 0, config2);
-    return c.json({ success: true, config: config2 });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+    await logAudit(c.env, user.id, "UPDATE_CONFIG", "config", void 0, config);
+    return c.json({ success: true, config });
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 configRoutes.put("/reset", async (c) => {
   try {
-    const config2 = DEFAULT_CONFIG;
+    const config = DEFAULT_CONFIG;
     const sections = {
-      featureToggles: config2.featureToggles,
-      homePageSections: config2.homePageSections,
-      sidebarVisibility: config2.sidebarVisibility,
-      bottomNavTabs: config2.bottomNavTabs,
-      topBarElements: config2.topBarElements,
-      cardStyle: config2.cardStyle,
-      contentProtection: config2.contentProtection
+      featureToggles: config.featureToggles,
+      homePageSections: config.homePageSections,
+      sidebarVisibility: config.sidebarVisibility,
+      bottomNavTabs: config.bottomNavTabs,
+      topBarElements: config.topBarElements,
+      cardStyle: config.cardStyle,
+      contentProtection: config.contentProtection
     };
     for (const [key, value] of Object.entries(sections)) {
       await c.env.DB.prepare(
@@ -8320,31 +6793,23 @@ configRoutes.put("/reset", async (c) => {
          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`
       ).bind(key, JSON.stringify(value)).run();
     }
-    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config2));
+    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config));
     await c.env.KV_CONFIG.put("config_updated_at", (/* @__PURE__ */ new Date()).toISOString());
     const user = c.get("user");
     await logAudit(c.env, user.id, "RESET_CONFIG", "config", void 0, { action: "reset_to_defaults" });
-    return c.json({ success: true, config: config2 });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+    return c.json({ success: true, config });
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var config_default = configRoutes;
 
-// src/routes/notifications.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // src/lib/onesignal.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-async function sendPushNotification(env2, payload) {
+async function sendPushNotification(env, payload) {
   try {
-    const appId = env2.ONE_SIGNAL_APP_ID;
-    const restApiKey = env2.ONE_SIGNAL_REST_API_KEY;
+    const appId = env.ONE_SIGNAL_APP_ID;
+    const restApiKey = env.ONE_SIGNAL_REST_API_KEY;
     if (!appId || !restApiKey) {
       console.warn("OneSignal not configured \u2014 skipping push notification");
       return { success: false, recipients: 0, errors: ["OneSignal not configured"] };
@@ -8387,69 +6852,64 @@ async function sendPushNotification(env2, payload) {
         errors: [result.errors?.[0] || "Unknown OneSignal error"]
       };
     }
-  } catch (error3) {
-    console.error("OneSignal push error:", error3);
+  } catch (error) {
+    console.error("OneSignal push error:", error);
     return {
       success: false,
       recipients: 0,
-      errors: [error3 instanceof Error ? error3.message : "Unknown error"]
+      errors: [error instanceof Error ? error.message : "Unknown error"]
     };
   }
 }
-__name(sendPushNotification, "sendPushNotification");
-async function getUserPushTokens(env2, userId) {
+async function getUserPushTokens(env, userId) {
   try {
-    const result = await env2.DB.prepare(
+    const result = await env.DB.prepare(
       "SELECT push_token FROM user_push_tokens WHERE user_id = ? AND is_active = 1"
     ).bind(userId).all();
     return result.results.map((row) => row.push_token);
-  } catch (error3) {
-    console.error("Failed to get user push tokens:", error3);
+  } catch (error) {
+    console.error("Failed to get user push tokens:", error);
     return [];
   }
 }
-__name(getUserPushTokens, "getUserPushTokens");
-async function getBatchUserPushTokens(env2, userIds) {
+async function getBatchUserPushTokens(env, userIds) {
   if (userIds.length === 0) return [];
   try {
     const placeholders = userIds.map(() => "?").join(",");
-    const result = await env2.DB.prepare(
+    const result = await env.DB.prepare(
       `SELECT DISTINCT push_token FROM user_push_tokens WHERE user_id IN (${placeholders}) AND is_active = 1`
     ).bind(...userIds).all();
     return result.results.map((row) => row.push_token);
-  } catch (error3) {
-    console.error("Failed to get batch user push tokens:", error3);
+  } catch (error) {
+    console.error("Failed to get batch user push tokens:", error);
     return [];
   }
 }
-__name(getBatchUserPushTokens, "getBatchUserPushTokens");
-async function registerPushToken(env2, userId, pushToken, deviceType, deviceInfo) {
+async function registerPushToken(env, userId, pushToken, deviceType, deviceInfo) {
   try {
-    await env2.DB.prepare(
+    await env.DB.prepare(
       "UPDATE user_push_tokens SET is_active = 1, updated_at = datetime('now') WHERE user_id = ? AND push_token = ?"
     ).bind(userId, pushToken).run();
-    await env2.DB.prepare(`
+    await env.DB.prepare(`
       INSERT INTO user_push_tokens (id, user_id, push_token, device_type, device_info, is_active, created_at)
       SELECT ?, ?, ?, ?, ?, 1, datetime('now')
       WHERE NOT EXISTS (SELECT 1 FROM user_push_tokens WHERE user_id = ? AND push_token = ?)
     `).bind(generateId(), userId, pushToken, deviceType || null, deviceInfo || null, userId, pushToken).run();
-  } catch (error3) {
-    console.error("Failed to register push token:", error3);
-    throw error3;
+  } catch (error) {
+    console.error("Failed to register push token:", error);
+    throw error;
   }
 }
-__name(registerPushToken, "registerPushToken");
-async function unregisterPushToken(env2, pushToken) {
+async function unregisterPushToken(env, pushToken) {
   try {
-    await env2.DB.prepare(
+    await env.DB.prepare(
       "UPDATE user_push_tokens SET is_active = 0, updated_at = datetime('now') WHERE push_token = ?"
     ).bind(pushToken).run();
-  } catch (error3) {
-    console.error("Failed to unregister push token:", error3);
-    throw error3;
+  } catch (error) {
+    console.error("Failed to unregister push token:", error);
+    throw error;
   }
 }
-__name(unregisterPushToken, "unregisterPushToken");
 
 // src/routes/notifications.ts
 var notificationRoutes = new Hono2();
@@ -8468,7 +6928,6 @@ function isInQuietHours(quietHoursEnabled, quietStart, quietEnd) {
     return currentMinutes >= startMinutes && currentMinutes < endMinutes;
   }
 }
-__name(isInQuietHours, "isInQuietHours");
 function getCategoryPushColumn(category) {
   const map = {
     "course-update": "course_updates_push",
@@ -8487,10 +6946,9 @@ function getCategoryPushColumn(category) {
   };
   return map[category] || map["info"];
 }
-__name(getCategoryPushColumn, "getCategoryPushColumn");
-async function checkDeliveryPrefs(env2, userId, category) {
+async function checkDeliveryPrefs(env, userId, category) {
   try {
-    const prefs = await env2.DB.prepare(
+    const prefs = await env.DB.prepare(
       "SELECT * FROM notification_preferences WHERE user_id = ?"
     ).bind(userId).first();
     if (!prefs) {
@@ -8514,12 +6972,11 @@ async function checkDeliveryPrefs(env2, userId, category) {
       return { shouldDeliver: true, shouldPush: false };
     }
     return { shouldDeliver: true, shouldPush: true };
-  } catch (error3) {
-    console.error("Failed to check delivery prefs:", error3);
+  } catch (error) {
+    console.error("Failed to check delivery prefs:", error);
     return { shouldDeliver: true, shouldPush: true };
   }
 }
-__name(checkDeliveryPrefs, "checkDeliveryPrefs");
 notificationRoutes.get("/", async (c) => {
   try {
     const page = parseInt(c.req.query("page") || "1");
@@ -8571,8 +7028,8 @@ notificationRoutes.get("/", async (c) => {
     ];
     documents.sort((a, b) => new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime());
     return c.json({ documents: documents.slice(0, limit), total: Math.max(total, documents.length) });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8580,7 +7037,7 @@ notificationRoutes.post("/", async (c) => {
   try {
     const data = await c.req.json();
     const {
-      title: title2,
+      title,
       message,
       type = "info",
       category = "info",
@@ -8591,7 +7048,7 @@ notificationRoutes.post("/", async (c) => {
       actionUrl,
       ...extraData
     } = data;
-    if (!title2 || !message) {
+    if (!title || !message) {
       return c.json({ error: "Title and message are required" }, 400);
     }
     const effectiveCategory = category || type;
@@ -8613,7 +7070,7 @@ notificationRoutes.post("/", async (c) => {
         await c.env.DB.prepare(`
           INSERT INTO notifications (id, user_id, title, message, type, category, read, action_url)
           VALUES (?, ?, ?, ?, ?, ?, 0, ?)
-        `).bind(notifId, userId, title2, message, type, effectiveCategory, actionUrl || null).run();
+        `).bind(notifId, userId, title, message, type, effectiveCategory, actionUrl || null).run();
         created.push({ id: notifId, userId });
       } catch (docErr) {
         failedCount++;
@@ -8626,7 +7083,6 @@ notificationRoutes.post("/", async (c) => {
         silentDelivery.push(userId);
       }
     }
-    __name(processUser, "processUser");
     if (targetAll) {
       targetType = "all";
       targetId = "all";
@@ -8671,7 +7127,7 @@ notificationRoutes.post("/", async (c) => {
         const pushTokens = await getBatchUserPushTokens(c.env, pushDelivery);
         if (pushTokens.length > 0) {
           await sendPushNotification(c.env, {
-            title: title2,
+            title,
             message,
             targetPlayerIds: pushTokens,
             url: actionUrl || void 0
@@ -8680,7 +7136,7 @@ notificationRoutes.post("/", async (c) => {
       }
       if (targetAll && pushDelivery.length === 0 && skippedByPref.length === 0) {
         await sendPushNotification(c.env, {
-          title: title2,
+          title,
           message,
           targetSegment: "All",
           url: actionUrl || void 0
@@ -8704,7 +7160,7 @@ notificationRoutes.post("/", async (c) => {
       VALUES ('in-app', ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       effectiveCategory,
-      title2,
+      title,
       message,
       targetType,
       targetId,
@@ -8736,17 +7192,14 @@ notificationRoutes.post("/", async (c) => {
       pushDelivery: pushDelivery.length,
       logged: true
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var notifications_default = notificationRoutes;
 
 // src/routes/analytics.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var analyticsRoutes = new Hono2();
 analyticsRoutes.use("*", adminAuthMiddleware);
 analyticsRoutes.get("/", async (c) => {
@@ -8794,8 +7247,8 @@ analyticsRoutes.get("/", async (c) => {
       popularCourses: popularCourses.results,
       recentLogs
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8865,17 +7318,14 @@ analyticsRoutes.get("/charts", async (c) => {
       courseDistribution,
       userGrowth: userGrowthWithBaseline
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var analytics_default = analyticsRoutes;
 
 // src/routes/upload.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var uploadRoutes = new Hono2();
 uploadRoutes.use("*", adminAuthMiddleware);
 uploadRoutes.post("/", async (c) => {
@@ -8899,8 +7349,8 @@ uploadRoutes.post("/", async (c) => {
       size: file.size
     });
     return c.json({ url, key, bucket });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8916,17 +7366,14 @@ uploadRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_FILE", "r2", key, { bucket });
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var upload_default = uploadRoutes;
 
 // src/routes/email.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 init_resend();
 var emailRoutes = new Hono2();
 emailRoutes.use("*", adminAuthMiddleware);
@@ -8940,8 +7387,8 @@ emailRoutes.post("/test", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "SEND_TEST_EMAIL", "email", void 0, { to });
     return c.json({ success: true, emailId: result.id });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8955,8 +7402,8 @@ emailRoutes.post("/custom", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "SEND_CUSTOM_EMAIL", "email", void 0, { to, subject });
     return c.json({ success: true, emailId: result.id });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -8967,17 +7414,14 @@ emailRoutes.post("/template", async (c) => {
       return c.json({ error: "Recipient and template ID are required" }, 400);
     }
     return c.json({ success: true, message: "Use /custom endpoint with pre-rendered template HTML" });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var email_default = emailRoutes;
 
 // src/routes/admin.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var adminRoutes = new Hono2();
 adminRoutes.use("*", adminAuthMiddleware);
 adminRoutes.get("/audit", async (c) => {
@@ -9007,8 +7451,8 @@ adminRoutes.get("/audit", async (c) => {
       limit,
       offset
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -9020,17 +7464,14 @@ adminRoutes.delete("/sessions", async (c) => {
     ).run();
     await logAudit(c.env, user.id, "CLEAR_SESSIONS", "admin", void 0, { action: "clear_all" });
     return c.json({ success: true, message: "All sessions cleared" });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var admin_default = adminRoutes;
 
 // src/routes/coupons.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var couponRoutes = new Hono2();
 couponRoutes.use("*", adminAuthMiddleware);
 couponRoutes.get("/", async (c) => {
@@ -9051,8 +7492,8 @@ couponRoutes.get("/", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ coupons: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 couponRoutes.post("/", async (c) => {
@@ -9086,8 +7527,8 @@ couponRoutes.post("/", async (c) => {
     ).run();
     await logAudit(c.env, user.id, "CREATE_COUPON", "coupons", String(result.meta?.last_row_id), data);
     return c.json({ success: true, message: "Coupon created successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 couponRoutes.put("/:id", async (c) => {
@@ -9122,8 +7563,8 @@ couponRoutes.put("/:id", async (c) => {
     ).bind(...params).run();
     await logAudit(c.env, user.id, "UPDATE_COUPON", "coupons", id, data);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 couponRoutes.delete("/:id", async (c) => {
@@ -9135,16 +7576,13 @@ couponRoutes.delete("/:id", async (c) => {
     ).bind(id).run();
     await logAudit(c.env, user.id, "DEACTIVATE_COUPON", "coupons", id);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var coupons_default = couponRoutes;
 
 // src/routes/discounts.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var discountRoutes = new Hono2();
 discountRoutes.use("*", adminAuthMiddleware);
 discountRoutes.get("/", async (c) => {
@@ -9165,8 +7603,8 @@ discountRoutes.get("/", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ discounts: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 discountRoutes.post("/", async (c) => {
@@ -9195,8 +7633,8 @@ discountRoutes.post("/", async (c) => {
     ).run();
     await logAudit(c.env, user.id, "CREATE_DISCOUNT", "discounts", String(result.meta?.last_row_id), data);
     return c.json({ success: true, message: "Discount created successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 discountRoutes.put("/:id", async (c) => {
@@ -9227,8 +7665,8 @@ discountRoutes.put("/:id", async (c) => {
     ).bind(...params).run();
     await logAudit(c.env, user.id, "UPDATE_DISCOUNT", "discounts", id, data);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 discountRoutes.delete("/:id", async (c) => {
@@ -9240,16 +7678,13 @@ discountRoutes.delete("/:id", async (c) => {
     ).bind(id).run();
     await logAudit(c.env, user.id, "DEACTIVATE_DISCOUNT", "discounts", id);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var discounts_default = discountRoutes;
 
 // src/routes/events.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var eventRoutes = new Hono2();
 eventRoutes.use("*", adminAuthMiddleware);
 eventRoutes.get("/", async (c) => {
@@ -9280,15 +7715,15 @@ eventRoutes.get("/", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ events: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 eventRoutes.post("/", async (c) => {
   try {
     const data = await c.req.json();
-    const { title: title2, title_bn, description, description_bn, event_type, banner_url, start_date, end_date, is_featured, metadata } = data;
-    if (!title2 || !event_type || !start_date) {
+    const { title, title_bn, description, description_bn, event_type, banner_url, start_date, end_date, is_featured, metadata } = data;
+    if (!title || !event_type || !start_date) {
       return c.json({ error: "title, event_type, start_date required" }, 400);
     }
     const user = c.get("user");
@@ -9296,7 +7731,7 @@ eventRoutes.post("/", async (c) => {
       INSERT INTO events (title, title_bn, description, description_bn, event_type, banner_url, start_date, end_date, is_featured, metadata, is_active, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
     `).bind(
-      title2,
+      title,
       title_bn || null,
       description || null,
       description_bn || null,
@@ -9310,8 +7745,8 @@ eventRoutes.post("/", async (c) => {
     ).run();
     await logAudit(c.env, user.id, "CREATE_EVENT", "events", String(result.meta?.last_row_id), data);
     return c.json({ success: true, message: "Event created successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 eventRoutes.put("/:id", async (c) => {
@@ -9342,8 +7777,8 @@ eventRoutes.put("/:id", async (c) => {
     ).bind(...params).run();
     await logAudit(c.env, user.id, "UPDATE_EVENT", "events", id, data);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 eventRoutes.delete("/:id", async (c) => {
@@ -9355,8 +7790,8 @@ eventRoutes.delete("/:id", async (c) => {
     ).bind(id).run();
     await logAudit(c.env, user.id, "DELETE_EVENT", "events", id);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 eventRoutes.post("/:id/broadcast", async (c) => {
@@ -9381,16 +7816,13 @@ eventRoutes.post("/:id/broadcast", async (c) => {
     `).bind(e.title, e.description || "", result.recipients, result.errors.length, JSON.stringify({ event_id: id }), user.id).run();
     await logAudit(c.env, user.id, "BROADCAST_EVENT", "events", id);
     return c.json({ success: result.success, recipients: result.recipients });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var events_default = eventRoutes;
 
 // src/routes/live-classes.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var liveClassRoutes = new Hono2();
 liveClassRoutes.use("*", adminAuthMiddleware);
 liveClassRoutes.get("/", async (c) => {
@@ -9412,15 +7844,15 @@ liveClassRoutes.get("/", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ liveClasses: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 liveClassRoutes.post("/", async (c) => {
   try {
     const data = await c.req.json();
-    const { course_id, title: title2, title_bn, description, instructor_id, technology_id, scheduled_at, duration_minutes, meeting_url, platform: platform2 } = data;
-    if (!title2 || !scheduled_at) {
+    const { course_id, title, title_bn, description, instructor_id, technology_id, scheduled_at, duration_minutes, meeting_url, platform } = data;
+    if (!title || !scheduled_at) {
       return c.json({ error: "title and scheduled_at required" }, 400);
     }
     const user = c.get("user");
@@ -9429,7 +7861,7 @@ liveClassRoutes.post("/", async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', 1, ?)
     `).bind(
       course_id || null,
-      title2,
+      title,
       title_bn || null,
       description || null,
       instructor_id || null,
@@ -9437,13 +7869,13 @@ liveClassRoutes.post("/", async (c) => {
       scheduled_at,
       duration_minutes || 60,
       meeting_url || null,
-      platform2 || "jitsi",
+      platform || "jitsi",
       user.id
     ).run();
     await logAudit(c.env, user.id, "CREATE_LIVE_CLASS", "live_classes", String(result.meta?.last_row_id), data);
     return c.json({ success: true, message: "Live class scheduled successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 liveClassRoutes.put("/:id", async (c) => {
@@ -9470,8 +7902,8 @@ liveClassRoutes.put("/:id", async (c) => {
     ).bind(...params).run();
     await logAudit(c.env, user.id, "UPDATE_LIVE_CLASS", "live_classes", id, data);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 liveClassRoutes.delete("/:id", async (c) => {
@@ -9483,16 +7915,13 @@ liveClassRoutes.delete("/:id", async (c) => {
     `).bind(id).run();
     await logAudit(c.env, user.id, "CANCEL_LIVE_CLASS", "live_classes", id);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var live_classes_default = liveClassRoutes;
 
 // src/routes/payments.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var paymentRoutes = new Hono2();
 paymentRoutes.use("*", adminAuthMiddleware);
 paymentRoutes.get("/", async (c) => {
@@ -9524,8 +7953,8 @@ paymentRoutes.get("/", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ payments: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 paymentRoutes.put("/:id/verify", async (c) => {
@@ -9588,8 +8017,8 @@ paymentRoutes.put("/:id/verify", async (c) => {
     }
     await logAudit(c.env, user.id, "VERIFY_PAYMENT", "payments", id);
     return c.json({ success: true, message: "Payment verified and package activated" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 paymentRoutes.put("/:id/reject", async (c) => {
@@ -9606,8 +8035,8 @@ paymentRoutes.put("/:id/reject", async (c) => {
     `).bind(JSON.stringify({ rejection_reason: reason || "Rejected by admin" }), user.id, id).run();
     await logAudit(c.env, user.id, "REJECT_PAYMENT", "payments", id, { reason });
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 paymentRoutes.put("/:id/refund", async (c) => {
@@ -9637,16 +8066,16 @@ paymentRoutes.put("/:id/refund", async (c) => {
     }
     await logAudit(c.env, user.id, "REFUND_PAYMENT", "payments", id, { reason });
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 paymentRoutes.get("/config", async (c) => {
   try {
     const result = await c.env.DB.prepare("SELECT * FROM payment_config").all();
     return c.json({ configs: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 paymentRoutes.put("/config/:gateway", async (c) => {
@@ -9691,8 +8120,8 @@ paymentRoutes.put("/config/:gateway", async (c) => {
     }
     await logAudit(c.env, user.id, "UPDATE_PAYMENT_CONFIG", "payment_config", void 0, { gateway, ...data });
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 paymentRoutes.get("/config/:gateway/setup-guide", async (c) => {
@@ -9775,9 +8204,6 @@ paymentRoutes.get("/config/:gateway/setup-guide", async (c) => {
 var payments_default = paymentRoutes;
 
 // src/routes/institute-requests.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var instituteRequestRoutes = new Hono2();
 instituteRequestRoutes.use("*", adminAuthMiddleware);
 instituteRequestRoutes.get("/", async (c) => {
@@ -9799,8 +8225,8 @@ instituteRequestRoutes.get("/", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ requests: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instituteRequestRoutes.post("/", async (c) => {
@@ -9829,8 +8255,8 @@ instituteRequestRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_INSTITUTE_REQUEST", "institute_requests", String(result.meta?.last_row_id), data);
     return c.json({ success: true, message: "Institute request submitted successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instituteRequestRoutes.put("/:id/approve", async (c) => {
@@ -9867,8 +8293,8 @@ instituteRequestRoutes.put("/:id/approve", async (c) => {
     } catch {
     }
     return c.json({ success: true, message: "Institute request approved and added to institutes" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 instituteRequestRoutes.put("/:id/reject", async (c) => {
@@ -9902,24 +8328,16 @@ instituteRequestRoutes.put("/:id/reject", async (c) => {
     } catch {
     }
     return c.json({ success: true, message: "Institute request rejected" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var institute_requests_default = instituteRequestRoutes;
 
-// src/routes/student-api.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-
 // src/lib/student-auth.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
-async function validateStudentSession(env2, token) {
+async function validateStudentSession(env, token) {
   try {
-    const session = await env2.DB.prepare(
+    const session = await env.DB.prepare(
       "SELECT user_id, email, name, expires_at, is_active FROM student_sessions WHERE id = ? AND is_active = 1"
     ).bind(token).first();
     if (!session) {
@@ -9927,14 +8345,14 @@ async function validateStudentSession(env2, token) {
     }
     const expiresAt = new Date(session.expires_at);
     if (expiresAt < /* @__PURE__ */ new Date()) {
-      await env2.DB.prepare(
+      await env.DB.prepare(
         "UPDATE student_sessions SET is_active = 0 WHERE id = ?"
       ).bind(token).run();
       return { authorized: false };
     }
     let emailVerified = false;
     try {
-      const user = await env2.DB.prepare(
+      const user = await env.DB.prepare(
         "SELECT email_verified FROM users WHERE id = ?"
       ).bind(session.user_id).first();
       if (user) {
@@ -9949,25 +8367,23 @@ async function validateStudentSession(env2, token) {
       name: session.name || void 0,
       emailVerified
     };
-  } catch (error3) {
-    console.error("Student session validation error:", error3);
+  } catch (error) {
+    console.error("Student session validation error:", error);
     return { authorized: false };
   }
 }
-__name(validateStudentSession, "validateStudentSession");
-async function createStudentSession(env2, userId, email) {
+async function createStudentSession(env, userId, email) {
   const sessionId = generateId();
   const expiresAt = getSessionExpiry(30);
-  await env2.DB.prepare(
+  await env.DB.prepare(
     `INSERT INTO student_sessions (id, user_id, email, expires_at, is_active, created_at)
      VALUES (?, ?, ?, ?, 1, datetime('now'))`
   ).bind(sessionId, userId, email, expiresAt).run();
   return sessionId;
 }
-__name(createStudentSession, "createStudentSession");
-async function deleteStudentSession(env2, token) {
+async function deleteStudentSession(env, token) {
   try {
-    await env2.DB.prepare(
+    await env.DB.prepare(
       "UPDATE student_sessions SET is_active = 0 WHERE id = ?"
     ).bind(token).run();
     return true;
@@ -9975,12 +8391,8 @@ async function deleteStudentSession(env2, token) {
     return false;
   }
 }
-__name(deleteStudentSession, "deleteStudentSession");
 
 // src/lib/student-auth-middleware.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 async function studentAuthMiddleware(c, next) {
   const authHeader = c.req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -9999,7 +8411,6 @@ async function studentAuthMiddleware(c, next) {
   c.set("studentName", result.name || "");
   await next();
 }
-__name(studentAuthMiddleware, "studentAuthMiddleware");
 
 // src/routes/student-api.ts
 var studentApiRoutes = new Hono2();
@@ -10012,10 +8423,9 @@ async function getStudentAuth(c) {
   const result = await validateStudentSession(c.env, token);
   return result;
 }
-__name(getStudentAuth, "getStudentAuth");
-async function getStudentUserDoc(env2, userId) {
+async function getStudentUserDoc(env, userId) {
   try {
-    const user = await env2.DB.prepare(
+    const user = await env.DB.prepare(
       "SELECT * FROM users WHERE id = ?"
     ).bind(userId).first();
     return user;
@@ -10023,11 +8433,10 @@ async function getStudentUserDoc(env2, userId) {
     return null;
   }
 }
-__name(getStudentUserDoc, "getStudentUserDoc");
-async function getInstituteName(env2, instituteId) {
+async function getInstituteName(env, instituteId) {
   if (!instituteId) return null;
   try {
-    const inst = await env2.DB.prepare(
+    const inst = await env.DB.prepare(
       "SELECT name FROM institutes WHERE id = ?"
     ).bind(instituteId).first();
     return inst?.name || null;
@@ -10035,11 +8444,10 @@ async function getInstituteName(env2, instituteId) {
     return null;
   }
 }
-__name(getInstituteName, "getInstituteName");
-async function getTechnologyName(env2, shortCode) {
+async function getTechnologyName(env, shortCode) {
   if (!shortCode) return null;
   try {
-    const tech = await env2.DB.prepare(
+    const tech = await env.DB.prepare(
       "SELECT name FROM technologies WHERE short_code = ?"
     ).bind(shortCode).first();
     return tech?.name || null;
@@ -10047,27 +8455,25 @@ async function getTechnologyName(env2, shortCode) {
     return null;
   }
 }
-__name(getTechnologyName, "getTechnologyName");
-function transformConfigForStudent(config2) {
+function transformConfigForStudent(config) {
   return {
-    contentProtection: config2.contentProtection,
-    features: config2.featureToggles,
+    contentProtection: config.contentProtection,
+    features: config.featureToggles,
     ui: {
-      homeSections: config2.homePageSections.sections,
-      sidebarSections: config2.sidebarVisibility,
-      bottomNavTabs: config2.bottomNavTabs.tabs.filter((t) => t.enabled).sort((a, b) => a.order - b.order).map((t) => t.id),
-      topBarElements: config2.topBarElements,
-      cardStyle: config2.cardStyle
+      homeSections: config.homePageSections.sections,
+      sidebarSections: config.sidebarVisibility,
+      bottomNavTabs: config.bottomNavTabs.tabs.filter((t) => t.enabled).sort((a, b) => a.order - b.order).map((t) => t.id),
+      topBarElements: config.topBarElements,
+      cardStyle: config.cardStyle
     }
   };
 }
-__name(transformConfigForStudent, "transformConfigForStudent");
 studentApiRoutes.get("/config", async (c) => {
   try {
     const cachedConfig = await c.env.KV_CONFIG.get("server_config", "json");
     if (cachedConfig) {
-      const config3 = cachedConfig;
-      return c.json({ config: transformConfigForStudent(config3) });
+      const config2 = cachedConfig;
+      return c.json({ config: transformConfigForStudent(config2) });
     }
     const { results } = await c.env.DB.prepare(
       "SELECT key, value FROM app_config"
@@ -10080,7 +8486,7 @@ studentApiRoutes.get("/config", async (c) => {
         configMap[row.key] = row.value;
       }
     }
-    const config2 = {
+    const config = {
       featureToggles: { ...DEFAULT_CONFIG.featureToggles, ...configMap.featureToggles },
       homePageSections: configMap.homePageSections || DEFAULT_CONFIG.homePageSections,
       sidebarVisibility: { ...DEFAULT_CONFIG.sidebarVisibility, ...configMap.sidebarVisibility },
@@ -10089,9 +8495,9 @@ studentApiRoutes.get("/config", async (c) => {
       cardStyle: configMap.cardStyle || DEFAULT_CONFIG.cardStyle,
       contentProtection: { ...DEFAULT_CONFIG.contentProtection, ...configMap.contentProtection }
     };
-    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config2), { expirationTtl: 300 });
-    return c.json({ config: transformConfigForStudent(config2) });
-  } catch (error3) {
+    await c.env.KV_CONFIG.put("server_config", JSON.stringify(config), { expirationTtl: 300 });
+    return c.json({ config: transformConfigForStudent(config) });
+  } catch (error) {
     return c.json({ config: transformConfigForStudent(DEFAULT_CONFIG) });
   }
 });
@@ -10101,8 +8507,8 @@ studentApiRoutes.get("/config/payment", async (c) => {
       "SELECT id, gateway, is_active, instructions, instructions_bn, sandbox_mode FROM payment_config WHERE is_active = 1"
     ).all();
     return c.json({ paymentConfig: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/institutes", async (c) => {
@@ -10130,8 +8536,8 @@ studentApiRoutes.get("/institutes", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ institutes: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/institutes/:id", async (c) => {
@@ -10144,8 +8550,8 @@ studentApiRoutes.get("/institutes/:id", async (c) => {
       return c.json({ error: "Institute not found" }, 404);
     }
     return c.json({ institute: result });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/technologies", async (c) => {
@@ -10154,8 +8560,8 @@ studentApiRoutes.get("/technologies", async (c) => {
       "SELECT * FROM technologies WHERE is_active = 1 ORDER BY name ASC"
     ).all();
     return c.json({ technologies: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/events", async (c) => {
@@ -10164,8 +8570,8 @@ studentApiRoutes.get("/events", async (c) => {
       "SELECT * FROM events WHERE is_active = 1 AND end_date >= date('now') ORDER BY start_date ASC"
     ).all();
     return c.json({ events: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/live-classes", async (c) => {
@@ -10174,8 +8580,8 @@ studentApiRoutes.get("/live-classes", async (c) => {
       "SELECT * FROM live_class_schedules WHERE is_active = 1 AND status IN ('scheduled', 'live') ORDER BY scheduled_at ASC"
     ).all();
     return c.json({ liveClasses: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/coupons/validate", async (c) => {
@@ -10208,8 +8614,8 @@ studentApiRoutes.get("/coupons/validate", async (c) => {
         min_purchase: cp.min_purchase
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/course-packages", async (c) => {
@@ -10253,8 +8659,8 @@ studentApiRoutes.get("/course-packages", async (c) => {
     }
     const filteredPackages = result.results.filter((p) => p.package_type === "single" || p.package_type === "dual");
     return c.json({ packages: filteredPackages });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/packages/mine", async (c) => {
@@ -10273,8 +8679,8 @@ studentApiRoutes.get("/packages/mine", async (c) => {
       ORDER BY up.activated_at DESC
     `).bind(auth.userId).all();
     return c.json({ packages: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/users/lookup", async (c) => {
@@ -10302,8 +8708,8 @@ studentApiRoutes.get("/users/lookup", async (c) => {
         avatarUrl: u.avatar_url || null
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/courses", async (c) => {
@@ -10348,8 +8754,8 @@ studentApiRoutes.get("/courses", async (c) => {
       }
     }));
     return c.json({ courses: enrichedCourses, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/courses/:id", async (c) => {
@@ -10406,8 +8812,8 @@ studentApiRoutes.get("/courses/:id", async (c) => {
       learningPoints,
       subjects
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/courses/:id/curriculum", async (c) => {
@@ -10466,8 +8872,8 @@ studentApiRoutes.get("/courses/:id/curriculum", async (c) => {
       videos,
       learningPoints
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/courses/:id/videos", async (c) => {
@@ -10501,8 +8907,8 @@ studentApiRoutes.get("/courses/:id/videos", async (c) => {
       return { ...video, is_locked: false };
     });
     return c.json({ videos, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/instructors", async (c) => {
@@ -10524,8 +8930,8 @@ studentApiRoutes.get("/instructors", async (c) => {
       `SELECT * FROM instructors ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ instructors: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/instructors/:id", async (c) => {
@@ -10538,8 +8944,8 @@ studentApiRoutes.get("/instructors/:id", async (c) => {
       return c.json({ error: "Instructor not found" }, 404);
     }
     return c.json({ instructor });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/instructors/:id/courses", async (c) => {
@@ -10561,8 +8967,8 @@ studentApiRoutes.get("/instructors/:id/courses", async (c) => {
     ).bind(instructorId).first();
     const total = countResult?.total || 0;
     return c.json({ courses: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/video/stream-url", async (c) => {
@@ -10599,8 +9005,8 @@ studentApiRoutes.get("/video/stream-url", async (c) => {
     }
     const url = getPublicUrl(c.env, bucket, key);
     return c.json({ url });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/auth/signup", async (c) => {
@@ -10687,8 +9093,8 @@ studentApiRoutes.post("/auth/signup", async (c) => {
         themeMode: "system"
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/auth/login", async (c) => {
@@ -10749,8 +9155,8 @@ studentApiRoutes.post("/auth/login", async (c) => {
         themeMode
       }
     });
-  } catch (error3) {
-    const msg = getErrorMessage(error3);
+  } catch (error) {
+    const msg = getErrorMessage(error);
     return c.json({ error: msg.includes("Invalid") ? msg : "Invalid email or password" }, 401);
   }
 });
@@ -10764,8 +9170,8 @@ studentApiRoutes.post("/auth/logout", async (c) => {
     const token = authHeader?.substring(7) || "";
     await deleteStudentSession(c.env, token);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/auth/me", async (c) => {
@@ -10816,8 +9222,8 @@ studentApiRoutes.get("/auth/me", async (c) => {
         themeMode
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/auth/verify-otp", async (c) => {
@@ -10862,8 +9268,8 @@ studentApiRoutes.post("/auth/verify-otp", async (c) => {
       ).bind(email).run();
     }
     return c.json({ success: true, message: "Email verified successfully" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/auth/otp-cooldown", async (c) => {
@@ -10884,7 +9290,7 @@ studentApiRoutes.get("/auth/otp-cooldown", async (c) => {
     const elapsed = Math.floor((now - sentAt) / 1e3);
     const remaining = Math.max(0, RESEND_COOLDOWN_SECONDS - elapsed);
     return c.json({ cooldownSeconds: remaining });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ cooldownSeconds: 0 });
   }
 });
@@ -10894,11 +9300,10 @@ function generateOTP() {
   const num = bytes[0] << 16 | bytes[1] << 8 | bytes[2];
   return (num % 1e6).toString().padStart(6, "0");
 }
-__name(generateOTP, "generateOTP");
-async function sendPasswordResetEmail(env2, to, otp) {
+async function sendPasswordResetEmail(env, to, otp) {
   const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_resend(), resend_exports));
   await sendEmail2(
-    env2,
+    env,
     to,
     "DAKKHO \u2014 Password Reset Code",
     `
@@ -10924,7 +9329,6 @@ async function sendPasswordResetEmail(env2, to, otp) {
     `
   );
 }
-__name(sendPasswordResetEmail, "sendPasswordResetEmail");
 studentApiRoutes.put("/auth/profile", async (c) => {
   try {
     const auth = await getStudentAuth(c);
@@ -10992,8 +9396,8 @@ studentApiRoutes.put("/auth/profile", async (c) => {
         avatarUrl: u?.avatar_url || ""
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/auth/forgot-password", async (c) => {
@@ -11025,8 +9429,8 @@ studentApiRoutes.post("/auth/forgot-password", async (c) => {
       }
     }
     return c.json({ success: true, message: "If an account exists with this email, a reset code has been sent." });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/auth/reset-password", async (c) => {
@@ -11064,8 +9468,8 @@ studentApiRoutes.post("/auth/reset-password", async (c) => {
       "UPDATE student_sessions SET is_active = 0 WHERE email = ?"
     ).bind(email).run();
     return c.json({ success: true, message: "Password has been reset successfully." });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var EMAIL_OTP_DAILY_LIMIT = 10;
@@ -11089,7 +9493,6 @@ async function checkDailyEmailRateLimit(db, email) {
     return { allowed: true, count: 0, limit: EMAIL_OTP_DAILY_LIMIT };
   }
 }
-__name(checkDailyEmailRateLimit, "checkDailyEmailRateLimit");
 studentApiRoutes.post("/auth/resend-otp", async (c) => {
   try {
     const { email } = await c.req.json();
@@ -11166,8 +9569,8 @@ studentApiRoutes.post("/auth/resend-otp", async (c) => {
       }
     }
     return c.json({ success: true, message: "If an account exists, a new code has been sent." });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/institutes/requests", async (c) => {
@@ -11201,8 +9604,8 @@ studentApiRoutes.post("/institutes/requests", async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
     `).bind(auth.userId, auth.email, auth.name || null, institute_name, institute_name_bn || null, division || null, district || null).run();
     return c.json({ success: true, message: "Institute request submitted" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/institutes/requests/mine", async (c) => {
@@ -11218,8 +9621,8 @@ studentApiRoutes.get("/institutes/requests/mine", async (c) => {
       "SELECT * FROM institute_requests WHERE user_id = ? ORDER BY created_at DESC"
     ).bind(auth.userId).all();
     return c.json({ requests: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/push/register", async (c) => {
@@ -11237,8 +9640,8 @@ studentApiRoutes.post("/push/register", async (c) => {
     }
     await registerPushToken(c.env, auth.userId, push_token, device_type, device_info);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.delete("/push/unregister", async (c) => {
@@ -11256,8 +9659,8 @@ studentApiRoutes.delete("/push/unregister", async (c) => {
     }
     await unregisterPushToken(c.env, push_token);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/push/vapid-key", async (c) => {
@@ -11267,8 +9670,8 @@ studentApiRoutes.get("/push/vapid-key", async (c) => {
       return c.json({ error: "Web push not configured" }, 503);
     }
     return c.json({ publicKey });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/push/subscribe", async (c) => {
@@ -11288,26 +9691,25 @@ studentApiRoutes.post("/push/subscribe", async (c) => {
     const deviceType = "webpush";
     await env_push_upsert(c.env, auth.userId, subscription.endpoint, subscriptionJson, deviceType);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
-async function env_push_upsert(env2, userId, endpoint, subscriptionJson, deviceType) {
-  const existing = await env2.DB.prepare(
+async function env_push_upsert(env, userId, endpoint, subscriptionJson, deviceType) {
+  const existing = await env.DB.prepare(
     "SELECT id FROM user_push_tokens WHERE user_id = ? AND push_token = ?"
   ).bind(userId, endpoint).first();
   if (existing) {
-    await env2.DB.prepare(
+    await env.DB.prepare(
       "UPDATE user_push_tokens SET device_info = ?, is_active = 1, updated_at = datetime('now') WHERE user_id = ? AND push_token = ?"
     ).bind(subscriptionJson, userId, endpoint).run();
   } else {
-    await env2.DB.prepare(`
+    await env.DB.prepare(`
       INSERT INTO user_push_tokens (id, user_id, push_token, device_type, device_info, is_active, created_at)
       VALUES (?, ?, ?, ?, ?, 1, datetime('now'))
     `).bind(generateId(), userId, endpoint, deviceType, subscriptionJson).run();
   }
 }
-__name(env_push_upsert, "env_push_upsert");
 studentApiRoutes.post("/payments/submit", async (c) => {
   try {
     const auth = await getStudentAuth(c);
@@ -11334,43 +9736,43 @@ studentApiRoutes.post("/payments/submit", async (c) => {
       VALUES (?, ?, ?, ?, 'BDT', 'manual', ?, ?, ?, 'pending', ?)
     `).bind(auth.userId, package_id, p.course_id, p.price, trx_id, phone || null, proof_url || null, submitMetadata).run();
     return c.json({ success: true, message: "Payment submitted for verification" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
-async function autoActivatePackage(env2, userId, packageId, courseId) {
-  const pkg = await env2.DB.prepare("SELECT * FROM course_packages WHERE id = ?").bind(packageId).first();
+async function autoActivatePackage(env, userId, packageId, courseId) {
+  const pkg = await env.DB.prepare("SELECT * FROM course_packages WHERE id = ?").bind(packageId).first();
   if (pkg) {
     const pkgData = pkg;
     const expiresAt = new Date(Date.now() + pkgData.duration_months * 30 * 24 * 60 * 60 * 1e3).toISOString();
-    await env2.DB.prepare(`
+    await env.DB.prepare(`
       INSERT INTO user_packages (user_id, package_id, course_id, package_type, activated_at, expires_at, status)
       VALUES (?, ?, ?, ?, datetime('now'), ?, 'active')
     `).bind(userId, packageId, courseId, pkgData.package_type, expiresAt).run();
     try {
-      const existingEnrollment = await env2.DB.prepare(
+      const existingEnrollment = await env.DB.prepare(
         "SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?"
       ).bind(userId, courseId).first();
       if (!existingEnrollment) {
         const enrollmentId = crypto.randomUUID();
-        await env2.DB.prepare(`
+        await env.DB.prepare(`
           INSERT INTO enrollments (id, user_id, course_id, package_id, expires_at, status, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, 'active', datetime('now'), datetime('now'))
         `).bind(enrollmentId, userId, courseId, packageId, expiresAt).run();
       } else {
-        await env2.DB.prepare(`
+        await env.DB.prepare(`
           UPDATE enrollments SET status = 'active', expires_at = ?, updated_at = datetime('now')
           WHERE user_id = ? AND course_id = ?
         `).bind(expiresAt, userId, courseId).run();
       }
     } catch (enrollErr) {
       try {
-        const existingEnrollment = await env2.DB.prepare(
+        const existingEnrollment = await env.DB.prepare(
           "SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?"
         ).bind(userId, courseId).first();
         if (!existingEnrollment) {
           const enrollmentId = crypto.randomUUID();
-          await env2.DB.prepare(`
+          await env.DB.prepare(`
             INSERT INTO enrollments (id, user_id, course_id, progress, completed, created_at, updated_at)
             VALUES (?, ?, ?, 0, 0, datetime('now'), datetime('now'))
           `).bind(enrollmentId, userId, courseId).run();
@@ -11381,7 +9783,6 @@ async function autoActivatePackage(env2, userId, packageId, courseId) {
     }
   }
 }
-__name(autoActivatePackage, "autoActivatePackage");
 studentApiRoutes.post("/payments/create", async (c) => {
   try {
     const auth = await getStudentAuth(c);
@@ -11484,8 +9885,8 @@ studentApiRoutes.post("/payments/create", async (c) => {
       pp_url: result.pp_url,
       payment_id: paymentId
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/payments/verify", async (c) => {
@@ -11560,8 +9961,8 @@ studentApiRoutes.post("/payments/verify", async (c) => {
         message: "Payment is still being processed."
       });
     }
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/payments/piprapay/webhook", async (c) => {
@@ -11651,8 +10052,8 @@ studentApiRoutes.post("/payments/piprapay/webhook", async (c) => {
       }
     }
     return c.json({ success: true });
-  } catch (error3) {
-    console.error("PipraPay webhook error:", error3);
+  } catch (error) {
+    console.error("PipraPay webhook error:", error);
     return c.json({ success: true, error: "Internal error" });
   }
 });
@@ -11711,9 +10112,9 @@ studentApiRoutes.get("/settings", async (c) => {
         system: { push: !!p.system_push, email: !!p.system_email }
       }
     });
-  } catch (error3) {
-    console.error("GET /settings error:", getErrorMessage(error3));
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    console.error("GET /settings error:", getErrorMessage(error));
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.put("/settings", async (c) => {
@@ -11782,9 +10183,9 @@ studentApiRoutes.put("/settings", async (c) => {
       prefs.system?.email ? 1 : 0
     ).run();
     return c.json({ success: true });
-  } catch (error3) {
-    console.error("PUT /settings error:", getErrorMessage(error3));
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    console.error("PUT /settings error:", getErrorMessage(error));
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var studentAuthenticated = new Hono2();
@@ -11818,7 +10219,7 @@ studentAuthenticated.get("/notifications", async (c) => {
       createdAt: row.created_at
     }));
     return c.json({ notifications, total });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ notifications: [], total: 0 });
   }
 });
@@ -11836,8 +10237,8 @@ studentAuthenticated.put("/notifications/:id/read", async (c) => {
       "UPDATE notifications SET read = 1 WHERE id = ?"
     ).bind(notifId).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentAuthenticated.put("/notifications/read-all", async (c) => {
@@ -11847,8 +10248,8 @@ studentAuthenticated.put("/notifications/read-all", async (c) => {
       "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0"
     ).bind(userId).run();
     return c.json({ success: true, count: result.meta?.changes || 0 });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentAuthenticated.get("/profile/stats", async (c) => {
@@ -11917,8 +10318,8 @@ studentAuthenticated.get("/profile/stats", async (c) => {
         avatarUrl: u?.avatar_url || ""
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentAuthenticated.get("/leaderboard", async (c) => {
@@ -12009,8 +10410,8 @@ studentAuthenticated.get("/leaderboard", async (c) => {
     };
     await c.env.KV_CONFIG.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
     return c.json(response);
-  } catch (error3) {
-    return c.json({ entries: [], yourRank: null, yourXp: 0, error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ entries: [], yourRank: null, yourXp: 0, error: getErrorMessage(error) }, 500);
   }
 });
 studentAuthenticated.get("/achievements", async (c) => {
@@ -12048,7 +10449,7 @@ studentAuthenticated.get("/achievements", async (c) => {
       unlockedCount,
       totalCount: achievements.length
     });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ achievements: [], totalXp: 0, unlockedCount: 0, totalCount: 0 });
   }
 });
@@ -12078,7 +10479,7 @@ studentAuthenticated.get("/activity", async (c) => {
       createdAt: row.created_at
     }));
     return c.json({ activities, total: result.results.length });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ activities: [], total: 0 });
   }
 });
@@ -12116,8 +10517,8 @@ studentAuthenticated.put("/profile", async (c) => {
       VALUES (?, 'profile_update', 'profile', 'Profile Updated', 'Updated profile information')
     `).bind(userId).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentAuthenticated.post("/upload-avatar", async (c) => {
@@ -12149,8 +10550,8 @@ studentAuthenticated.post("/upload-avatar", async (c) => {
       VALUES (?, 'avatar_upload', 'profile', 'Avatar Updated', 'Updated profile picture')
     `).bind(userId).run();
     return c.json({ success: true, avatarUrl });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var DEFAULT_PREFERENCES = {
@@ -12215,7 +10616,7 @@ studentAuthenticated.get("/preferences", async (c) => {
         language: r.language || "bn"
       }
     });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ preferences: DEFAULT_PREFERENCES });
   }
 });
@@ -12284,8 +10685,101 @@ studentAuthenticated.put("/preferences", async (c) => {
       prefs.language || "bn"
     ).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+studentAuthenticated.get("/student/learning-stats", async (c) => {
+  try {
+    const userId = c.get("userId");
+    const range = c.req.query("range") || "30d";
+    const days = range === "7d" ? 7 : range === "90d" ? 90 : 30;
+    const dailyData = [];
+    try {
+      const rows = await c.env.DB.prepare(`
+        SELECT DATE(created_at) as day,
+               COUNT(CASE WHEN activity_type = 'video_watch' THEN 1 END) as videos,
+               COUNT(*) as activities
+        FROM student_activity
+        WHERE user_id = ? AND created_at >= datetime('now', '-${days} days')
+        GROUP BY DATE(created_at)
+        ORDER BY day ASC
+      `).bind(userId).all();
+      for (const row of rows.results || []) {
+        dailyData.push({ date: row.day, videos: row.videos || 0, activities: row.activities || 0 });
+      }
+    } catch {
+    }
+    const subjectProgress = [];
+    try {
+      const rows = await c.env.DB.prepare(`
+        SELECT t.name as technology, e.progress
+        FROM enrollments e
+        INNER JOIN courses c ON e.course_id = c.id
+        LEFT JOIN technologies t ON c.technology_id = t.id
+        WHERE e.user_id = ?
+      `).bind(userId).all();
+      for (const row of rows.results || []) {
+        subjectProgress.push({ subject: row.technology || "General", progress: row.progress || 0 });
+      }
+    } catch {
+    }
+    let hoursWatched = 0;
+    let coursesEnrolled = 0;
+    let certificates = 0;
+    let currentStreak = 0;
+    try {
+      const watchStats = await c.env.DB.prepare(
+        "SELECT SUM(CASE WHEN metadata LIKE '%watchMinutes%' THEN CAST(json_extract(metadata, '$.watchMinutes') AS REAL) ELSE 0 END) as total_minutes FROM student_activity WHERE user_id = ? AND activity_type = 'video_watch'"
+      ).bind(userId).first();
+      hoursWatched = Math.round((watchStats?.total_minutes || 0) / 60 * 10) / 10;
+    } catch {
+    }
+    try {
+      const enrollCount = await c.env.DB.prepare(
+        "SELECT COUNT(*) as total FROM enrollments WHERE user_id = ?"
+      ).bind(userId).first();
+      coursesEnrolled = enrollCount?.total || 0;
+    } catch {
+    }
+    try {
+      const certCount = await c.env.DB.prepare(
+        "SELECT COUNT(*) as total FROM certificates WHERE user_id = ? AND status = 'issued'"
+      ).bind(userId).first();
+      certificates = certCount?.total || 0;
+    } catch {
+    }
+    try {
+      const streakRows = await c.env.DB.prepare(
+        "SELECT DATE(created_at) as day FROM student_activity WHERE user_id = ? GROUP BY DATE(created_at) ORDER BY day DESC LIMIT 30"
+      ).bind(userId).all();
+      const activeDays = (streakRows.results || []).map((r) => r.day);
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      let streak = 0;
+      let checkDate = /* @__PURE__ */ new Date();
+      if (!activeDays.includes(today)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+      for (let i = 0; i < 60; i++) {
+        const dateStr = checkDate.toISOString().split("T")[0];
+        if (activeDays.includes(dateStr)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      currentStreak = streak;
+    } catch {
+    }
+    return c.json({
+      dailyData,
+      subjectProgress,
+      overview: { hoursWatched, coursesEnrolled, certificates, currentStreak },
+      range
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.route("/", studentAuthenticated);
@@ -12313,8 +10807,8 @@ studentApiRoutes.get("/enrollments/mine", async (c) => {
       return true;
     });
     return c.json({ enrollments: activeEnrollments });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/enrollments/check", async (c) => {
@@ -12350,8 +10844,8 @@ studentApiRoutes.get("/enrollments/check", async (c) => {
       }
     }
     return c.json({ enrolled, enrollment, paymentStatus });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/enroll", async (c) => {
@@ -12428,8 +10922,8 @@ studentApiRoutes.post("/enroll", async (c) => {
         status: "active"
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/student/notifications", studentAuthMiddleware, async (c) => {
@@ -12457,8 +10951,8 @@ studentApiRoutes.get("/student/notifications", studentAuthMiddleware, async (c) 
       total: countResult?.total || 0,
       unreadCount: unreadResult?.total || 0
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.put("/student/notifications/:id/read", studentAuthMiddleware, async (c) => {
@@ -12469,8 +10963,8 @@ studentApiRoutes.put("/student/notifications/:id/read", studentAuthMiddleware, a
       "UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?"
     ).bind(notificationId, userId).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.put("/student/notifications/read-all", studentAuthMiddleware, async (c) => {
@@ -12480,8 +10974,8 @@ studentApiRoutes.put("/student/notifications/read-all", studentAuthMiddleware, a
       "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0"
     ).bind(userId).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.get("/student/profile/stats", studentAuthMiddleware, async (c) => {
@@ -12562,8 +11056,8 @@ studentApiRoutes.get("/student/profile/stats", studentAuthMiddleware, async (c) 
         streak
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.put("/student/profile", studentAuthMiddleware, async (c) => {
@@ -12619,8 +11113,8 @@ studentApiRoutes.put("/student/profile", studentAuthMiddleware, async (c) => {
         avatarUrl: u?.avatar_url || ""
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/student/upload-avatar", studentAuthMiddleware, async (c) => {
@@ -12655,8 +11149,8 @@ studentApiRoutes.post("/student/upload-avatar", studentAuthMiddleware, async (c)
       "UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?"
     ).bind(avatarUrl, (/* @__PURE__ */ new Date()).toISOString(), userId).run();
     return c.json({ success: true, avatarUrl });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/student/change-password", studentAuthMiddleware, async (c) => {
@@ -12684,8 +11178,8 @@ studentApiRoutes.post("/student/change-password", studentAuthMiddleware, async (
       "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?"
     ).bind(newHash, userId).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 studentApiRoutes.post("/student/delete-account", studentAuthMiddleware, async (c) => {
@@ -12711,26 +11205,23 @@ studentApiRoutes.post("/student/delete-account", studentAuthMiddleware, async (c
     await c.env.DB.prepare("DELETE FROM notification_tokens WHERE user_id = ?").bind(userId).run();
     await c.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(userId).run();
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var student_api_default = studentApiRoutes;
 
 // src/routes/push.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var pushRoutes = new Hono2();
 pushRoutes.use("*", adminAuthMiddleware);
 pushRoutes.post("/broadcast", async (c) => {
   try {
-    const { title: title2, titleBn, message, messageBn, url, data } = await c.req.json();
-    if (!title2 || !message) {
+    const { title, titleBn, message, messageBn, url, data } = await c.req.json();
+    if (!title || !message) {
       return c.json({ error: "title and message required" }, 400);
     }
     const result = await sendPushNotification(c.env, {
-      title: title2,
+      title,
       titleBn,
       message,
       messageBn,
@@ -12741,21 +11232,21 @@ pushRoutes.post("/broadcast", async (c) => {
     await c.env.DB.prepare(`
       INSERT INTO notification_logs (type, category, title, message, target_type, sent_count, failed_count, metadata, created_by)
       VALUES ('push', 'broadcast', ?, ?, 'all', ?, ?, ?, ?)
-    `).bind(title2, message, result.recipients, result.errors.length, JSON.stringify(data || {}), c.get("user").id).run();
+    `).bind(title, message, result.recipients, result.errors.length, JSON.stringify(data || {}), c.get("user").id).run();
     const user = c.get("user");
-    await logAudit(c.env, user.id, "BROADCAST_PUSH", "notifications", void 0, { title: title2, recipients: result.recipients });
+    await logAudit(c.env, user.id, "BROADCAST_PUSH", "notifications", void 0, { title, recipients: result.recipients });
     return c.json({ success: result.success, recipients: result.recipients, errors: result.errors });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 pushRoutes.post("/send", async (c) => {
   try {
-    const { userIds, title: title2, titleBn, message, messageBn, url, data } = await c.req.json();
+    const { userIds, title, titleBn, message, messageBn, url, data } = await c.req.json();
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return c.json({ error: "userIds array required" }, 400);
     }
-    if (!title2 || !message) {
+    if (!title || !message) {
       return c.json({ error: "title and message required" }, 400);
     }
     const tokens = await getBatchUserPushTokens(c.env, userIds);
@@ -12763,7 +11254,7 @@ pushRoutes.post("/send", async (c) => {
       return c.json({ success: false, message: "No push tokens found for specified users" });
     }
     const result = await sendPushNotification(c.env, {
-      title: title2,
+      title,
       titleBn,
       message,
       messageBn,
@@ -12774,10 +11265,10 @@ pushRoutes.post("/send", async (c) => {
     await c.env.DB.prepare(`
       INSERT INTO notification_logs (type, category, title, message, target_type, target_id, sent_count, failed_count, metadata, created_by)
       VALUES ('push', 'targeted', ?, ?, 'users', ?, ?, ?, ?, ?)
-    `).bind(title2, message, userIds.join(","), result.recipients, result.errors.length, JSON.stringify(data || {}), c.get("user").id).run();
+    `).bind(title, message, userIds.join(","), result.recipients, result.errors.length, JSON.stringify(data || {}), c.get("user").id).run();
     return c.json({ success: result.success, recipients: result.recipients, errors: result.errors });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 pushRoutes.get("/stats", async (c) => {
@@ -12792,8 +11283,8 @@ pushRoutes.get("/stats", async (c) => {
       totalSubscribers: totalTokens?.count || 0,
       recentNotifications: recentLogs.results
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 pushRoutes.get("/logs", async (c) => {
@@ -12825,16 +11316,13 @@ pushRoutes.get("/logs", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ logs: result.results, total });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var push_default = pushRoutes;
 
 // src/routes/technologies.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var techRoutes = new Hono2();
 techRoutes.use("*", adminAuthMiddleware);
 techRoutes.get("/", async (c) => {
@@ -12843,8 +11331,8 @@ techRoutes.get("/", async (c) => {
       "SELECT * FROM technologies ORDER BY name ASC"
     ).all();
     return c.json({ technologies: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 techRoutes.post("/", async (c) => {
@@ -12869,8 +11357,8 @@ techRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_TECHNOLOGY", "technologies", void 0, data);
     return c.json({ success: true, message: "Technology created" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 techRoutes.put("/", async (c) => {
@@ -12919,8 +11407,8 @@ techRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_TECHNOLOGY", "technologies", String(technologyId), updates);
     return c.json({ success: true, message: "Technology updated" });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 techRoutes.delete("/", async (c) => {
@@ -12933,22 +11421,18 @@ techRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_TECHNOLOGY", "technologies", technologyId);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var technologies_default = techRoutes;
 
 // src/routes/subjects.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var subjectRoutes = new Hono2();
 subjectRoutes.use("*", adminAuthMiddleware);
 function slugify3(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
-__name(slugify3, "slugify");
 subjectRoutes.get("/", async (c) => {
   try {
     const page = parseInt(c.req.query("page") || "1");
@@ -12974,8 +11458,8 @@ subjectRoutes.get("/", async (c) => {
       `SELECT * FROM subjects ${where} ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13014,8 +11498,8 @@ subjectRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_SUBJECT", "subjects", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13059,8 +11543,8 @@ subjectRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_SUBJECT", "subjects", String(subjectId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13074,23 +11558,19 @@ subjectRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_SUBJECT", "subjects", id);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var subjects_default = subjectRoutes;
 
 // src/routes/chapters.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var chapterRoutes = new Hono2();
 chapterRoutes.use("*", adminAuthMiddleware);
 function slugify4(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
-__name(slugify4, "slugify");
 chapterRoutes.get("/", async (c) => {
   try {
     const page = parseInt(c.req.query("page") || "1");
@@ -13116,8 +11596,8 @@ chapterRoutes.get("/", async (c) => {
       `SELECT * FROM chapters ${where} ORDER BY course_id, subject_id, sort_order ASC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13150,8 +11630,8 @@ chapterRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_CHAPTER", "chapters", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13190,8 +11670,8 @@ chapterRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_CHAPTER", "chapters", String(chapterId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13205,23 +11685,19 @@ chapterRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_CHAPTER", "chapters", id);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var chapters_default = chapterRoutes;
 
 // src/routes/lessons.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var lessonRoutes = new Hono2();
 lessonRoutes.use("*", adminAuthMiddleware);
 function slugify5(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
-__name(slugify5, "slugify");
 lessonRoutes.get("/", async (c) => {
   try {
     const page = parseInt(c.req.query("page") || "1");
@@ -13252,8 +11728,8 @@ lessonRoutes.get("/", async (c) => {
       `SELECT * FROM lessons ${where} ORDER BY chapter_id, sort_order ASC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13318,8 +11794,8 @@ lessonRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_LESSON", "lessons", id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13377,8 +11853,8 @@ lessonRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_LESSON", "lessons", String(lessonId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13392,17 +11868,14 @@ lessonRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_LESSON", "lessons", id);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var lessons_default = lessonRoutes;
 
 // src/routes/learning-points.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var learningPointRoutes = new Hono2();
 learningPointRoutes.use("*", adminAuthMiddleware);
 learningPointRoutes.get("/", async (c) => {
@@ -13418,8 +11891,8 @@ learningPointRoutes.get("/", async (c) => {
       `SELECT * FROM course_learning_points ${where} ORDER BY sort_order ASC`
     ).bind(...params).all();
     return c.json({ documents: result.results, total: result.results.length });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13448,8 +11921,8 @@ learningPointRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_LEARNING_POINT", "course_learning_points", created?.id, data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13488,8 +11961,8 @@ learningPointRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_LEARNING_POINT", "course_learning_points", String(id), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13503,17 +11976,14 @@ learningPointRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_LEARNING_POINT", "course_learning_points", id);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var learning_points_default = learningPointRoutes;
 
 // src/routes/packages.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var packageRoutes = new Hono2();
 packageRoutes.use("*", adminAuthMiddleware);
 packageRoutes.get("/", async (c) => {
@@ -13536,8 +12006,8 @@ packageRoutes.get("/", async (c) => {
       `SELECT * FROM course_packages ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13565,8 +12035,8 @@ packageRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_PACKAGE", "packages", String(created?.id), data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13606,8 +12076,8 @@ packageRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_PACKAGE", "packages", String(packageId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13621,8 +12091,8 @@ packageRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_PACKAGE", "packages", packageId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13636,17 +12106,14 @@ packageRoutes.delete("/:id", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_PACKAGE", "packages", packageId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var packages_default = packageRoutes;
 
 // src/routes/enrollments.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var enrollmentRoutes = new Hono2();
 enrollmentRoutes.use("*", adminAuthMiddleware);
 enrollmentRoutes.get("/", async (c) => {
@@ -13679,8 +12146,8 @@ enrollmentRoutes.get("/", async (c) => {
        ORDER BY e.created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13694,17 +12161,14 @@ enrollmentRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_ENROLLMENT", "enrollments", enrollmentId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var enrollments_default = enrollmentRoutes;
 
 // src/routes/achievements.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var achievementRoutes = new Hono2();
 achievementRoutes.use("*", adminAuthMiddleware);
 achievementRoutes.get("/", async (c) => {
@@ -13731,8 +12195,8 @@ achievementRoutes.get("/", async (c) => {
        ORDER BY ad.category, ad.xp ASC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
     return c.json({ documents: result.results, total });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13762,8 +12226,8 @@ achievementRoutes.post("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_ACHIEVEMENT", "achievements", String(created?.id), data);
     return c.json({ document: created });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13799,8 +12263,8 @@ achievementRoutes.put("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_ACHIEVEMENT", "achievements", String(achievementId), updates);
     return c.json({ document: updated });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
@@ -13815,17 +12279,14 @@ achievementRoutes.delete("/", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "DELETE_ACHIEVEMENT", "achievements", achievementId);
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
     return c.json({ error: message }, 500);
   }
 });
 var achievements_default = achievementRoutes;
 
 // src/routes/migrate.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var migrateRoutes = new Hono2();
 async function execIgnore(db, sql) {
   try {
@@ -13839,7 +12300,6 @@ async function execIgnore(db, sql) {
     return { sql: sql.substring(0, 80), ok: false, error: msg };
   }
 }
-__name(execIgnore, "execIgnore");
 migrateRoutes.post("/", adminAuthMiddleware, async (c) => {
   const user = c.get("user");
   const results = [];
@@ -14135,8 +12595,8 @@ migrateRoutes.get("/", adminAuthMiddleware, async (c) => {
       "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
     ).all();
     const tableInfo = {};
-    for (const table3 of tables.results) {
-      const tableName = table3.name;
+    for (const table of tables.results) {
+      const tableName = table.name;
       if (tableName.startsWith("_cf_")) continue;
       try {
         const cols = await c.env.DB.prepare(`PRAGMA table_info('${tableName}')`).all();
@@ -14156,9 +12616,6 @@ migrateRoutes.get("/", adminAuthMiddleware, async (c) => {
 var migrate_default = migrateRoutes;
 
 // src/routes/watch-history.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var watchHistoryRoutes = new Hono2();
 watchHistoryRoutes.use("*", studentAuthMiddleware);
 watchHistoryRoutes.get("/", async (c) => {
@@ -14214,9 +12671,9 @@ watchHistoryRoutes.get("/", async (c) => {
       limit,
       offset
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Watch history GET error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Watch history GET error:", error);
     return c.json({ error: message }, 500);
   }
 });
@@ -14258,9 +12715,9 @@ watchHistoryRoutes.post("/", async (c) => {
       id,
       action: "created"
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Watch history POST error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Watch history POST error:", error);
     return c.json({ error: message }, 500);
   }
 });
@@ -14274,9 +12731,9 @@ watchHistoryRoutes.delete("/", async (c) => {
       success: true,
       deleted: result.meta?.changes || 0
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Watch history DELETE all error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Watch history DELETE all error:", error);
     return c.json({ error: message }, 500);
   }
 });
@@ -14291,18 +12748,15 @@ watchHistoryRoutes.delete("/:id", async (c) => {
       return c.json({ error: "History entry not found" }, 404);
     }
     return c.json({ success: true });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Watch history DELETE single error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Watch history DELETE single error:", error);
     return c.json({ error: message }, 500);
   }
 });
 var watch_history_default = watchHistoryRoutes;
 
 // src/routes/about.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var DEFAULT_ABOUT_CONTENT = {
   aboutText: "DAKKHO is Bangladesh's premier online learning platform built exclusively for polytechnic students. We provide high-quality video courses aligned with the BTEB curriculum, covering all major technologies from Web Development and Electronics to Civil Engineering and Architecture. Our platform connects students with expert instructors from across the country, making quality technical education accessible regardless of location or financial background.",
   missionText: "To democratize technical education in Bangladesh by providing world-class learning experiences to every polytechnic student. We believe that geographical boundaries or financial constraints should never be barriers to quality education. Through technology, community, and dedicated instructors, we are building the future skilled workforce of Bangladesh.",
@@ -14322,7 +12776,7 @@ aboutPublicRoutes.get("/", async (c) => {
     const data = await fetchAboutData(c.env);
     await c.env.KV_CONFIG.put("about_page_data", JSON.stringify(data), { expirationTtl: 300 });
     return c.json(data);
-  } catch (error3) {
+  } catch (error) {
     return c.json({
       content: DEFAULT_ABOUT_CONTENT,
       stats: [],
@@ -14337,8 +12791,8 @@ aboutAdminRoutes.get("/", async (c) => {
   try {
     const data = await fetchAboutData(c.env);
     return c.json(data);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.put("/content", async (c) => {
@@ -14361,8 +12815,8 @@ aboutAdminRoutes.put("/content", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "UPDATE_ABOUT_CONTENT", "about", void 0, content);
     return c.json({ success: true, content });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.get("/stats", async (c) => {
@@ -14371,8 +12825,8 @@ aboutAdminRoutes.get("/stats", async (c) => {
       "SELECT * FROM about_stats ORDER BY sort_order ASC"
     ).all();
     return c.json({ stats: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.post("/stats", async (c) => {
@@ -14388,8 +12842,8 @@ aboutAdminRoutes.post("/stats", async (c) => {
     const user = c.get("user");
     await logAudit(c.env, user.id, "CREATE_ABOUT_STAT", "about_stats", void 0, { label, value });
     return c.json({ success: true, id: result.meta.last_row_id });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.put("/stats", async (c) => {
@@ -14430,8 +12884,8 @@ aboutAdminRoutes.put("/stats", async (c) => {
     ).bind(...params).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.delete("/stats", async (c) => {
@@ -14451,8 +12905,8 @@ aboutAdminRoutes.delete("/stats", async (c) => {
     await c.env.DB.prepare("DELETE FROM about_stats WHERE id = ?").bind(id).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.get("/team", async (c) => {
@@ -14461,8 +12915,8 @@ aboutAdminRoutes.get("/team", async (c) => {
       "SELECT * FROM about_team ORDER BY sort_order ASC"
     ).all();
     return c.json({ team: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.post("/team", async (c) => {
@@ -14476,8 +12930,8 @@ aboutAdminRoutes.post("/team", async (c) => {
     ).bind(name, role, avatarUrl || null, icon || "users", sortOrder || 0, isActive !== void 0 ? isActive ? 1 : 0 : 1).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true, id: result.meta.last_row_id });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.put("/team", async (c) => {
@@ -14522,8 +12976,8 @@ aboutAdminRoutes.put("/team", async (c) => {
     ).bind(...params).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.delete("/team", async (c) => {
@@ -14543,8 +12997,8 @@ aboutAdminRoutes.delete("/team", async (c) => {
     await c.env.DB.prepare("DELETE FROM about_team WHERE id = ?").bind(id).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.get("/faq", async (c) => {
@@ -14553,8 +13007,8 @@ aboutAdminRoutes.get("/faq", async (c) => {
       "SELECT * FROM about_faq ORDER BY sort_order ASC"
     ).all();
     return c.json({ faq: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.post("/faq", async (c) => {
@@ -14568,8 +13022,8 @@ aboutAdminRoutes.post("/faq", async (c) => {
     ).bind(question, answer, sortOrder || 0, isActive !== void 0 ? isActive ? 1 : 0 : 1).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true, id: result.meta.last_row_id });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.put("/faq", async (c) => {
@@ -14606,8 +13060,8 @@ aboutAdminRoutes.put("/faq", async (c) => {
     ).bind(...params).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 aboutAdminRoutes.delete("/faq", async (c) => {
@@ -14627,12 +13081,12 @@ aboutAdminRoutes.delete("/faq", async (c) => {
     await c.env.DB.prepare("DELETE FROM about_faq WHERE id = ?").bind(id).run();
     await invalidateAboutCache(c.env);
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
-async function fetchAboutData(env2) {
-  const configRow = await env2.DB.prepare(
+async function fetchAboutData(env) {
+  const configRow = await env.DB.prepare(
     "SELECT value FROM app_config WHERE key = 'about_content'"
   ).first();
   let content = DEFAULT_ABOUT_CONTENT;
@@ -14642,13 +13096,13 @@ async function fetchAboutData(env2) {
     } catch {
     }
   }
-  const statsResult = await env2.DB.prepare(
+  const statsResult = await env.DB.prepare(
     "SELECT * FROM about_stats WHERE is_active = 1 ORDER BY sort_order ASC"
   ).all();
-  const teamResult = await env2.DB.prepare(
+  const teamResult = await env.DB.prepare(
     "SELECT * FROM about_team WHERE is_active = 1 ORDER BY sort_order ASC"
   ).all();
-  const faqResult = await env2.DB.prepare(
+  const faqResult = await env.DB.prepare(
     "SELECT * FROM about_faq WHERE is_active = 1 ORDER BY sort_order ASC"
   ).all();
   return {
@@ -14658,24 +13112,14 @@ async function fetchAboutData(env2) {
     faq: faqResult.results
   };
 }
-__name(fetchAboutData, "fetchAboutData");
-async function invalidateAboutCache(env2) {
+async function invalidateAboutCache(env) {
   try {
-    await env2.KV_CONFIG.delete("about_page_data");
+    await env.KV_CONFIG.delete("about_page_data");
   } catch {
   }
 }
-__name(invalidateAboutCache, "invalidateAboutCache");
-
-// src/routes/support.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 
 // src/lib/web-push.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 function base64urlEncode(buffer) {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = "";
@@ -14684,7 +13128,6 @@ function base64urlEncode(buffer) {
   }
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
-__name(base64urlEncode, "base64urlEncode");
 function base64urlDecode(str) {
   let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   const pad = (4 - base64.length % 4) % 4;
@@ -14696,7 +13139,6 @@ function base64urlDecode(str) {
   }
   return bytes.buffer;
 }
-__name(base64urlDecode, "base64urlDecode");
 async function hmacSHA256(key, data) {
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
@@ -14707,15 +13149,13 @@ async function hmacSHA256(key, data) {
   );
   return crypto.subtle.sign("HMAC", cryptoKey, data);
 }
-__name(hmacSHA256, "hmacSHA256");
 async function hkdfExtract(salt, ikm) {
   return hmacSHA256(salt, ikm);
 }
-__name(hkdfExtract, "hkdfExtract");
-async function hkdfExpand(prk, info3, length) {
+async function hkdfExpand(prk, info, length) {
   const hashLen = 32;
   const n = Math.ceil(length / hashLen);
-  const infoBytes = new Uint8Array(info3);
+  const infoBytes = new Uint8Array(info);
   let okm = new Uint8Array(0);
   let t = new Uint8Array(0);
   for (let i = 1; i <= n; i++) {
@@ -14731,7 +13171,6 @@ async function hkdfExpand(prk, info3, length) {
   }
   return okm.slice(0, length).buffer;
 }
-__name(hkdfExpand, "hkdfExpand");
 function derToRawSignature(derSig) {
   const der = new Uint8Array(derSig);
   let idx = 2;
@@ -14751,7 +13190,6 @@ function derToRawSignature(derSig) {
   raw2.set(s, 32);
   return raw2.buffer;
 }
-__name(derToRawSignature, "derToRawSignature");
 function derIntegerTo32Bytes(derInt) {
   let value;
   if (derInt.length > 1 && derInt[0] === 0) {
@@ -14766,7 +13204,6 @@ function derIntegerTo32Bytes(derInt) {
   result.set(value, 32 - value.length);
   return result;
 }
-__name(derIntegerTo32Bytes, "derIntegerTo32Bytes");
 function concat(...arrays) {
   const total = arrays.reduce((sum, a) => sum + a.length, 0);
   const result = new Uint8Array(total);
@@ -14777,11 +13214,9 @@ function concat(...arrays) {
   }
   return result;
 }
-__name(concat, "concat");
 function uint16BE(value) {
   return new Uint8Array([value >> 8 & 255, value & 255]);
 }
-__name(uint16BE, "uint16BE");
 function uint32BE(value) {
   return new Uint8Array([
     value >> 24 & 255,
@@ -14790,7 +13225,6 @@ function uint32BE(value) {
     value & 255
   ]);
 }
-__name(uint32BE, "uint32BE");
 async function generateVapidJwt(privateKey, audience, subject) {
   const header = base64urlEncode(
     new TextEncoder().encode(JSON.stringify({ typ: "JWT", alg: "ES256" }))
@@ -14820,7 +13254,6 @@ async function generateVapidJwt(privateKey, audience, subject) {
   const rawSignature = derToRawSignature(derSignature);
   return `${signingInput}.${base64urlEncode(rawSignature)}`;
 }
-__name(generateVapidJwt, "generateVapidJwt");
 async function encryptPayload(payload, p256dh, auth) {
   const recipientPub = new Uint8Array(base64urlDecode(p256dh));
   const authKey = new Uint8Array(base64urlDecode(auth));
@@ -14848,7 +13281,7 @@ async function encryptPayload(payload, p256dh, auth) {
   );
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const prk = await hkdfExtract(authKey.buffer, sharedSecret);
-  const context2 = concat(
+  const context = concat(
     new TextEncoder().encode("P-256"),
     new Uint8Array([0]),
     uint16BE(recipientPub.length),
@@ -14859,13 +13292,13 @@ async function encryptPayload(payload, p256dh, auth) {
   const keyInfo = concat(
     new TextEncoder().encode("Content-Encoding: aes128gcm"),
     new Uint8Array([0]),
-    context2
+    context
   );
   const cek = await hkdfExpand(prk, keyInfo.buffer, 16);
   const nonceInfo = concat(
     new TextEncoder().encode("Content-Encoding: nonce"),
     new Uint8Array([0]),
-    context2
+    context
   );
   const nonce = await hkdfExpand(prk, nonceInfo.buffer, 12);
   const payloadBytes = new TextEncoder().encode(payload);
@@ -14891,11 +13324,10 @@ async function encryptPayload(payload, p256dh, auth) {
     new Uint8Array(ciphertext)
   );
 }
-__name(encryptPayload, "encryptPayload");
-async function sendWebPush(env2, subscription, payload, options) {
+async function sendWebPush(env, subscription, payload, options) {
   try {
     const audience = new URL(subscription.endpoint).origin;
-    const jwt = await generateVapidJwt(env2.VAPID_PRIVATE_KEY, audience, env2.VAPID_SUBJECT);
+    const jwt = await generateVapidJwt(env.VAPID_PRIVATE_KEY, audience, env.VAPID_SUBJECT);
     const encrypted = await encryptPayload(
       JSON.stringify(payload),
       subscription.keys.p256dh,
@@ -14904,7 +13336,7 @@ async function sendWebPush(env2, subscription, payload, options) {
     const response = await fetch(subscription.endpoint, {
       method: "POST",
       headers: {
-        Authorization: `vapid t=${jwt}, k=${env2.VAPID_PUBLIC_KEY}`,
+        Authorization: `vapid t=${jwt}, k=${env.VAPID_PUBLIC_KEY}`,
         "Content-Encoding": "aes128gcm",
         "Content-Type": "application/octet-stream",
         TTL: String(options?.ttl ?? 2419200),
@@ -14925,7 +13357,6 @@ async function sendWebPush(env2, subscription, payload, options) {
     };
   }
 }
-__name(sendWebPush, "sendWebPush");
 
 // src/routes/support.ts
 function generateTicketId() {
@@ -14934,13 +13365,12 @@ function generateTicketId() {
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `TK-${dateStr}-${rand}`;
 }
-__name(generateTicketId, "generateTicketId");
-async function getTelegramConfig(env2) {
+async function getTelegramConfig(env) {
   try {
-    const tokenRow = await env2.DB.prepare(
+    const tokenRow = await env.DB.prepare(
       "SELECT value FROM app_config WHERE key = 'telegram_bot_token'"
     ).first();
-    const chatIdsRow = await env2.DB.prepare(
+    const chatIdsRow = await env.DB.prepare(
       "SELECT value FROM app_config WHERE key = 'telegram_chat_ids'"
     ).first();
     const botToken = tokenRow?.value || "";
@@ -14957,7 +13387,6 @@ async function getTelegramConfig(env2) {
     return { botToken: "", chatIds: [] };
   }
 }
-__name(getTelegramConfig, "getTelegramConfig");
 async function sendTelegramMessage(botToken, chatId, text, replyMarkup) {
   if (!botToken) return;
   try {
@@ -14974,13 +13403,12 @@ async function sendTelegramMessage(botToken, chatId, text, replyMarkup) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-  } catch (error3) {
-    console.error("Failed to send Telegram message:", error3);
+  } catch (error) {
+    console.error("Failed to send Telegram message:", error);
   }
 }
-__name(sendTelegramMessage, "sendTelegramMessage");
-async function notifyNewTicket(env2, ticket) {
-  const { botToken, chatIds } = await getTelegramConfig(env2);
+async function notifyNewTicket(env, ticket) {
+  const { botToken, chatIds } = await getTelegramConfig(env);
   if (!botToken || chatIds.length === 0) return;
   const priorityEmoji = {
     low: "\u{1F7E2}",
@@ -15005,22 +13433,21 @@ Resolve: /resolve ${ticket.ticket_id} Resolution details`;
     await sendTelegramMessage(botToken, chatId, text);
   }
 }
-__name(notifyNewTicket, "notifyNewTicket");
-async function notifyTicketResolved(env2, userId, ticketId, resolvedContent) {
+async function notifyTicketResolved(env, userId, ticketId, resolvedContent) {
   try {
     const timestamp = Math.floor(Date.now() / 1e3);
     const encodedContent = encodeURIComponent(resolvedContent.substring(0, 200));
     const url = `https://dakkho-student.pages.dev/help/contact-support/${ticketId}/${timestamp}/${encodedContent}`;
-    await sendWebPushToUser(env2, userId, {
+    await sendWebPushToUser(env, userId, {
       type: "ticket_resolved",
       ticketId,
       title: "Support Ticket Resolved",
       body: `Your ticket ${ticketId} has been resolved`,
       url
     });
-    const tokens = await getUserPushTokens(env2, userId);
+    const tokens = await getUserPushTokens(env, userId);
     if (tokens.length === 0) return;
-    await sendPushNotification(env2, {
+    await sendPushNotification(env, {
       title: "Support Ticket Resolved",
       titleBn: "\u09B8\u09BE\u09AA\u09CB\u09B0\u09CD\u099F \u099F\u09BF\u0995\u09C7\u099F \u09B8\u09AE\u09BE\u09A7\u09BE\u09A8 \u09B9\u09AF\u09BC\u09C7\u099B\u09C7",
       message: `Your ticket ${ticketId} has been resolved`,
@@ -15034,25 +13461,24 @@ async function notifyTicketResolved(env2, userId, ticketId, resolvedContent) {
       },
       targetPlayerIds: tokens
     });
-  } catch (error3) {
-    console.error("Failed to send push notification:", error3);
+  } catch (error) {
+    console.error("Failed to send push notification:", error);
   }
 }
-__name(notifyTicketResolved, "notifyTicketResolved");
-async function notifyTicketReply(env2, userId, ticketId, senderType, replyPreview) {
+async function notifyTicketReply(env, userId, ticketId, senderType, replyPreview) {
   try {
     if (senderType === "user") return;
-    await sendWebPushToUser(env2, userId, {
+    await sendWebPushToUser(env, userId, {
       type: "ticket_reply",
       ticketId,
       title: "New Support Reply",
       body: replyPreview.substring(0, 100),
       url: `https://dakkho-student.pages.dev/help/contact-support`
     });
-    const tokens = await getUserPushTokens(env2, userId);
+    const tokens = await getUserPushTokens(env, userId);
     if (tokens.length === 0) return;
     const url = `https://dakkho-student.pages.dev/help/contact-support`;
-    await sendPushNotification(env2, {
+    await sendPushNotification(env, {
       title: "New Support Reply",
       titleBn: "\u09A8\u09A4\u09C1\u09A8 \u09B8\u09BE\u09AA\u09CB\u09B0\u09CD\u099F \u09B0\u09BF\u09AA\u09CD\u09B2\u09BE\u0987",
       message: replyPreview.substring(0, 100),
@@ -15064,15 +13490,14 @@ async function notifyTicketReply(env2, userId, ticketId, senderType, replyPrevie
       },
       targetPlayerIds: tokens
     });
-  } catch (error3) {
-    console.error("Failed to send push notification for reply:", error3);
+  } catch (error) {
+    console.error("Failed to send push notification for reply:", error);
   }
 }
-__name(notifyTicketReply, "notifyTicketReply");
-async function sendWebPushToUser(env2, userId, payload) {
+async function sendWebPushToUser(env, userId, payload) {
   try {
-    if (!env2.VAPID_PRIVATE_KEY || !env2.VAPID_PUBLIC_KEY) return;
-    const result = await env2.DB.prepare(
+    if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY) return;
+    const result = await env.DB.prepare(
       "SELECT push_token, device_type, device_info FROM user_push_tokens WHERE user_id = ? AND is_active = 1"
     ).bind(userId).all();
     for (const row of result.results) {
@@ -15080,29 +13505,27 @@ async function sendWebPushToUser(env2, userId, payload) {
         try {
           const subscription = JSON.parse(row.device_info);
           if (subscription.endpoint && subscription.keys) {
-            await sendWebPush(env2, subscription, payload);
+            await sendWebPush(env, subscription, payload);
           }
         } catch (e) {
           console.error("Failed to send web push:", e);
         }
       }
     }
-  } catch (error3) {
-    console.error("Failed to send web push to user:", error3);
+  } catch (error) {
+    console.error("Failed to send web push to user:", error);
   }
 }
-__name(sendWebPushToUser, "sendWebPushToUser");
-async function saveNotification(env2, userId, title2, message, actionUrl, type = "info", category = "") {
+async function saveNotification(env, userId, title, message, actionUrl, type = "info", category = "") {
   try {
-    await env2.DB.prepare(`
+    await env.DB.prepare(`
       INSERT INTO notifications (id, user_id, title, message, type, category, read, action_url, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, 0, ?, datetime('now'), datetime('now'))
-    `).bind(generateId(), userId, title2, message, type, category, actionUrl).run();
-  } catch (error3) {
-    console.error("Failed to save notification:", error3);
+    `).bind(generateId(), userId, title, message, type, category, actionUrl).run();
+  } catch (error) {
+    console.error("Failed to save notification:", error);
   }
 }
-__name(saveNotification, "saveNotification");
 var supportPublicRoutes = new Hono2();
 supportPublicRoutes.post("/tickets", async (c) => {
   try {
@@ -15201,16 +13624,16 @@ supportPublicRoutes.post("/tickets", async (c) => {
           html
         })
       });
-    } catch (error3) {
-      console.error("Failed to send confirmation email:", error3);
+    } catch (error) {
+      console.error("Failed to send confirmation email:", error);
     }
     return c.json({
       success: true,
       ticketId,
       message: "Ticket created successfully"
     }, 201);
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportPublicRoutes.get("/tickets", async (c) => {
@@ -15232,8 +13655,8 @@ supportPublicRoutes.get("/tickets", async (c) => {
     query += " ORDER BY created_at DESC LIMIT 50";
     const result = await c.env.DB.prepare(query).bind(...params).all();
     return c.json({ tickets: result.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportPublicRoutes.get("/tickets/:ticketId", async (c) => {
@@ -15249,8 +13672,8 @@ supportPublicRoutes.get("/tickets/:ticketId", async (c) => {
       "SELECT * FROM support_messages WHERE ticket_id = ? ORDER BY created_at ASC"
     ).bind(ticketId).all();
     return c.json({ ticket, messages: messages.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportPublicRoutes.post("/tickets/:ticketId/messages", async (c) => {
@@ -15328,8 +13751,8 @@ Reply: /reply ${ticketId} Your message here`
       }
     }
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportPublicRoutes.get("/attachment-url", async (c) => {
@@ -15349,8 +13772,8 @@ supportPublicRoutes.get("/attachment-url", async (c) => {
     headers.set("Cache-Control", "public, max-age=86400");
     headers.set("Access-Control-Allow-Origin", "*");
     return new Response(file.body, { headers });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var supportAdminRoutes = new Hono2();
@@ -15395,8 +13818,8 @@ supportAdminRoutes.get("/tickets", async (c) => {
     const total = countResult?.total || 0;
     const result = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
     return c.json({ tickets: result.results, total, page, limit });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.get("/tickets/:ticketId", async (c) => {
@@ -15412,8 +13835,8 @@ supportAdminRoutes.get("/tickets/:ticketId", async (c) => {
       "SELECT * FROM support_messages WHERE ticket_id = ? ORDER BY created_at ASC"
     ).bind(ticketId).all();
     return c.json({ ticket, messages: messages.results });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.post("/tickets/:ticketId/reply", async (c) => {
@@ -15480,8 +13903,8 @@ supportAdminRoutes.post("/tickets/:ticketId/reply", async (c) => {
       );
     }
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.put("/tickets/:ticketId/resolve", async (c) => {
@@ -15541,8 +13964,8 @@ supportAdminRoutes.put("/tickets/:ticketId/resolve", async (c) => {
           html
         })
       });
-    } catch (error3) {
-      console.error("Failed to send resolution email:", error3);
+    } catch (error) {
+      console.error("Failed to send resolution email:", error);
     }
     const { botToken, chatIds } = await getTelegramConfig(c.env);
     for (const chatId of chatIds) {
@@ -15557,8 +13980,8 @@ Resolved by: ${user.name || "Admin"}`
       );
     }
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.put("/tickets/:ticketId/status", async (c) => {
@@ -15598,8 +14021,8 @@ supportAdminRoutes.put("/tickets/:ticketId/status", async (c) => {
       );
     }
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.get("/config", async (c) => {
@@ -15625,8 +14048,8 @@ supportAdminRoutes.get("/config", async (c) => {
       telegramChatIds: chatIds,
       supportEmail: emailRow?.value || ""
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.put("/config", async (c) => {
@@ -15645,8 +14068,8 @@ supportAdminRoutes.put("/config", async (c) => {
       ).bind(supportEmail).run();
     }
     return c.json({ success: true });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 supportAdminRoutes.get("/stats", async (c) => {
@@ -15673,8 +14096,8 @@ supportAdminRoutes.get("/stats", async (c) => {
       closed: closed?.count || 0,
       total: total?.count || 0
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var telegramWebhookRoutes = new Hono2();
@@ -15915,23 +14338,19 @@ Resolve: /resolve ${ticketId} details`;
       `\u2753 Unknown command. Use /start to see available commands.`
     );
     return c.json({ ok: true });
-  } catch (error3) {
-    console.error("Telegram webhook error:", error3);
+  } catch (error) {
+    console.error("Telegram webhook error:", error);
     return c.json({ ok: true });
   }
 });
 
 // src/routes/video-streaming.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var videoStreamingRoutes = new Hono2();
 function generateStreamToken(videoId, sessionId, expiry, secret) {
   const data = `${videoId}:${sessionId}:${expiry}`;
   const encoded = btoa(JSON.stringify({ v: videoId, s: sessionId, e: expiry }));
   return encoded;
 }
-__name(generateStreamToken, "generateStreamToken");
 function validateStreamToken(token, videoId) {
   try {
     const decoded = JSON.parse(atob(token));
@@ -15942,7 +14361,6 @@ function validateStreamToken(token, videoId) {
     return { valid: false };
   }
 }
-__name(validateStreamToken, "validateStreamToken");
 videoStreamingRoutes.post("/session/:videoId", studentAuthMiddleware, async (c) => {
   try {
     const videoId = c.req.param("videoId");
@@ -15980,8 +14398,8 @@ videoStreamingRoutes.post("/session/:videoId", studentAuthMiddleware, async (c) 
       availableQualities: JSON.parse(video.available_qualities || "[]"),
       processingStatus: video.processing_status || "pending"
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 videoStreamingRoutes.get("/playlist/:videoId", async (c) => {
@@ -16036,8 +14454,8 @@ videoStreamingRoutes.get("/playlist/:videoId", async (c) => {
         "Access-Control-Allow-Origin": c.req.header("origin") || "*"
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 videoStreamingRoutes.get("/variant/:videoId/:quality/playlist.m3u8", async (c) => {
@@ -16078,8 +14496,8 @@ videoStreamingRoutes.get("/variant/:videoId/:quality/playlist.m3u8", async (c) =
         "Access-Control-Allow-Origin": c.req.header("origin") || "*"
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 videoStreamingRoutes.get("/seg/:videoId/:quality/:segFile", async (c) => {
@@ -16118,8 +14536,8 @@ videoStreamingRoutes.get("/seg/:videoId/:quality/:segFile", async (c) => {
       headers.set("Content-Type", object.httpMetadata.contentType);
     }
     return new Response(object.body, { headers });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 videoStreamingRoutes.get("/info/:videoId", async (c) => {
@@ -16162,8 +14580,8 @@ videoStreamingRoutes.get("/info/:videoId", async (c) => {
         fallbackUrl: video.video_url
       }
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 videoStreamingRoutes.put("/processing-status/:videoId", adminAuthMiddleware, async (c) => {
@@ -16211,8 +14629,8 @@ videoStreamingRoutes.put("/processing-status/:videoId", adminAuthMiddleware, asy
       `UPDATE videos SET ${setClauses.join(", ")} WHERE id = ?`
     ).bind(...setValues).run();
     return c.json({ success: true, videoId, updated: setClauses.length });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 videoStreamingRoutes.get("/pending-transcode", adminAuthMiddleware, async (c) => {
@@ -16232,16 +14650,13 @@ videoStreamingRoutes.get("/pending-transcode", adminAuthMiddleware, async (c) =>
       videos: result.results,
       total: result.results.length
     });
-  } catch (error3) {
-    return c.json({ error: getErrorMessage(error3) }, 500);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 var video_streaming_default = videoStreamingRoutes;
 
 // src/routes/unified-auth.ts
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var unifiedAuthRoutes = new Hono2();
 unifiedAuthRoutes.post("/login", async (c) => {
   try {
@@ -16295,9 +14710,9 @@ unifiedAuthRoutes.post("/login", async (c) => {
         avatarUrl: user.avatar_url || ""
       }
     });
-  } catch (error3) {
-    const message = getErrorMessage(error3);
-    console.error("Unified login error:", error3);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("Unified login error:", error);
     return c.json({ error: message }, 401);
   }
 });
@@ -16474,7 +14889,7 @@ app.get("/upload/:bucketType/:key{.+}", async (c) => {
     headers.set("Access-Control-Allow-Origin", "*");
     headers.set("CDN-Cache-Control", "public, max-age=2592000");
     return new Response(file.body, { headers });
-  } catch (error3) {
+  } catch (error) {
     return c.json({ error: "Failed to serve file" }, 500);
   }
 });
@@ -16485,17 +14900,17 @@ app.onError((err, c) => {
 });
 var index_default = {
   fetch: app.fetch,
-  async scheduled(event, env2, ctx) {
+  async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
         const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3).toISOString().replace("T", " ").replace("Z", "");
-        const tickets = await env2.DB.prepare(
+        const tickets = await env.DB.prepare(
           "SELECT ticket_id FROM support_tickets WHERE status IN ('resolved', 'closed') AND updated_at < ? AND updated_at > ''"
         ).bind(cutoff).all();
         if (!tickets.results.length) return;
         let deletedCount = 0;
         for (const ticket of tickets.results) {
-          const messages = await env2.DB.prepare(
+          const messages = await env.DB.prepare(
             "SELECT attachments FROM support_messages WHERE ticket_id = ? AND attachments NOT IN ('[]', '', 'null')"
           ).bind(ticket.ticket_id).all();
           for (const msg of messages.results) {
@@ -16504,7 +14919,7 @@ var index_default = {
               for (const key of keys) {
                 if (key && key.startsWith("support/")) {
                   try {
-                    await env2.R2_SUPPORT_ATTACHMENTS.delete(key);
+                    await env.R2_SUPPORT_ATTACHMENTS.delete(key);
                     deletedCount++;
                   } catch {
                   }
@@ -16513,13 +14928,13 @@ var index_default = {
             } catch {
             }
           }
-          await env2.DB.prepare(
+          await env.DB.prepare(
             "UPDATE support_messages SET attachments = '[]' WHERE ticket_id = ? AND attachments NOT IN ('[]', '', 'null')"
           ).bind(ticket.ticket_id).run();
         }
         console.log(`[Cron] Cleaned ${deletedCount} R2 attachments from ${tickets.results.length} old resolved/closed tickets`);
-      } catch (error3) {
-        console.error("[Cron] Failed to clean up attachments:", error3);
+      } catch (error) {
+        console.error("[Cron] Failed to clean up attachments:", error);
       }
     })());
   }
@@ -16527,4 +14942,3 @@ var index_default = {
 export {
   index_default as default
 };
-//# sourceMappingURL=index.js.map
