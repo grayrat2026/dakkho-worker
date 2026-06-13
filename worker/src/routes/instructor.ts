@@ -41,7 +41,7 @@ function formatCourseRow(row: Record<string, unknown>): Record<string, unknown> 
     $id: row.id,
     $createdAt: row.created_at,
     isPublished: row.is_published,
-    price: row.price_bdt ?? row.price,
+    price: row.price ?? row.price_bdt ?? 0,
     instructorId: row.instructor_id,
   };
 }
