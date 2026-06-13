@@ -17,6 +17,7 @@ import {
   formatCourseRow,
   formatVideoRow,
   formatEnrollmentRow,
+  formatInstructorRow,
   slugify,
   verifyCourseOwnership,
   getInstructorId,
@@ -1507,10 +1508,71 @@ routes.delete('/videos/:id', instructorOrAdminMiddleware, async (c) => {
   }
 });
 
+// GET /instructors/search — Search all active instructors by name/email
+routes.get('/instructors/search', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const q = c.req.query('q') || '';
+    const limit = parseInt(c.req.query('limit') || '20');
+    const offset = parseInt(c.req.query('offset') || '0');
+
+    let where = 'WHERE is_active = 1';
+    const params: unknown[] = [];
+
+    if (q) {
+      where += ' AND (name LIKE ? OR email LIKE ?)';
+      params.push(`%${q}%`, `%${q}%`);
+    }
+
+    const countResult = await c.env.DB.prepare(
+      `SELECT COUNT(*) as total FROM instructors ${where}`
+    ).bind(...params).first();
+    const total = (countResult as any)?.total || 0;
+
+    const result = await c.env.DB.prepare(
+      `SELECT id, name, email, avatar_url, specialization, is_active FROM instructors ${where} ORDER BY name ASC LIMIT ? OFFSET ?`
+    ).bind(...params, limit, offset).all();
+
+    const instructors = result.results.map((r: any) => formatInstructorRow(r));
+
+    return c.json({ instructors, total });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /instructors/list — Default list of active instructors (for when no search query)
+routes.get('/instructors/list', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const limit = parseInt(c.req.query('limit') || '20');
+    const offset = parseInt(c.req.query('offset') || '0');
+
+    const countResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as total FROM instructors WHERE is_active = 1'
+    ).first();
+    const total = (countResult as any)?.total || 0;
+
+    const result = await c.env.DB.prepare(
+      'SELECT id, name, email, avatar_url, specialization, is_active FROM instructors WHERE is_active = 1 ORDER BY name ASC LIMIT ? OFFSET ?'
+    ).bind(limit, offset).all();
+
+    const instructors = result.results.map((r: any) => formatInstructorRow(r));
+
+    return c.json({ instructors, total });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
 // GET /videos/search — Search instructor's uploaded videos by title
 routes.get('/videos/search', instructorOrAdminMiddleware, async (c) => {
   try {
-    const instructorId = c.get('instructor')?.id || c.get('user')?.id;
+    const authRole = c.get('authRole');
+    let instructorId: string;
+    if (authRole === 'admin') {
+      instructorId = c.req.query('instructorId') || '';
+    } else {
+      instructorId = c.get('instructorId');
+    }
     if (!instructorId) {
       return c.json({ error: 'Instructor ID required' }, 401);
     }
@@ -1744,22 +1806,55 @@ routes.get('/technologies', instructorOrAdminMiddleware, async (c) => {
   }
 });
 
-// GET /subjects — List subjects (optionally filter by technology_id)
+// GET /subjects — List subjects (optionally filter by technology_id, supports junction table)
 routes.get('/subjects', instructorOrAdminMiddleware, async (c) => {
   try {
     const technologyId = c.req.query('technology_id');
-    let query = 'SELECT * FROM subjects';
+    const search = c.req.query('search') || '';
+
+    let query = 'SELECT DISTINCT s.* FROM subjects s';
     const params: unknown[] = [];
+    const conditions: string[] = [];
 
     if (technologyId) {
-      query += ' WHERE technology_id = ?';
-      params.push(parseInt(technologyId));
+      // Also search in subject_technologies junction table
+      query += ' LEFT JOIN subject_technologies st ON s.id = st.subject_id';
+      conditions.push('(s.technology_id = ? OR st.technology_id = ?)');
+      params.push(parseInt(technologyId), parseInt(technologyId));
     }
 
-    query += ' ORDER BY sort_order ASC, name ASC';
+    if (search) {
+      conditions.push('s.name LIKE ?');
+      params.push(`%${search}%`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY s.sort_order ASC, s.name ASC';
 
     const result = await c.env.DB.prepare(query).bind(...params).all();
-    return c.json({ success: true, subjects: result.results });
+
+    // Enrich with technology_ids and technology_names from junction table
+    const subjectsWithTech = await Promise.all((result.results as any[]).map(async (subject) => {
+      try {
+        const techResult = await c.env.DB.prepare(
+          `SELECT st.technology_id, t.name as technology_name FROM subject_technologies st
+           JOIN technologies t ON st.technology_id = t.id
+           WHERE st.subject_id = ?`
+        ).bind(String(subject.id)).all();
+        return {
+          ...subject,
+          technology_ids: techResult.results.map((r: any) => r.technology_id),
+          technology_names: techResult.results.map((r: any) => r.technology_name),
+        };
+      } catch {
+        return subject;
+      }
+    }));
+
+    return c.json({ success: true, subjects: subjectsWithTech });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
@@ -1851,6 +1946,139 @@ routes.delete('/courses/:id/subjects/:subjectId', instructorOrAdminMiddleware, a
     ).bind(courseId, subjectId).run();
 
     return c.json({ success: true, message: 'Subject removed from course' });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /courses/:id/instructors — Get instructors assigned to a course
+routes.get('/courses/:id/instructors', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const courseId = c.req.param('id');
+
+    // Get course owner
+    const course = await c.env.DB.prepare(
+      'SELECT instructor_id FROM courses WHERE id = ?'
+    ).bind(courseId).first<{ instructor_id: string }>();
+
+    const instructors: any[] = [];
+
+    // Add course owner
+    if (course?.instructor_id) {
+      try {
+        const ownerRow = await c.env.DB.prepare(
+          'SELECT id, name, email, avatar_url, specialization FROM instructors WHERE id = ?'
+        ).bind(course.instructor_id).first();
+        if (ownerRow) {
+          instructors.push({
+            ...formatInstructorRow(ownerRow as Record<string, unknown>),
+            isOwner: true,
+            subjects: [],
+          });
+        }
+      } catch {}
+    }
+
+    // Get co-instructors from junction table
+    try {
+      const junctionResult = await c.env.DB.prepare(
+        'SELECT instructor_id, subject_ids FROM course_instructors WHERE course_id = ?'
+      ).bind(courseId).all();
+
+      for (const row of junctionResult.results as any[]) {
+        if (row.instructor_id === course?.instructor_id) continue; // Skip owner (already added)
+        try {
+          const instRow = await c.env.DB.prepare(
+            'SELECT id, name, email, avatar_url, specialization FROM instructors WHERE id = ?'
+          ).bind(row.instructor_id).first();
+          if (instRow) {
+            // Parse subject_ids and get subject names
+            let subjects: any[] = [];
+            try {
+              const subjectIds = typeof row.subject_ids === 'string' ? JSON.parse(row.subject_ids) : (row.subject_ids || []);
+              if (Array.isArray(subjectIds) && subjectIds.length > 0) {
+                const subjectResults = await c.env.DB.prepare(
+                  `SELECT id, name FROM subjects WHERE id IN (${subjectIds.map(() => '?').join(',')})`
+                ).bind(...subjectIds).all();
+                subjects = subjectResults.results.map((s: any) => ({
+                  subjectId: s.id,
+                  subjectName: s.name,
+                }));
+              }
+            } catch {}
+            
+            instructors.push({
+              ...formatInstructorRow(instRow as Record<string, unknown>),
+              isOwner: false,
+              subjects,
+            });
+          }
+        } catch {}
+      }
+    } catch {}
+
+    return c.json({ success: true, instructors });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /courses/:id/instructors — Add instructor to course
+routes.post('/courses/:id/instructors', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const courseId = c.req.param('id');
+    const { instructorId, error: idError } = getInstructorId(c);
+    if (idError) return idError;
+
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
+    }
+
+    const body = await c.req.json();
+    const { instructor_id, subject_ids } = body;
+
+    if (!instructor_id) {
+      return c.json({ error: 'instructor_id is required' }, 400);
+    }
+
+    const now = new Date().toISOString();
+
+    try {
+      await c.env.DB.prepare(`
+        INSERT INTO course_instructors (course_id, instructor_id, subject_ids, sort_order, created_at)
+        VALUES (?, ?, ?, 0, ?)
+      `).bind(courseId, instructor_id, JSON.stringify(subject_ids || []), now).run();
+    } catch (err: any) {
+      if (err?.message?.includes('UNIQUE') || err?.message?.includes('duplicate')) {
+        return c.json({ error: 'Instructor already added to this course' }, 400);
+      }
+    }
+
+    return c.json({ success: true, message: 'Instructor added to course' }, 201);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// DELETE /courses/:id/instructors/:instructorId — Remove instructor from course
+routes.delete('/courses/:id/instructors/:instructorId', instructorOrAdminMiddleware, async (c) => {
+  try {
+    const courseId = c.req.param('id');
+    const instructorIdParam = c.req.param('instructorId');
+    const { instructorId, error: idError } = getInstructorId(c);
+    if (idError) return idError;
+
+    const owns = await verifyCourseOwnership(c.env, courseId, instructorId);
+    if (!owns) {
+      return c.json({ error: 'You do not own this course' }, 403);
+    }
+
+    await c.env.DB.prepare(
+      'DELETE FROM course_instructors WHERE course_id = ? AND instructor_id = ?'
+    ).bind(courseId, instructorIdParam).run();
+
+    return c.json({ success: true, message: 'Instructor removed from course' });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }

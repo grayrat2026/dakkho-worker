@@ -391,7 +391,48 @@ routes.get('/instructors/:id', async (c) => {
       return c.json({ error: 'Instructor not found' }, 404);
     }
 
-    return c.json({ instructor });
+    const inst = instructor as any;
+
+    // Compute totalCourses from courses table (both as owner and via course_instructors junction)
+    let totalCourses = 0;
+    try {
+      const courseCount = await c.env.DB.prepare(`
+        SELECT COUNT(DISTINCT c.id) as total 
+        FROM courses c 
+        LEFT JOIN course_instructors ci ON c.id = ci.course_id AND ci.instructor_id = ?
+        WHERE (c.instructor_id = ? OR ci.instructor_id = ?) AND c.is_published = 1
+      `).bind(id, id, id).first<{ total: number }>();
+      totalCourses = courseCount?.total || 0;
+    } catch {}
+
+    // Compute totalStudents from enrollments for this instructor's courses
+    let totalStudents = 0;
+    try {
+      const studentCount = await c.env.DB.prepare(`
+        SELECT COUNT(DISTINCT e.user_id) as total
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        WHERE c.instructor_id = ?
+      `).bind(id).first<{ total: number }>();
+      totalStudents = studentCount?.total || 0;
+    } catch {}
+
+    // Compute rating from course_ratings or default to instructor's rating
+    const rating = inst.rating || 0;
+
+    // Get cover URL
+    const coverUrl = inst.cover_url || inst.coverUrl || '';
+
+    return c.json({
+      instructor: {
+        ...inst,
+        totalCourses,
+        totalStudents,
+        rating,
+        coverUrl,
+        avatarUrl: inst.avatar_url || inst.avatarUrl || '',
+      }
+    });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
@@ -413,13 +454,19 @@ routes.get('/instructors/:id/courses', async (c) => {
       return c.json({ error: 'Instructor not found' }, 404);
     }
 
-    const result = await c.env.DB.prepare(
-      'SELECT * FROM courses WHERE instructor_id = ? AND is_published = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    ).bind(instructorId, limit, offset).all();
+    // Get courses where instructor is either owner or assigned via course_instructors
+    const result = await c.env.DB.prepare(`
+      SELECT DISTINCT c.* FROM courses c
+      LEFT JOIN course_instructors ci ON c.id = ci.course_id AND ci.instructor_id = ?
+      WHERE (c.instructor_id = ? OR ci.instructor_id = ?) AND c.is_published = 1
+      ORDER BY c.created_at DESC LIMIT ? OFFSET ?
+    `).bind(instructorId, instructorId, instructorId, limit, offset).all();
 
-    const countResult = await c.env.DB.prepare(
-      'SELECT COUNT(*) as total FROM courses WHERE instructor_id = ? AND is_published = 1'
-    ).bind(instructorId).first();
+    const countResult = await c.env.DB.prepare(`
+      SELECT COUNT(DISTINCT c.id) as total FROM courses c
+      LEFT JOIN course_instructors ci ON c.id = ci.course_id AND ci.instructor_id = ?
+      WHERE (c.instructor_id = ? OR ci.instructor_id = ?) AND c.is_published = 1
+    `).bind(instructorId, instructorId, instructorId).first();
     const total = (countResult as any)?.total || 0;
 
     return c.json({ courses: result.results, total });
