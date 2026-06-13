@@ -1,317 +1,457 @@
-# 🎓 DAKKHO Student App
+<div align="center">
 
-<p align="center">
-  <strong>Student-facing application for the DAKKHO online learning platform</strong>
-</p>
+# ⚡ DAKKHO — Worker API
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss" alt="Tailwind CSS 4" />
-  <img src="https://img.shields.io/badge/shadcn/ui-latest-000000?logo=shadcnui" alt="shadcn/ui" />
-  <img src="https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflare" alt="Cloudflare Pages" />
-  <img src="https://img.shields.io/badge/Framer_Motion-latest-0055FF?logo=framer" alt="Framer Motion" />
-  <img src="https://img.shields.io/badge/Zustand-latest-764ABC" alt="Zustand" />
-  <img src="https://img.shields.io/badge/Recharts-latest-8884D8" alt="Recharts" />
-</p>
+**Backend API for the DAKKHO Online Learning Platform**
+
+[![Hono](https://img.shields.io/badge/Hono-4.7-E3602B?style=for-the-badge&logo=hono&logoColor=white)](https://hono.dev/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![D1 Database](https://img.shields.io/badge/D1-Database-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/d1/)
+[![R2 Storage](https://img.shields.io/badge/R2-Storage-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/r2/)
+
+**🌐 Live:** [dakkho-admin-api.dakkho-admin.workers.dev](https://dakkho-admin-api.dakkho-admin.workers.dev)
+
+</div>
 
 ---
 
-## 📋 Overview
+## 📖 Overview
 
-DAKKHO Student App is the learner-facing single-page application for the DAKKHO online learning platform. Students can browse courses, view detailed curriculum information, enroll with flexible package options, stream video content, track their learning progress, and manage their accounts. The app features smooth animations, responsive design, and a modern UI built with shadcn/ui.
+DAKKHO Worker API is the centralized backend powering all three frontend applications — Student, Instructor, and Admin. Built on [Hono](https://hono.dev/) and deployed to Cloudflare Workers, it leverages D1 (SQLite) for relational data, R2 for object storage, and KV for configuration broadcasting. The API handles authentication for three distinct user roles, tokenized HLS video streaming, PipraPay/SSLCommerz/bKash payment processing, email via Resend, and push notifications via OneSignal.
 
-## 🛠 Tech Stack
+## 🔗 Related Repositories
 
-| Technology       | Version | Purpose                          |
-|------------------|---------|----------------------------------|
-| Next.js          | 16      | React framework (SPA mode)       |
-| React            | 19      | UI library                       |
-| Tailwind CSS     | 4       | Utility-first CSS framework      |
-| shadcn/ui        | latest  | Accessible component library     |
-| Framer Motion    | latest  | Smooth page & component animations|
-| Zustand          | latest  | Lightweight state management     |
-| Recharts         | latest  | Progress charts & visualizations |
-| TypeScript       | 5       | Type safety                      |
-
-## ✨ Features
-
-### 🔍 Course Discovery
-- **Course Browsing** — Browse all available courses with filtering and search
-- **Course Detail Pages** — Rich course pages with curriculum overview, instructor info, and enrollment options
-- **Featured Instructors** — Discover and explore top instructors on the platform
-
-### 📚 Learning Experience
-- **Video Streaming** — Stream course videos directly in the app with progress tracking
-- **My Courses** — Access all enrolled courses from a unified dashboard
-- **Watch History** — Track viewing history and resume where you left off
-- **Curriculum Navigation** — Browse chapters, lessons, and learning points
-
-### 🔐 Authentication
-- **Email OTP Login** — Passwordless authentication via one-time email codes
-- **Password Authentication** — Traditional email + password login
-- **Session Management** — Secure session handling with automatic token refresh
-
-### 💳 Enrollment & Payment
-- **Package Selection** — Choose enrollment packages (Single, Duo, etc.)
-- **PipraPay Integration** — Secure payment processing in BDT (Bangladeshi Taka)
-- **Enrollment History** — View all past and current enrollments
-
-### 📞 Support
-- **Support Center** — Submit and track support tickets
-- **About Page** — Learn about the DAKKHO platform
+| Repository | Description | Live URL |
+|---|---|---|
+| [dakkho-student-app](https://github.com/grayrat2026/dakkho-student-app) | Student-facing Next.js 16 SPA | [dakkho-student.pages.dev](https://dakkho-student.pages.dev) |
+| [dakkho-instructor](https://github.com/grayrat2026/dakkho-instructor) | Instructor-facing Next.js 16 SPA | [dakkho-instructor.pages.dev](https://dakkho-instructor.pages.dev) |
+| [dakkho-admin-web](https://github.com/grayrat2026/dakkho-admin-web) | Admin panel Next.js 16 SPA | [dakkho-admin.pages.dev](https://dakkho-admin.pages.dev) |
 
 ## 🏗 Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│           DAKKHO Student App                │
-│          (Next.js 16 SPA)                   │
-│                                             │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
-│  │  Routes   │ │Components│ │  Zustand     │ │
-│  │  (Pages)  │ │  (UI)    │ │  Stores      │ │
-│  └─────┬─────┘ └────┬─────┘ └──────┬──────┘ │
-│        │             │              │        │
-│        └─────────────┼──────────────┘        │
-│                      │                       │
-│              ┌───────┴───────┐               │
-│              │  API Service   │               │
-│              └───────┬───────┘               │
-└──────────────────────┼───────────────────────┘
-                       │ HTTPS
-                       ▼
-┌─────────────────────────────────────────────┐
-│        DAKKHO API Worker                    │
-│    (Hono + Cloudflare Workers)              │
-│                                             │
-│  /api/*     ──► Student API Routes          │
-│  /auth/*    ──► Authentication              │
-│  /upload/*  ──► R2 File Serving             │
-│                                             │
-│  ┌────┐  ┌────┐  ┌────┐                    │
-│  │ D1 │  │ R2 │  │ KV │                    │
-│  └────┘  └────┘  └────┘                    │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   Cloudflare Workers Runtime                  │
+│                                                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐ │
+│  │  /auth   │  │/instructor│  │  /api    │  │   /admin     │ │
+│  │ Unified  │  │ Instructor│  │ Student  │  │   Admin      │ │
+│  │  Auth    │  │  Routes   │  │  Routes  │  │   Routes     │ │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────┬───────┘ │
+│       │             │             │               │         │
+│  ┌────┴─────────────┴─────────────┴───────────────┴───────┐ │
+│  │              Hono Middleware Layer                       │ │
+│  │  • CORS (7 origins)  • Logger  • Auth (3 types)         │ │
+│  └────┬────────────┬──────────────┬────────────────────────┘ │
+│       │            │              │                          │
+│  ┌────▼────┐  ┌────▼────┐  ┌────▼─────┐                    │
+│  │   D1    │  │   R2    │  │   KV     │                    │
+│  │ (SQLite)│  │ (5 Buckets)│ (Config) │                    │
+│  └─────────┘  └─────────┘  └──────────┘                    │
+│                                                              │
+│  ┌──────────────────┐  ┌──────────────────────────────────┐ │
+│  │ Cron (3 AM daily)│  │ External Services                │ │
+│  │ R2 cleanup       │  │ Resend • OneSignal • PipraPay    │ │
+│  └──────────────────┘  │ SSLCommerz • bKash               │ │
+│                         └──────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## 🌐 API Endpoints (Student-Facing)
+## 🧰 Tech Stack
 
-The student app communicates with the backend via the `/api/*` route group:
+| Technology | Version | Purpose |
+|---|---|---|
+| Hono | 4.7 | Fast web framework for Cloudflare Workers |
+| Cloudflare Workers | — | Serverless edge runtime |
+| TypeScript | 5.7+ | Type-safe development |
+| D1 | — | SQLite-based relational database |
+| R2 | — | S3-compatible object storage (5 buckets) |
+| KV | — | Key-value store for config broadcasting |
+| Wrangler | 3.99+ | CLI for development and deployment |
+| Resend | — | Transactional email delivery |
+| OneSignal | — | Push notification service |
+| PipraPay | — | BD payment gateway (primary) |
+| SSLCommerz | — | BD payment gateway (plug & play) |
+| bKash | — | BD mobile banking (plug & play) |
 
-| Endpoint                  | Method  | Description                          |
-|---------------------------|---------|--------------------------------------|
-| `/api/courses`            | GET     | List all published courses           |
-| `/api/courses/:id`        | GET     | Get course detail with curriculum    |
-| `/api/instructors`        | GET     | List featured instructors            |
-| `/api/enrollments/mine`   | GET     | Get current user's enrollments       |
-| `/api/watch-history`      | GET     | Get user's watch history             |
-| `/api/video/stream`       | GET     | Get video stream URL                 |
-| `/api/about`              | GET     | Get about page content               |
-| `/api/support`            | GET/POST| List/create support tickets          |
+## 🔐 Authentication System
 
-**Base API URL**: `https://dakkho-admin-api.dakkho-admin.workers.dev/api/`
+The API implements **three independent authentication systems**, each with its own session table and middleware:
 
-### Authentication Endpoints
+| Role | Session Table | Token Storage | Middleware |
+|---|---|---|---|
+| Admin | `admin_sessions` | Cookie | `adminAuthMiddleware` |
+| Instructor | `instructor_sessions` | Bearer Token | `instructorAuthMiddleware` / `instructorOrAdminMiddleware` |
+| Student | `student_sessions` | Bearer Token | `studentAuthMiddleware` |
 
-| Endpoint                  | Method  | Description                          |
-|---------------------------|---------|--------------------------------------|
-| `/auth/login`             | POST    | Login with email + password          |
-| `/auth/otp/send`          | POST    | Send OTP to email                    |
-| `/auth/otp/verify`        | POST    | Verify OTP and authenticate          |
-| `/auth/check`             | GET     | Verify current session               |
-| `/auth/logout`            | POST    | End current session                  |
-| `/auth/forgot-password`   | POST    | Request password reset               |
-| `/auth/reset-password`    | POST    | Reset password with token            |
+### Unified Auth (`/auth`)
+Role-agnostic login that auto-detects whether the user is a student, instructor, or admin based on credentials.
 
-## 🗄 Database Schema (D1)
+### Password Security
+- **Admin**: PBKDF2-SHA256 with 100,000 iterations
+- **Instructor**: bcrypt-based verification
+- **Student**: OTP-based (email) + password authentication
 
-Key D1 tables used by the student app:
+## 📡 API Route Groups
 
-| Table               | Purpose                             |
-|---------------------|-------------------------------------|
-| `users`             | Student accounts and profiles       |
-| `courses`           | Published course catalog            |
-| `chapters`          | Course chapters                     |
-| `lessons`           | Lessons within chapters             |
-| `learning_points`   | Learning objectives per lesson      |
-| `videos`            | Video metadata and R2 references   |
-| `instructors`       | Instructor profiles                 |
-| `enrollments`       | Student course enrollments          |
-| `packages`          | Available enrollment packages       |
-| `payments`          | Payment transaction records         |
-| `watch_history`     | Video viewing progress tracking     |
-| `support_tickets`   | Student support requests            |
+### Admin Routes (`/admin/*`)
+Protected by `adminAuthMiddleware`. Full CRUD operations for platform management.
 
-### R2 Storage Buckets
+| Route File | Mount Path | Description |
+|---|---|---|
+| `courses.ts` | `/admin/courses` | Course CRUD, pricing, publishing |
+| `videos.ts` | `/admin/videos` | Video metadata management |
+| `categories.ts` | `/admin/categories` | Course category management |
+| `instructors.ts` | `/admin/instructors` | Instructor profile management |
+| `users.ts` | `/admin/users` | Student user management |
+| `institutes.ts` | `/admin/institutes` | Polytechnic institute directory |
+| `institute-requests.ts` | `/admin/institute-requests` | Institute addition requests |
+| `technologies.ts` | `/admin/technologies` | Technology/department management |
+| `subjects.ts` | `/admin/subjects` | Subject management with technology filter |
+| `chapters.ts` | `/admin/chapters` | Chapter CRUD |
+| `lessons.ts` | `/admin/lessons` | Lesson CRUD |
+| `learning-points.ts` | `/admin/learning-points` | Learning objectives |
+| `packages.ts` | `/admin/packages` | Course package management |
+| `enrollments.ts` | `/admin/enrollments` | Enrollment management |
+| `payments.ts` | `/admin/payments` | Payment verification (PipraPay/SSLCommerz/bKash) |
+| `coupons.ts` | `/admin/coupons` | Coupon code management |
+| `discounts.ts` | `/admin/discounts` | Discount management |
+| `events.ts` | `/admin/events` | Event management |
+| `live-classes.ts` | `/admin/live-classes` | Live class scheduling |
+| `notifications.ts` | `/admin/notifications` | Notification management + OneSignal push |
+| `push.ts` | `/admin/push` | Push notification management |
+| `analytics.ts` | `/admin/analytics` | Platform analytics and statistics |
+| `config.ts` | `/admin/config` | App configuration (D1 + KV) |
+| `upload.ts` | `/admin/upload` | R2 file upload |
+| `email.ts` | `/admin/email` | Email sending via Resend |
+| `about.ts` | `/admin/about` | About page management |
+| `support.ts` | `/admin/support` | Support ticket management + Telegram |
+| `achievements.ts` | `/admin/achievements` | Achievement definitions + unlock tracking |
+| `certificates.ts` | `/student/certificates` | Certificate generation |
+| `system.ts` | `/admin/system` | System health checks |
+| `admin.ts` | `/admin/admin` | Audit logs, session management |
+| `migration.ts` | `/admin/migration` | One-time D1 migration utilities |
+| `migrate.ts` | `/admin/migrate` | D1 schema migration |
 
-| Bucket                | Purpose                             |
-|-----------------------|-------------------------------------|
-| `videos`              | Course video files                  |
-| `thumbnails`          | Course and video thumbnails         |
-| `avatars`             | User and instructor avatars         |
-| `resources`           | Downloadable course resources       |
-| `support-attachments` | Support ticket attachments          |
+### Instructor Routes (`/instructor/*`)
+Protected by `instructorOrAdminMiddleware`. Instructor can manage their own courses, videos, schedule, and profile.
 
-## 🚀 Deployment
+| Endpoint | Method | Description |
+|---|---|---|
+| `/instructor/auth/login` | POST | Instructor login |
+| `/instructor/auth/check` | GET | Verify session |
+| `/instructor/auth/logout` | POST | End session |
+| `/instructor/courses` | GET | List instructor's courses |
+| `/instructor/courses/:id` | GET | Course detail |
+| `/instructor/courses` | POST | Create course |
+| `/instructor/courses/:id` | PUT | Update course |
+| `/instructor/courses/:id` | DELETE | Delete course |
+| `/instructor/courses/:id/videos` | GET | List course videos |
+| `/instructor/courses/:id/videos` | POST | Add video |
+| `/instructor/courses/:id/videos/:videoId` | PUT | Update video |
+| `/instructor/courses/:id/videos/:videoId` | DELETE | Delete video |
+| `/instructor/courses/:id/chapters` | GET/POST | Chapter management |
+| `/instructor/courses/:id/lessons` | GET/POST | Lesson management |
+| `/instructor/courses/:id/resources` | GET/POST | Resource management |
+| `/instructor/courses/:id/thumbnail` | POST | Upload course thumbnail |
+| `/instructor/dashboard` | GET | Dashboard stats |
+| `/instructor/analytics` | GET | Course analytics |
+| `/instructor/earnings` | GET | Revenue tracking |
+| `/instructor/students` | GET | Student progress |
+| `/instructor/reviews` | GET | Course reviews |
+| `/instructor/schedule` | GET | Class schedule |
+| `/instructor/profile` | GET/PUT | Profile management |
+| `/instructor/notifications` | GET | Notification center |
+| `/instructor/change-password` | POST | Password change |
 
-| Platform         | URL                                        |
-|------------------|--------------------------------------------|
-| Cloudflare Pages | https://dakkho-student.pages.dev           |
+### Student API Routes (`/api/*`)
+Protected by `studentAuthMiddleware`. Students browse courses, enroll, stream videos, and manage profiles.
 
-### Deploy to Cloudflare Pages
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/courses` | GET | Published course catalog |
+| `/api/courses/:id` | GET | Course detail with curriculum |
+| `/api/courses/:id/videos` | GET | Course video list |
+| `/api/instructors` | GET | Featured instructors |
+| `/api/enrollments/mine` | GET | Student's enrollments |
+| `/api/packages` | GET | Available packages |
+| `/api/video/stream` | GET | Tokenized HLS stream URL |
+| `/api/watch-history` | GET/POST | Watch progress tracking |
+| `/api/about` | GET | About page content |
+| `/api/support` | GET/POST | Support tickets |
+| `/api/leaderboard` | GET | Leaderboard with filters |
+| `/api/achievements` | GET | Student achievements |
+| `/api/learning-stats` | GET | Learning statistics |
+| `/api/student/profile` | GET/PUT | Profile management |
+| `/api/student/settings` | GET/PUT | App settings |
 
-```bash
-# Build the application
-npm run build
+### Public Routes
+| Endpoint | Method | Description |
+|---|---|---|
+| `/auth/login` | POST | Unified role-agnostic login |
+| `/auth/register` | POST | Student registration |
+| `/auth/otp/send` | POST | Send OTP |
+| `/auth/otp/verify` | POST | Verify OTP |
+| `/upload/:bucketType/:key` | GET | Public R2 file serving |
 
-# Deploy via Wrangler
-npx wrangler pages deploy out
-```
+## 🗄 Database Schema
 
-## 🔧 Environment Variables
+975-line SQL schema defining **30+ tables**:
 
-Create a `.env.local` file in the project root:
+| Table | Purpose |
+|---|---|
+| `admin_sessions` | Admin JWT session tokens |
+| `instructor_sessions` | Instructor JWT session tokens |
+| `student_sessions` | Student JWT session tokens |
+| `users` | Student accounts and profiles |
+| `instructors` | Instructor profiles and specializations |
+| `courses` | Course catalog with pricing and metadata |
+| `course_instructors` | Many-to-many course-instructor mapping |
+| `course_subjects` | Course-subject relationships |
+| `subjects` | Academic subjects |
+| `subject_technologies` | Subject-to-technology mapping |
+| `chapters` | Course chapters |
+| `lessons` | Lessons within chapters |
+| `course_learning_points` | Learning objectives per course |
+| `videos` | Video metadata and R2 references |
+| `categories` | Course categories |
+| `technologies` | Technology/department definitions |
+| `institutes` | Polytechnic institute directory |
+| `enrollments` | Student course enrollments |
+| `packages` | Enrollment package definitions |
+| `user_packages` | Student package subscriptions |
+| `payments` | Payment transaction records |
+| `coupons` | Promotional coupon codes |
+| `discounts` | Active discount campaigns |
+| `events` | Platform events |
+| `live_classes` | Scheduled live class sessions |
+| `notifications` | User notifications |
+| `achievements` | Achievement definitions |
+| `user_achievements` | Unlocked achievements per user |
+| `watch_history` | Video viewing progress |
+| `quiz_questions` | Quiz question bank |
+| `quiz_attempts` | Student quiz attempts |
+| `certificates` | Earned certificates |
+| `discussions` | Discussion threads and replies |
+| `support_tickets` | Student support requests |
+| `support_messages` | Support ticket messages |
+| `audit_logs` | Admin action audit trail |
+| `app_config` | Application configuration |
+| `terms_versions` | Terms of service versions |
 
-```env
-# API Configuration
-NEXT_PUBLIC_API_URL=https://dakkho-admin-api.dakkho-admin.workers.dev/api
+## 🪣 R2 Storage Buckets
 
-# App Configuration
-NEXT_PUBLIC_APP_NAME=DAKKHO
-NEXT_PUBLIC_APP_URL=https://dakkho-student.pages.dev
+| Binding | Bucket Name | Purpose |
+|---|---|---|
+| `R2_VIDEOS` | `dakkho-videos` | Course video files |
+| `R2_THUMBNAILS` | `dakkho-thumbnails` | Course and video thumbnails |
+| `R2_AVATARS` | `dakkho-avatars` | User and instructor avatars |
+| `R2_RESOURCES` | `dakkho-resources` | Downloadable course resources (PDFs, docs) |
+| `R2_SUPPORT_ATTACHMENTS` | `dakkho-support-attachments` | Support ticket attachments |
 
-# Payment
-NEXT_PUBLIC_PIPRAPAY_BASE_URL=https://api.piprapay.com
-```
+## 💳 Payment Gateways
+
+| Gateway | Status | Features |
+|---|---|---|
+| **PipraPay** | Active | Custom domain `pay.dakkho.pro.bd`, auto-verification |
+| SSLCommerz | Plug & Play | Ready for activation |
+| bKash | Plug & Play | Ready for activation |
+| Manual | Active | Admin verifies payment screenshots |
+
+## ⏰ Cron Triggers
+
+| Schedule | Job |
+|---|---|
+| `0 3 * * *` | Daily cleanup of R2 attachments from resolved/closed support tickets older than 30 days |
+
+## 🔑 Secrets (via `wrangler secret put`)
+
+| Secret | Purpose |
+|---|---|
+| `RESEND_API_KEY` | Email service API key |
+| `ADMIN_SECRET_KEY` | Admin JWT signing secret |
+| `ONE_SIGNAL_APP_ID` | OneSignal push app ID |
+| `ONE_SIGNAL_REST_API_KEY` | OneSignal REST API key |
+| `VAPID_PRIVATE_KEY` | Web Push VAPID private key |
+| `VAPID_PUBLIC_KEY` | Web Push VAPID public key |
+| `VAPID_SUBJECT` | Web Push VAPID subject URL |
+| `PIPRAPAY_API_KEY` | PipraPay payment gateway key |
 
 ## 📁 Project Structure
 
 ```
-dakkho-student-app/
-├── public/                  # Static assets
+worker/
 ├── src/
-│   ├── app/                 # Next.js app router pages
-│   │   ├── layout.tsx       # Root layout
-│   │   ├── page.tsx         # Home / Course listing
-│   │   ├── courses/         # Course browsing pages
-│   │   │   ├── page.tsx     # Course list
-│   │   │   └── [id]/        # Course detail page
-│   │   ├── my-courses/      # Enrolled courses dashboard
-│   │   ├── watch/           # Video player page
-│   │   │   └── [videoId]/   # Specific video player
-│   │   ├── history/         # Watch history page
-│   │   ├── instructors/     # Featured instructors
-│   │   ├── enroll/          # Enrollment flow
-│   │   ├── about/           # About page
-│   │   ├── support/         # Support center
-│   │   ├── auth/            # Authentication pages
-│   │   │   ├── login/       # Login page
-│   │   │   ├── otp/         # OTP verification
-│   │   │   └── register/    # Registration page
-│   │   └── profile/         # User profile & settings
-│   ├── components/          # Reusable UI components
-│   │   ├── ui/              # shadcn/ui base components
-│   │   ├── layout/          # Layout components (navbar, footer)
-│   │   ├── course/          # Course-related components
-│   │   ├── video/           # Video player components
-│   │   ├── enrollment/      # Enrollment flow components
-│   │   └── auth/            # Authentication components
-│   ├── lib/                 # Utility functions and helpers
-│   │   ├── api.ts           # API client with auth interceptors
-│   │   ├── utils.ts         # General utilities
-│   │   └── constants.ts     # App constants
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useAuth.ts       # Authentication hook
-│   │   ├── useCourses.ts    # Course data hook
-│   │   └── useVideo.ts      # Video streaming hook
-│   ├── store/               # Zustand state stores
-│   │   ├── authStore.ts     # Authentication state
-│   │   ├── courseStore.ts   # Course browsing state
-│   │   └── playerStore.ts   # Video player state
-│   └── types/               # TypeScript type definitions
-├── next.config.ts           # Next.js configuration
-├── tailwind.config.ts       # Tailwind CSS configuration
-├── tsconfig.json            # TypeScript configuration
-└── package.json             # Dependencies and scripts
+│   ├── index.ts                 # Hono app entry — mounts all route groups
+│   ├── env.ts                   # Cloudflare Worker bindings type definitions
+│   ├── routes/                  # 38 route modules
+│   │   ├── auth.ts              # Admin authentication
+│   │   ├── unified-auth.ts      # Role-agnostic login
+│   │   ├── instructor.ts        # All instructor endpoints (3200+ lines)
+│   │   ├── student-api.ts       # All student endpoints (3500+ lines)
+│   │   ├── courses.ts           # Admin course CRUD
+│   │   ├── videos.ts            # Admin video CRUD
+│   │   ├── categories.ts        # Admin category CRUD
+│   │   ├── instructors.ts       # Admin instructor CRUD
+│   │   ├── users.ts             # Admin user CRUD
+│   │   ├── institutes.ts        # Admin institute CRUD
+│   │   ├── technologies.ts      # Technology/department CRUD
+│   │   ├── subjects.ts          # Subject CRUD
+│   │   ├── chapters.ts          # Chapter CRUD
+│   │   ├── lessons.ts           # Lesson CRUD
+│   │   ├── packages.ts          # Package management
+│   │   ├── enrollments.ts       # Enrollment management
+│   │   ├── payments.ts          # Payment verification
+│   │   ├── coupons.ts           # Coupon management
+│   │   ├── discounts.ts         # Discount management
+│   │   ├── events.ts            # Event management
+│   │   ├── live-classes.ts      # Live class scheduling
+│   │   ├── notifications.ts     # Notification + OneSignal
+│   │   ├── push.ts              # Push notification management
+│   │   ├── analytics.ts         # Platform analytics
+│   │   ├── config.ts            # App configuration
+│   │   ├── upload.ts            # R2 file upload
+│   │   ├── email.ts             # Resend email
+│   │   ├── about.ts             # About page management
+│   │   ├── support.ts           # Support tickets + Telegram
+│   │   ├── achievements.ts      # Achievement management
+│   │   ├── certificates.ts      # Certificate generation
+│   │   ├── discussions.ts       # Discussion threads
+│   │   ├── quizzes.ts           # Quiz management
+│   │   ├── watch-history.ts     # Watch history tracking
+│   │   ├── video-streaming.ts   # Tokenized HLS streaming
+│   │   ├── learning-points.ts   # Learning objectives
+│   │   ├── institute-requests.ts# Institute requests
+│   │   ├── admin.ts             # Audit logs, sessions
+│   │   ├── system.ts            # System health
+│   │   ├── migration.ts         # Migration utilities
+│   │   ├── migrate.ts           # Schema migration
+│   │   ├── student.ts           # Legacy student routes
+│   │   └── terms.ts             # Terms of service
+│   └── lib/                     # 17 library modules
+│       ├── auth.ts              # Admin JWT auth
+│       ├── auth-password.ts     # PBKDF2-SHA256 password hashing
+│       ├── student-auth.ts      # Student session management
+│       ├── student-auth-middleware.ts
+│       ├── instructor-auth.ts   # Instructor session management
+│       ├── instructor-auth-middleware.ts
+│       ├── otp.ts               # OTP generation & verification
+│       ├── totp.ts              # TOTP 2FA support
+│       ├── r2.ts                # R2 public URL helpers
+│       ├── rate-limit.ts        # Rate limiting middleware
+│       ├── resend.ts            # Email sending via Resend
+│       ├── onesignal.ts         # OneSignal push notifications
+│       ├── web-push.ts          # Web Push (RFC 8291/8292)
+│       ├── payment.ts           # Payment gateway integrations
+│       ├── achievements.ts      # Achievement unlock logic
+│       ├── streak.ts            # Learning streak tracking
+│       ├── cron.ts              # Scheduled job handlers
+│       ├── auto-notifications.ts# Auto-notification triggers
+│       ├── audit.ts             # Audit log helper
+│       ├── appwrite.ts          # Legacy Appwrite migration
+│       ├── types.ts             # Shared type definitions
+│       └── utils.ts             # General utilities
+├── schema.sql                   # Full D1 database schema
+├── migration-d1.sql             # Initial D1 migration
+├── migration-incremental.sql    # Incremental schema updates
+├── migration-curriculum.sql     # Curriculum structure migration
+├── migration-subject-technologies.sql
+├── migration-piprapay.sql       # PipraPay tables migration
+├── seed-technologies.sql        # Technology seed data
+├── seed-achievements.sql        # Achievement seed data
+├── seed-instructors.sql         # Instructor seed data
+├── seed-polytechnics.sql        # Polytechnic institute seed data
+├── wrangler.toml                # Worker configuration
+├── tsconfig.json                # TypeScript configuration
+└── package.json                 # Dependencies
 ```
 
-## 🏃 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
+- Cloudflare account with Workers, D1, R2, and KV access
+- Wrangler CLI (`npm install -g wrangler`)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/grayrat2026/dakkho-student-app.git
-cd dakkho-student-app
+git clone https://github.com/grayrat2026/dakkho-worker.git
+cd dakkho-worker/worker
 
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your configuration
+# Login to Cloudflare
+npx wrangler login
+```
 
-# Start development server
+### Database Setup
+
+```bash
+# Create D1 database (if not already created)
+npx wrangler d1 create dakkho-admin-db
+
+# Run schema migration
+npx wrangler d1 execute dakkho-admin-db --file=./schema.sql
+
+# Seed initial data
+npx wrangler d1 execute dakkho-admin-db --file=./seed-technologies.sql
+npx wrangler d1 execute dakkho-admin-db --file=./seed-achievements.sql
+```
+
+### Set Secrets
+
+```bash
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put ADMIN_SECRET_KEY
+npx wrangler secret put ONE_SIGNAL_APP_ID
+npx wrangler secret put ONE_SIGNAL_REST_API_KEY
+npx wrangler secret put PIPRAPAY_API_KEY
+```
+
+### Development
+
+```bash
+# Start local development server
 npm run dev
+
+# Test with Wrangler tail (live logs)
+npm run tail
 ```
 
-### Available Scripts
+### Deploy
 
-| Command          | Description                        |
-|------------------|------------------------------------|
-| `npm run dev`    | Start development server           |
-| `npm run build`  | Build for production               |
-| `npm run start`  | Start production server            |
-| `npm run lint`   | Run ESLint                         |
-
-## 🔑 Key Workflows
-
-### Course Enrollment Flow
-
-```
-Browse Courses → View Course Detail → Select Package →
-PipraPay Payment → Enrollment Confirmed → Access Content
+```bash
+# Deploy to Cloudflare Workers
+npx wrangler deploy --config wrangler.toml
 ```
 
-### Video Streaming Flow
+## 🌐 CORS Configuration
 
-```
-My Courses → Select Course → Choose Lesson →
-Stream Video → Track Progress → Update Watch History
-```
+The API allows requests from the following origins:
 
-### Authentication Flow
+- `https://dakkho-student.pages.dev`
+- `https://dakkho-instructor.pages.dev`
+- `https://dakkho-admin.pages.dev`
+- `https://dakkhostudent.pages.dev`
+- `https://localhost:3000` (development)
+- `https://localhost:3001` (development)
+- Additional custom domains as needed
 
-```
-Home → Login → [Email OTP | Password] →
-Verify → Dashboard → Browse Courses
-```
+## 📊 Source Stats
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Commit Convention
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` — New features
-- `fix:` — Bug fixes
-- `docs:` — Documentation changes
-- `style:` — Code style changes
-- `refactor:` — Code refactoring
-- `test:` — Test additions
-- `chore:` — Build/tooling changes
+| Metric | Value |
+|---|---|
+| Route Files | 38 |
+| Library Files | 17 |
+| Total TypeScript Files | 67 |
+| Database Tables | 30+ |
+| R2 Buckets | 5 |
+| API Endpoint Groups | 4 (auth, admin, instructor, student) |
 
 ## 📄 License
 
@@ -320,5 +460,5 @@ This project is proprietary and confidential. All rights reserved.
 ---
 
 <p align="center">
-  Built with ❤️ for the DAKKHO Platform
+  Built with ⚡ for the DAKKHO Platform
 </p>
