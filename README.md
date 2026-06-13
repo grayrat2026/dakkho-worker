@@ -453,6 +453,28 @@ The API allows requests from the following origins:
 | R2 Buckets | 5 |
 | API Endpoint Groups | 4 (auth, admin, instructor, student) |
 
+## 📋 Recent Changes (June 2026)
+
+### Instructor Profile & Stats
+- `GET /instructors/:id` (public) now computes `totalCourses` and `totalStudents` from D1, returns `coverUrl` and `avatarUrl`
+- `GET /instructors/:id/courses` now searches both `courses.instructor_id` AND `course_instructors` junction table
+
+### Instructor Search & List
+- `GET /instructor/instructors/search?q=` — Search active instructors by name/email (for course instructor assignment)
+- `GET /instructor/instructors/list` — Default active instructor list (no search query needed)
+
+### Course Instructor CRUD
+- `GET /instructor/courses/:id/instructors` — List course owner + co-instructors with subject assignments
+- `POST /instructor/courses/:id/instructors` — Add co-instructor with subject_ids
+- `DELETE /instructor/courses/:id/instructors/:instructorId` — Remove co-instructor
+
+### Video Search Fix
+- `GET /instructor/videos/search` now properly uses auth middleware (`c.get('instructorId')` instead of broken `c.get('instructor')?.id`)
+
+### Subject Multi-Technology Support
+- `GET /instructor/subjects` now searches both `subjects.technology_id` AND `subject_technologies` junction table
+- Returns `technology_ids` and `technology_names` from junction for each subject
+
 ## 📄 License
 
 This project is proprietary and confidential. All rights reserved.
