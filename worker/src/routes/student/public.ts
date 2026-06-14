@@ -19,6 +19,38 @@ import {
 
 const routes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
+// Default exam tips — shared with admin endpoint
+function getDefaultExamTips() {
+  return {
+    strategies: [
+      { title: 'Active Recall Method', description: 'Instead of re-reading notes, close your book and try to recall the key concepts from memory. This strengthens neural connections and improves long-term retention.', tip: 'Try this: After each chapter, write down everything you remember without looking. Then check what you missed.' },
+      { title: 'Spaced Repetition', description: 'Review material at increasing intervals (1 day, 3 days, 7 days, 14 days). This technique leverages the spacing effect for optimal memory retention.', tip: "Use DAKKHO's built-in review reminders to schedule your spaced repetition sessions automatically." },
+      { title: 'Pomodoro Technique', description: 'Study in focused 25-minute blocks followed by 5-minute breaks. After 4 blocks, take a longer 15-30 minute break. This maintains concentration and prevents burnout.', tip: 'Set a timer on your phone. During the 25 minutes, eliminate all distractions — no phone, no social media.' },
+      { title: 'Feynman Technique', description: "Explain the concept in simple terms as if teaching someone else. If you can't explain it simply, you don't understand it well enough.", tip: 'Try recording yourself explaining a topic. Listen back and notice where you hesitate or get confused.' },
+      { title: 'Practice Testing', description: 'Take practice exams under realistic conditions. This not only tests your knowledge but also reduces exam anxiety by making the actual exam feel familiar.', tip: "Use DAKKHO's Practice Mode with timed sessions. Aim to complete practice tests faster than the actual time limit." },
+    ],
+    timeManagement: [
+      { title: 'Create a Study Schedule', desc: 'Plan your study sessions at least 2 weeks before the exam. Allocate more time to difficult subjects.', priority: 'High' },
+      { title: 'Use the 80/20 Rule', desc: 'Focus 80% of your time on the 20% of topics most likely to appear on the exam. Analyze past papers to identify patterns.', priority: 'High' },
+      { title: 'Set Daily Goals', desc: "Break down your syllabus into daily chunks. Complete each day's target before moving on.", priority: 'Medium' },
+      { title: 'Prioritize Weak Areas', desc: 'Start study sessions with your weakest topics when your mind is fresh.', priority: 'High' },
+      { title: 'Review Before Sleep', desc: 'Study the most important material right before going to sleep. Your brain consolidates memories during sleep.', priority: 'Low' },
+    ],
+    commonMistakes: [
+      { mistake: 'Cramming the night before', consequence: 'Information overload leads to confusion and anxiety.', fix: 'Start early and review regularly using spaced repetition.' },
+      { mistake: 'Skipping practice problems', consequence: 'You may struggle to apply concepts under time pressure.', fix: 'Solve at least 10 practice problems for each topic.' },
+      { mistake: 'Not reading questions carefully', consequence: 'Misunderstanding a question can cost you marks.', fix: 'Read each question twice. Underline key terms.' },
+      { mistake: 'Not managing exam time', consequence: 'Spending too long on difficult questions means easier ones go unanswered.', fix: 'Allocate time per question. Skip difficult ones and return later.' },
+    ],
+    wellness: [
+      { title: 'Sleep Well', desc: 'Aim for 7-8 hours of quality sleep. Avoid screens 30 minutes before bed.', time: 'Night' },
+      { title: 'Stay Hydrated', desc: 'Drink at least 8 glasses of water daily. Dehydration impairs concentration by up to 30%.', time: 'All Day' },
+      { title: 'Take Regular Breaks', desc: 'Follow the 50/10 rule: 50 minutes of study, 10 minutes of break.', time: 'Study Time' },
+      { title: 'Practice Mindfulness', desc: '5 minutes of deep breathing or meditation before studying can significantly improve focus.', time: 'Before Study' },
+    ],
+  };
+}
+
 // ─── Helper: Transform R2 keys to public URLs ───
 function toPublicUrl(env: Env, url: string | null | undefined, bucket: string = 'images'): string {
   if (!url) return '';
@@ -529,36 +561,8 @@ routes.get('/exam-tips', async (c) => {
       }
     }
 
-    // Return default tips if none configured
-    const defaultTips = {
-      strategies: [
-        { title: 'Active Recall Method', description: 'Instead of re-reading notes, close your book and try to recall the key concepts from memory. This strengthens neural connections and improves long-term retention.', tip: 'Try this: After each chapter, write down everything you remember without looking. Then check what you missed.' },
-        { title: 'Spaced Repetition', description: 'Review material at increasing intervals (1 day, 3 days, 7 days, 14 days). This technique leverages the spacing effect for optimal memory retention.', tip: 'Use DAKKHO\'s built-in review reminders to schedule your spaced repetition sessions automatically.' },
-        { title: 'Pomodoro Technique', description: 'Study in focused 25-minute blocks followed by 5-minute breaks. After 4 blocks, take a longer 15-30 minute break. This maintains concentration and prevents burnout.', tip: 'Set a timer on your phone. During the 25 minutes, eliminate all distractions — no phone, no social media.' },
-        { title: 'Feynman Technique', description: 'Explain the concept in simple terms as if teaching someone else. If you can\'t explain it simply, you don\'t understand it well enough.', tip: 'Try recording yourself explaining a topic. Listen back and notice where you hesitate or get confused.' },
-        { title: 'Practice Testing', description: 'Take practice exams under realistic conditions. This not only tests your knowledge but also reduces exam anxiety by making the actual exam feel familiar.', tip: 'Use DAKKHO\'s Practice Mode with timed sessions. Aim to complete practice tests faster than the actual time limit.' },
-      ],
-      timeManagement: [
-        { title: 'Create a Study Schedule', desc: 'Plan your study sessions at least 2 weeks before the exam. Allocate more time to difficult subjects.', priority: 'High' },
-        { title: 'Use the 80/20 Rule', desc: 'Focus 80% of your time on the 20% of topics most likely to appear on the exam. Analyze past papers to identify patterns.', priority: 'High' },
-        { title: 'Set Daily Goals', desc: 'Break down your syllabus into daily chunks. Complete each day\'s target before moving on.', priority: 'Medium' },
-        { title: 'Prioritize Weak Areas', desc: 'Start study sessions with your weakest topics when your mind is fresh.', priority: 'High' },
-        { title: 'Review Before Sleep', desc: 'Study the most important material right before going to sleep. Your brain consolidates memories during sleep.', priority: 'Low' },
-      ],
-      commonMistakes: [
-        { mistake: 'Cramming the night before', consequence: 'Information overload leads to confusion and anxiety.', fix: 'Start early and review regularly using spaced repetition.' },
-        { mistake: 'Skipping practice problems', consequence: 'You may struggle to apply concepts under time pressure.', fix: 'Solve at least 10 practice problems for each topic.' },
-        { mistake: 'Not reading questions carefully', consequence: 'Misunderstanding a question can cost you marks.', fix: 'Read each question twice. Underline key terms.' },
-        { mistake: 'Not managing exam time', consequence: 'Spending too long on difficult questions means easier ones go unanswered.', fix: 'Allocate time per question. Skip difficult ones and return later.' },
-      ],
-      wellness: [
-        { title: 'Sleep Well', desc: 'Aim for 7-8 hours of quality sleep. Avoid screens 30 minutes before bed.', time: 'Night' },
-        { title: 'Stay Hydrated', desc: 'Drink at least 8 glasses of water daily. Dehydration impairs concentration by up to 30%.', time: 'All Day' },
-        { title: 'Take Regular Breaks', desc: 'Follow the 50/10 rule: 50 minutes of study, 10 minutes of break.', time: 'Study Time' },
-        { title: 'Practice Mindfulness', desc: '5 minutes of deep breathing or meditation before studying can significantly improve focus.', time: 'Before Study' },
-      ],
-    };
-    return c.json({ tips: defaultTips });
+    // Return default tips if none configured (same defaults as admin endpoint)
+    return c.json({ tips: getDefaultExamTips() });
   } catch (error) {
     return c.json({ tips: { strategies: [], timeManagement: [], commonMistakes: [], wellness: [] } });
   }
