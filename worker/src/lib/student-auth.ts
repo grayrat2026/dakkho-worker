@@ -67,16 +67,18 @@ export async function validateStudentSession(
 export async function createStudentSession(
   env: Env,
   userId: string,
-  email: string
+  email: string,
+  deviceInfo?: string,
+  ipAddress?: string
 ): Promise<string> {
   const sessionId = generateId();
   const expiresAt = getSessionExpiry(30); // 30-day session for students
 
   await env.DB.prepare(
-    `INSERT INTO student_sessions (id, user_id, email, expires_at, is_active, created_at)
-     VALUES (?, ?, ?, ?, 1, datetime('now'))`
+    `INSERT INTO student_sessions (id, user_id, email, name, device_info, ip_address, expires_at, is_active, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))`
   )
-    .bind(sessionId, userId, email, expiresAt)
+    .bind(sessionId, userId, email, null, deviceInfo || null, ipAddress || null, expiresAt)
     .run();
 
   return sessionId;

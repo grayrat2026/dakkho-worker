@@ -134,6 +134,26 @@ async function cleanOldNotificationLogs(db: D1Database): Promise<CronTaskResult>
   }
 }
 
+// ─── 6. Clean expired 2FA pending tokens ───
+
+async function cleanExpired2FATokens(db: D1Database): Promise<CronTaskResult> {
+  try {
+    const result = await db.prepare(
+      "DELETE FROM pending_2fa_tokens WHERE expires_at < datetime('now')"
+    ).run();
+
+    return {
+      task: 'clean_expired_2fa_tokens',
+      deleted: result.meta.changes || 0,
+    };
+  } catch (error: any) {
+    return {
+      task: 'clean_expired_2fa_tokens',
+      error: error.message || 'Unknown error',
+    };
+  }
+}
+
 // ─── Main runner: execute all cron tasks ───
 
 export async function runCronTasks(db: D1Database): Promise<CronTaskResult[]> {
@@ -143,6 +163,7 @@ export async function runCronTasks(db: D1Database): Promise<CronTaskResult[]> {
     resetStaleStreaks(db),
     deactivateExpiredPackages(db),
     cleanOldNotificationLogs(db),
+    cleanExpired2FATokens(db),
   ]);
 
   return results.map((r, i) => {

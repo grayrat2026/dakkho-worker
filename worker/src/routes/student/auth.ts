@@ -22,6 +22,7 @@ import {
   type StudentAuthVariables,
 } from './helpers';
 import { logError } from '../../lib/error-monitor';
+import { verifyTOTP } from '../../lib/totp';
 
 const routes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -185,6 +186,51 @@ routes.post('/auth/login', async (c) => {
       return c.json({ error: 'Admin accounts cannot login here. Use the admin panel.' }, 403);
     }
 
+    // Check if 2FA is enabled for this user
+    let twoFAEnabled = false;
+    try {
+      const twoFA = await c.env.DB.prepare(
+        'SELECT is_enabled FROM user_2fa WHERE user_id = ?'
+      ).bind(user.id).first<{ is_enabled: number }>();
+      twoFAEnabled = twoFA?.is_enabled === 1;
+    } catch {}
+
+    // If 2FA is enabled, return a pending token and require TOTP verification
+    if (twoFAEnabled) {
+      // Generate a temporary pending token (valid for 5 minutes)
+      const pendingToken = crypto.randomUUID();
+      const pendingExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+      await c.env.DB.prepare(
+        `INSERT INTO pending_2fa_tokens (id, user_id, email, expires_at, created_at)
+         VALUES (?, ?, ?, ?, datetime('now'))`
+      ).bind(pendingToken, user.id, user.email, pendingExpiry).run().catch(async () => {
+        // Table might not exist yet, try creating it
+        try {
+          await c.env.DB.exec(`
+            CREATE TABLE IF NOT EXISTS pending_2fa_tokens (
+              id TEXT PRIMARY KEY,
+              user_id TEXT NOT NULL,
+              email TEXT NOT NULL,
+              expires_at TEXT NOT NULL,
+              created_at TEXT DEFAULT (datetime('now'))
+            )
+          `);
+          await c.env.DB.prepare(
+            `INSERT INTO pending_2fa_tokens (id, user_id, email, expires_at, created_at)
+             VALUES (?, ?, ?, ?, datetime('now'))`
+          ).bind(pendingToken, user.id, user.email, pendingExpiry).run();
+        } catch {}
+      });
+
+      return c.json({
+        requires2FA: true,
+        pendingToken,
+        email: user.email,
+        method: 'totp',
+      });
+    }
+
     // Get user packages from D1
     let userPackages: any[] = [];
     try {
@@ -209,9 +255,23 @@ routes.post('/auth/login', async (c) => {
     const instituteName = await getInstituteName(c.env, user.institute_id || null);
     const technologyName = await getTechnologyName(c.env, user.technology || null);
 
-    // Delete any existing D1 sessions and create new one
-    await c.env.DB.prepare('DELETE FROM student_sessions WHERE user_id = ?').bind(user.id).run();
-    const token = await createStudentSession(c.env, user.id, user.email);
+    // Get device info and IP from request
+    const userAgent = c.req.header('User-Agent') || '';
+    const ipAddress = c.req.header('CF-Connecting-IP') || '';
+
+    // Parse basic device info from user agent
+    let deviceInfo = 'Browser';
+    if (/mobile|android|iphone/i.test(userAgent)) deviceInfo = 'Chrome Mobile on Mobile';
+    else if (/tablet|ipad/i.test(userAgent)) deviceInfo = 'Safari Mobile on Tablet';
+    else if (/firefox/i.test(userAgent)) deviceInfo = 'Firefox on Desktop';
+    else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) deviceInfo = 'Safari on Desktop';
+    else if (/edge/i.test(userAgent)) deviceInfo = 'Edge on Desktop';
+    else deviceInfo = 'Chrome on Desktop';
+
+    // Delete any existing D1 sessions and create new one with device info
+    // Note: We keep other sessions alive for the Active Sessions page to show them
+    // Only the current session will be marked active; old ones stay as-is
+    const token = await createStudentSession(c.env, user.id, user.email, deviceInfo, ipAddress);
 
     return c.json({
       success: true,
@@ -242,6 +302,136 @@ routes.post('/auth/login', async (c) => {
       statusCode: 401,
     });
     return c.json({ error: msg.includes('Invalid') ? msg : 'Invalid email or password' }, 401);
+  }
+});
+
+// POST /auth/2fa/verify — Verify 2FA TOTP code during login
+routes.post('/auth/2fa/verify', async (c) => {
+  try {
+    const { pendingToken, totpCode } = await c.req.json();
+
+    if (!pendingToken || !totpCode) {
+      return c.json({ error: 'Pending token and TOTP code are required' }, 400);
+    }
+
+    // Look up the pending token
+    const pending = await c.env.DB.prepare(
+      'SELECT user_id, email, expires_at FROM pending_2fa_tokens WHERE id = ?'
+    ).bind(pendingToken).first<{ user_id: string; email: string; expires_at: string }>();
+
+    if (!pending) {
+      return c.json({ error: 'Invalid or expired verification session. Please login again.' }, 401);
+    }
+
+    // Check expiry
+    if (new Date(pending.expires_at) < new Date()) {
+      await c.env.DB.prepare('DELETE FROM pending_2fa_tokens WHERE id = ?').bind(pendingToken).run();
+      return c.json({ error: 'Verification session expired. Please login again.' }, 401);
+    }
+
+    const userId = pending.user_id;
+
+    // Get TOTP secret for this user
+    const twoFA = await c.env.DB.prepare(
+      'SELECT totp_secret, backup_codes FROM user_2fa WHERE user_id = ? AND is_enabled = 1'
+    ).bind(userId).first<{ totp_secret: string; backup_codes: string }>();
+
+    if (!twoFA?.totp_secret) {
+      return c.json({ error: '2FA not configured for this account' }, 400);
+    }
+
+    // Verify TOTP code
+    const valid = await verifyTOTP(twoFA.totp_secret, totpCode);
+    if (!valid) {
+      // Try backup codes
+      let usedBackupCode = false;
+      if (twoFA.backup_codes) {
+        try {
+          const codes: string[] = JSON.parse(twoFA.backup_codes);
+          const codeIndex = codes.indexOf(totpCode.toUpperCase());
+          if (codeIndex !== -1) {
+            usedBackupCode = true;
+            codes.splice(codeIndex, 1);
+            await c.env.DB.prepare(
+              'UPDATE user_2fa SET backup_codes = ?, updated_at = datetime(\'now\') WHERE user_id = ?'
+            ).bind(JSON.stringify(codes), userId).run();
+          }
+        } catch {}
+      }
+      if (!usedBackupCode) {
+        return c.json({ error: 'Invalid verification code. Please try again.' }, 400);
+      }
+    }
+
+    // Delete the pending token
+    await c.env.DB.prepare('DELETE FROM pending_2fa_tokens WHERE id = ?').bind(pendingToken).run();
+
+    // Now complete the login (same as the regular login flow)
+    const user = await c.env.DB.prepare(
+      'SELECT id, email, full_name, role, password_hash, institute_id, technology, email_verified, is_active, avatar_url FROM users WHERE id = ? AND is_active = 1'
+    ).bind(userId).first<{ id: string; email: string; full_name: string; role: string; password_hash: string; institute_id: number | null; technology: string | null; email_verified: number; is_active: number; avatar_url: string | null }>();
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Get user packages
+    let userPackages: any[] = [];
+    try {
+      const pkgResult = await c.env.DB.prepare(
+        "SELECT up.*, cp.package_type, cp.price, cp.duration_months FROM user_packages up JOIN course_packages cp ON up.package_id = cp.id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.activated_at DESC"
+      ).bind(user.id).all();
+      userPackages = pkgResult.results as any[];
+    } catch {}
+
+    // Get theme
+    let themeMode = 'system';
+    try {
+      const prefs = await c.env.DB.prepare(
+        'SELECT theme_mode FROM user_preferences WHERE user_id = ?'
+      ).bind(user.id).first();
+      if (prefs && (prefs as any).theme_mode) {
+        themeMode = (prefs as any).theme_mode;
+      }
+    } catch {}
+
+    const instituteName = await getInstituteName(c.env, user.institute_id || null);
+    const technologyName = await getTechnologyName(c.env, user.technology || null);
+
+    // Get device info and IP
+    const userAgent = c.req.header('User-Agent') || '';
+    const ipAddress = c.req.header('CF-Connecting-IP') || '';
+    let deviceInfo = 'Browser';
+    if (/mobile|android|iphone/i.test(userAgent)) deviceInfo = 'Chrome Mobile on Mobile';
+    else if (/tablet|ipad/i.test(userAgent)) deviceInfo = 'Safari Mobile on Tablet';
+    else if (/firefox/i.test(userAgent)) deviceInfo = 'Firefox on Desktop';
+    else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) deviceInfo = 'Safari on Desktop';
+    else if (/edge/i.test(userAgent)) deviceInfo = 'Edge on Desktop';
+    else deviceInfo = 'Chrome on Desktop';
+
+    // Create session (keep existing sessions for Active Sessions page)
+    const token = await createStudentSession(c.env, user.id, user.email, deviceInfo, ipAddress);
+
+    return c.json({
+      success: true,
+      token,
+      userId: user.id,
+      user: {
+        id: user.id,
+        name: user.full_name,
+        email: user.email,
+        instituteId: user.institute_id || null,
+        instituteName: instituteName || null,
+        technology: user.technology || null,
+        technologyName: technologyName || null,
+        emailVerified: !!user.email_verified,
+        avatarUrl: user.avatar_url || '',
+        packages: userPackages,
+        themeMode,
+      },
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
   }
 });
 

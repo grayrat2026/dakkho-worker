@@ -23,6 +23,7 @@ import {
   studentAuthMiddleware,
   type StudentAuthVariables,
 } from './helpers';
+import { generateTOTPSecret, generateBackupCodes, verifyTOTP, generateOTPAuthURL } from '../../lib/totp';
 
 const routes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -1460,10 +1461,318 @@ routes.post('/student/delete-account', studentAuthMiddleware, async (c) => {
     await c.env.DB.prepare('DELETE FROM student_sessions WHERE user_id = ?').bind(userId).run();
     // Delete notification tokens
     await c.env.DB.prepare('DELETE FROM notification_tokens WHERE user_id = ?').bind(userId).run();
+    // Delete 2FA data
+    await c.env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(userId).run();
+    // Delete pending 2FA tokens
+    await c.env.DB.prepare('DELETE FROM pending_2fa_tokens WHERE user_id = ?').bind(userId).run();
+    // Delete user preferences
+    await c.env.DB.prepare('DELETE FROM user_preferences WHERE user_id = ?').bind(userId).run();
+    // Delete notification preferences
+    await c.env.DB.prepare('DELETE FROM notification_preferences WHERE user_id = ?').bind(userId).run();
     // Finally delete the user
     await c.env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
 
     return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// Sessions Management
+// ═══════════════════════════════════════════════════
+
+// GET /student/sessions — List active sessions for current user
+routes.get('/student/sessions', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const currentToken = c.req.header('Authorization')?.replace('Bearer ', '') || '';
+
+    const result = await c.env.DB.prepare(
+      `SELECT id, user_id, email, name, device_info, ip_address, created_at, expires_at, is_active
+       FROM student_sessions WHERE user_id = ? AND is_active = 1 ORDER BY created_at DESC`
+    ).bind(userId).all();
+
+    const sessions = result.results.map((row: any) => {
+      const isCurrent = row.id === currentToken;
+      let device: 'mobile' | 'desktop' | 'tablet' = 'desktop';
+      let browser = 'Unknown Browser';
+      const deviceInfo = row.device_info || '';
+
+      // Parse device info string (format: "Browser on Device")
+      if (deviceInfo) {
+        if (/mobile|android|iphone/i.test(deviceInfo)) device = 'mobile';
+        else if (/tablet|ipad/i.test(deviceInfo)) device = 'tablet';
+        else device = 'desktop';
+
+        // Extract browser name
+        if (/chrome/i.test(deviceInfo) && !/edge/i.test(deviceInfo)) browser = device.includes('Mobile') ? 'Chrome Mobile' : 'Chrome';
+        else if (/firefox/i.test(deviceInfo)) browser = 'Firefox';
+        else if (/safari/i.test(deviceInfo) && !/chrome/i.test(deviceInfo)) browser = device.includes('Mobile') ? 'Safari Mobile' : 'Safari';
+        else if (/edge/i.test(deviceInfo)) browser = 'Edge';
+        else browser = deviceInfo.split(' on ')[0] || 'Browser';
+      }
+
+      // Format time ago
+      const createdAt = new Date(row.created_at);
+      const now = new Date();
+      const diffMs = now.getTime() - createdAt.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      let lastActive = 'Unknown';
+      if (isCurrent) lastActive = 'Active now';
+      else if (diffMins < 1) lastActive = 'Just now';
+      else if (diffMins < 60) lastActive = `${diffMins} min ago`;
+      else if (diffHours < 24) lastActive = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      else lastActive = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+      // Mask IP address
+      const ip = row.ip_address || '';
+      const maskedIp = ip.replace(/(\d+\.\d+)\.\d+\.\d+/, '$1.XX.XX');
+
+      return {
+        id: row.id,
+        device,
+        browser,
+        location: '', // IP-based geolocation not available in Workers
+        ip: maskedIp,
+        lastActive,
+        isCurrent,
+        createdAt: row.created_at,
+        expiresAt: row.expires_at,
+      };
+    });
+
+    return c.json({ sessions });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// DELETE /student/sessions/:id — Revoke a specific session
+routes.delete('/student/sessions/:id', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const currentToken = c.req.header('Authorization')?.replace('Bearer ', '') || '';
+    const sessionId = c.req.param('id');
+
+    // Don't allow revoking current session
+    if (sessionId === currentToken) {
+      return c.json({ error: 'Cannot revoke your current session. Use logout instead.' }, 400);
+    }
+
+    // Verify the session belongs to this user
+    const session = await c.env.DB.prepare(
+      'SELECT user_id FROM student_sessions WHERE id = ? AND is_active = 1'
+    ).bind(sessionId).first<{ user_id: string }>();
+
+    if (!session || session.user_id !== userId) {
+      return c.json({ error: 'Session not found' }, 404);
+    }
+
+    await c.env.DB.prepare(
+      'UPDATE student_sessions SET is_active = 0 WHERE id = ?'
+    ).bind(sessionId).run();
+
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /student/sessions/revoke-all — Revoke all other sessions
+routes.post('/student/sessions/revoke-all', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const currentToken = c.req.header('Authorization')?.replace('Bearer ', '') || '';
+
+    const result = await c.env.DB.prepare(
+      'UPDATE student_sessions SET is_active = 0 WHERE user_id = ? AND id != ? AND is_active = 1'
+    ).bind(userId, currentToken).run();
+
+    return c.json({ success: true, revokedCount: result.meta?.changes || 0 });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// Two-Factor Authentication (TOTP)
+// ═══════════════════════════════════════════════════
+
+// GET /student/2fa/status — Get 2FA status for current user
+routes.get('/student/2fa/status', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+
+    const row = await c.env.DB.prepare(
+      'SELECT is_enabled, method, totp_verified FROM user_2fa WHERE user_id = ?'
+    ).bind(userId).first<{ is_enabled: number; method: string; totp_verified: number }>();
+
+    return c.json({
+      enabled: row?.is_enabled === 1,
+      method: row?.method || 'totp',
+      verified: row?.totp_verified === 1,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /student/2fa/setup — Start TOTP setup (generate secret, return QR URL + backup codes)
+routes.post('/student/2fa/setup', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+
+    // Check if already enabled
+    const existing = await c.env.DB.prepare(
+      'SELECT is_enabled FROM user_2fa WHERE user_id = ?'
+    ).bind(userId).first<{ is_enabled: number }>();
+
+    if (existing?.is_enabled === 1) {
+      return c.json({ error: '2FA is already enabled. Disable it first to set up again.' }, 400);
+    }
+
+    // Verify password before allowing 2FA setup
+    const { password } = await c.req.json();
+    if (!password) {
+      return c.json({ error: 'Password is required to set up 2FA' }, 400);
+    }
+
+    const user = await c.env.DB.prepare(
+      'SELECT password_hash, email FROM users WHERE id = ?'
+    ).bind(userId).first<{ password_hash: string; email: string }>();
+
+    if (!user?.password_hash) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    const validPassword = await verifyPassword(password, user.password_hash);
+    if (!validPassword) {
+      return c.json({ error: 'Incorrect password' }, 401);
+    }
+
+    // Generate TOTP secret and backup codes
+    const secret = generateTOTPSecret();
+    const backupCodes = generateBackupCodes(8);
+    const otpAuthUrl = generateOTPAuthURL(secret, user.email);
+
+    // Store in user_2fa (upsert)
+    await c.env.DB.prepare(`
+      INSERT INTO user_2fa (user_id, method, totp_secret, totp_verified, backup_codes, is_enabled, created_at, updated_at)
+      VALUES (?, 'totp', ?, 0, ?, 0, datetime('now'), datetime('now'))
+      ON CONFLICT(user_id) DO UPDATE SET
+        method = 'totp',
+        totp_secret = ?,
+        totp_verified = 0,
+        backup_codes = ?,
+        is_enabled = 0,
+        updated_at = datetime('now')
+    `).bind(userId, secret, JSON.stringify(backupCodes), secret, JSON.stringify(backupCodes)).run();
+
+    return c.json({
+      secret,
+      otpAuthUrl,
+      backupCodes,
+    });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /student/2fa/verify-setup — Verify TOTP code during setup
+routes.post('/student/2fa/verify-setup', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const { code } = await c.req.json();
+
+    if (!code) {
+      return c.json({ error: 'TOTP code is required' }, 400);
+    }
+
+    const row = await c.env.DB.prepare(
+      'SELECT totp_secret, totp_verified FROM user_2fa WHERE user_id = ?'
+    ).bind(userId).first<{ totp_secret: string; totp_verified: number }>();
+
+    if (!row?.totp_secret) {
+      return c.json({ error: '2FA setup not initiated. Please start setup first.' }, 400);
+    }
+
+    if (row.totp_verified === 1) {
+      return c.json({ error: '2FA already verified' }, 400);
+    }
+
+    const valid = await verifyTOTP(row.totp_secret, code);
+    if (!valid) {
+      // Check backup codes as fallback
+      const backupRow = await c.env.DB.prepare(
+        'SELECT backup_codes FROM user_2fa WHERE user_id = ?'
+      ).bind(userId).first<{ backup_codes: string }>();
+
+      if (backupRow?.backup_codes) {
+        const codes: string[] = JSON.parse(backupRow.backup_codes);
+        const codeIndex = codes.indexOf(code.toUpperCase());
+        if (codeIndex !== -1) {
+          // Remove used backup code
+          codes.splice(codeIndex, 1);
+          await c.env.DB.prepare(
+            'UPDATE user_2fa SET backup_codes = ?, updated_at = datetime(\'now\') WHERE user_id = ?'
+          ).bind(JSON.stringify(codes), userId).run();
+        } else {
+          return c.json({ error: 'Invalid verification code. Please try again.' }, 400);
+        }
+      } else {
+        return c.json({ error: 'Invalid verification code. Please try again.' }, 400);
+      }
+    }
+
+    // Mark as verified and enable
+    await c.env.DB.prepare(
+      `UPDATE user_2fa SET totp_verified = 1, is_enabled = 1, updated_at = datetime('now') WHERE user_id = ?`
+    ).bind(userId).run();
+
+    return c.json({ success: true, enabled: true });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// POST /student/2fa/disable — Disable 2FA (requires password)
+routes.post('/student/2fa/disable', studentAuthMiddleware, async (c) => {
+  try {
+    const userId = c.get('studentId');
+    const { password } = await c.req.json();
+
+    if (!password) {
+      return c.json({ error: 'Password is required to disable 2FA' }, 400);
+    }
+
+    const user = await c.env.DB.prepare(
+      'SELECT password_hash FROM users WHERE id = ?'
+    ).bind(userId).first<{ password_hash: string }>();
+
+    if (!user?.password_hash) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    const validPassword = await verifyPassword(password, user.password_hash);
+    if (!validPassword) {
+      return c.json({ error: 'Incorrect password' }, 401);
+    }
+
+    // Disable and clear TOTP data
+    await c.env.DB.prepare(`
+      UPDATE user_2fa SET
+        is_enabled = 0,
+        totp_verified = 0,
+        totp_secret = NULL,
+        backup_codes = NULL,
+        updated_at = datetime('now')
+      WHERE user_id = ?
+    `).bind(userId).run();
+
+    return c.json({ success: true, enabled: false });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }

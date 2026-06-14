@@ -60,8 +60,9 @@ migrateRoutes.post('/', adminAuthMiddleware, async (c) => {
     `CREATE TABLE IF NOT EXISTS live_class_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id TEXT, title TEXT NOT NULL, title_bn TEXT, description TEXT, instructor_id TEXT, technology_id INTEGER, scheduled_at TEXT NOT NULL, duration_minutes INTEGER DEFAULT 60, meeting_url TEXT, platform TEXT DEFAULT 'jitsi', status TEXT DEFAULT 'scheduled', recording_url TEXT, is_active INTEGER DEFAULT 1, created_by TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`,
     `CREATE TABLE IF NOT EXISTS notification_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, category TEXT NOT NULL, title TEXT, message TEXT, target_type TEXT, target_id TEXT, sent_count INTEGER DEFAULT 0, failed_count INTEGER DEFAULT 0, metadata TEXT DEFAULT '{}', created_by TEXT, created_at TEXT DEFAULT (datetime('now')))`,
     `CREATE TABLE IF NOT EXISTS user_push_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, push_token TEXT NOT NULL, device_type TEXT, device_info TEXT, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`,
-    `CREATE TABLE IF NOT EXISTS student_sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL UNIQUE, email TEXT NOT NULL, name TEXT, device_info TEXT, ip_address TEXT, created_at TEXT DEFAULT (datetime('now')), expires_at TEXT NOT NULL, is_active INTEGER DEFAULT 1)`,
+    `CREATE TABLE IF NOT EXISTS student_sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, email TEXT NOT NULL, name TEXT, device_info TEXT, ip_address TEXT, created_at TEXT DEFAULT (datetime('now')), expires_at TEXT NOT NULL, is_active INTEGER DEFAULT 1)`,
     `CREATE TABLE IF NOT EXISTS user_2fa (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL UNIQUE, method TEXT DEFAULT 'email', totp_secret TEXT, totp_verified INTEGER DEFAULT 0, backup_codes TEXT, is_enabled INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`,
+    `CREATE TABLE IF NOT EXISTS pending_2fa_tokens (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, email TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')))`,
     `CREATE TABLE IF NOT EXISTS payment_config (id INTEGER PRIMARY KEY AUTOINCREMENT, gateway TEXT NOT NULL UNIQUE, is_active INTEGER DEFAULT 0, config TEXT DEFAULT '{}', sandbox_mode INTEGER DEFAULT 1, instructions TEXT, instructions_bn TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`,
     `CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, package_id INTEGER, course_id TEXT, amount REAL NOT NULL, currency TEXT DEFAULT 'BDT', gateway TEXT NOT NULL, gateway_trx_id TEXT, gateway_payment_id TEXT, status TEXT DEFAULT 'pending', proof_url TEXT, trx_id_submitted TEXT, phone_submitted TEXT, verified_by TEXT, verified_at TEXT, metadata TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`,
     `CREATE TABLE IF NOT EXISTS notification_preferences (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL UNIQUE, push_enabled INTEGER DEFAULT 1, email_enabled INTEGER DEFAULT 1, sms_enabled INTEGER DEFAULT 0, quiet_hours_start TEXT DEFAULT '22:00', quiet_hours_end TEXT DEFAULT '08:00', course_updates_push INTEGER DEFAULT 1, course_updates_email INTEGER DEFAULT 1, grades_push INTEGER DEFAULT 1, grades_email INTEGER DEFAULT 1, schedule_push INTEGER DEFAULT 1, schedule_email INTEGER DEFAULT 1, payment_push INTEGER DEFAULT 1, payment_email INTEGER DEFAULT 1, promotions_push INTEGER DEFAULT 0, promotions_email INTEGER DEFAULT 0, social_push INTEGER DEFAULT 1, social_email INTEGER DEFAULT 0, system_push INTEGER DEFAULT 1, system_email INTEGER DEFAULT 1, updated_at TEXT DEFAULT (datetime('now')), created_at TEXT DEFAULT (datetime('now')))`,
@@ -137,6 +138,15 @@ migrateRoutes.post('/', adminAuthMiddleware, async (c) => {
     `ALTER TABLE course_packages ADD COLUMN description TEXT`,
   ];
 
+  // ─── Drop UNIQUE index on student_sessions.user_id (to allow multiple sessions) ───
+  // SQLite doesn't support DROP INDEX IF EXISTS cleanly, so we try-catch
+  try {
+    await c.env.DB.exec('DROP INDEX IF EXISTS idx_student_sessions_user');
+  } catch {}
+  try {
+    await c.env.DB.exec('DROP INDEX IF EXISTS student_sessions_user_id');
+  } catch {}
+
   // ─── CREATE INDEX IF NOT EXISTS ───
 
   const createIndexes = [
@@ -191,8 +201,10 @@ migrateRoutes.post('/', adminAuthMiddleware, async (c) => {
     `CREATE INDEX IF NOT EXISTS idx_notif_logs_created ON notification_logs(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_push_tokens_user ON user_push_tokens(user_id)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_push_tokens_token ON user_push_tokens(push_token)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_student_sessions_user ON student_sessions(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_student_sessions_user ON student_sessions(user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_student_sessions_expires ON student_sessions(expires_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_student_sessions_active ON student_sessions(is_active)`,
+    `CREATE INDEX IF NOT EXISTS idx_pending_2fa_expires ON pending_2fa_tokens(expires_at)`,
     `CREATE INDEX IF NOT EXISTS idx_user_2fa_user ON user_2fa(user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`,

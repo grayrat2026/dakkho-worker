@@ -64,8 +64,7 @@ unifiedAuthRoutes.post('/login', async (c) => {
       ).bind(token, user.id, user.email, user.full_name, ip, ua, getSessionExpiry(7), user.avatar_url || null).run();
 
     } else {
-      // Student session
-      await c.env.DB.prepare('DELETE FROM student_sessions WHERE user_id = ?').bind(user.id).run();
+      // Student session (keep existing sessions for Active Sessions page)
       await c.env.DB.prepare(
         `INSERT INTO student_sessions (id, user_id, email, name, ip_address, device_info, expires_at, is_active)
          VALUES (?, ?, ?, ?, ?, ?, ?, 1)`
