@@ -17,6 +17,9 @@
 - Login API now returns `avatarUrl` from users table — fixes profile picture not showing in student app
 - Student session validation with 30-day expiry
 - Email verification flow with OTP
+- **Fixed D1 SQLITE_MISMATCH** — `instituteId` and `semester` now converted to INTEGER before D1 INSERT/UPDATE
+- **Fixed `/api/student/profile/stats`** — now returns `profile` object (phone, bio, semester, avatarUrl, instituteId, technology) alongside stats
+- **Fixed `/api/student/profile`** — PUT endpoint properly converts string fields to correct D1 column types
 
 ### Payment
 - PipraPay checkout integration with auto-activation on webhook
@@ -45,6 +48,11 @@
 | `GET /api/courses/:id/curriculum` | Course curriculum | No |
 | `GET /api/video/stream-url` | HLS stream URL | Yes |
 | `GET /api/coupons/validate` | Validate coupon | No |
+| `GET /api/student/profile/stats` | Student stats + profile | Yes |
+| `PUT /api/student/profile` | Update student profile | Yes |
+| `POST /api/student/upload-avatar` | Upload avatar | Yes |
+| `GET /api/watch-history` | Watch history | Yes |
+| `POST /api/watch-history` | Upsert watch entry | Yes |
 
 ## Development
 
