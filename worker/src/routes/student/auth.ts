@@ -307,7 +307,7 @@ routes.get('/auth/me', async (c) => {
         email: auth.email || u?.email || '',
         phone: u?.phone || null,
         bio: u?.bio || null,
-        semester: u?.semester || null,
+        semester: u?.semester ?? null,
         instituteId: u?.institute_id || null,
         instituteName: instituteName || null,
         technology: u?.technology || null,
