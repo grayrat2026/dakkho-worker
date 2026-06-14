@@ -46,11 +46,11 @@ routes.put('/auth/profile', async (c) => {
     const params: unknown[] = [];
 
     if (fullName !== undefined) { updates.push('full_name = ?'); params.push(fullName); }
-    if (instituteId !== undefined) { updates.push('institute_id = ?'); params.push(instituteId); }
+    if (instituteId !== undefined) { updates.push('institute_id = ?'); const n = Number(instituteId); params.push(isNaN(n) ? instituteId : n); }
     if (technology !== undefined) { updates.push('technology = ?'); params.push(technology); }
     if (bio !== undefined) { updates.push('bio = ?'); params.push(bio); }
     if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
-    if (semester !== undefined) { updates.push('semester = ?'); params.push(semester); }
+    if (semester !== undefined) { updates.push('semester = ?'); const n = Number(semester); params.push(isNaN(n) ? semester : n); }
     if (avatarUrl !== undefined) { updates.push('avatar_url = ?'); params.push(avatarUrl); }
 
     if (updates.length === 0) {
@@ -1231,15 +1231,32 @@ routes.get('/student/profile/stats', studentAuthMiddleware, async (c) => {
       }
     } catch {}
 
+    // Get user profile fields for pre-filling edit form
+    let profile: { phone: string; bio: string; semester: string; avatarUrl: string; instituteId: number | null; technology: string } = { phone: '', bio: '', semester: '', avatarUrl: '', instituteId: null, technology: '' };
+    try {
+      const userRow = await c.env.DB.prepare(
+        'SELECT phone, bio, semester, avatar_url, institute_id, technology FROM users WHERE id = ?'
+      ).bind(userId).first<{ phone: string | null; bio: string | null; semester: number | null; avatar_url: string | null; institute_id: number | null; technology: string | null }>();
+      if (userRow) {
+        profile = {
+          phone: userRow.phone || '',
+          bio: userRow.bio || '',
+          semester: userRow.semester != null ? String(userRow.semester) : '',
+          avatarUrl: userRow.avatar_url || '',
+          instituteId: userRow.institute_id ?? null,
+          technology: userRow.technology || '',
+        };
+      }
+    } catch {}
+
     return c.json({
       stats: {
-        enrolledCourses,
-        completedCourses,
-        totalWatchTime,
-        videosWatched,
-        activePackages,
-        streak,
+        coursesEnrolled: enrolledCourses,
+        hoursWatched: Math.round(totalWatchTime / 3600),
+        certificates: completedCourses,
+        currentStreak: streak,
       },
+      profile,
     });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
@@ -1263,13 +1280,21 @@ routes.put('/student/profile', studentAuthMiddleware, async (c) => {
       avatarUrl: 'avatar_url',
     };
 
+    // Fields that must be INTEGER in D1 — convert strings to numbers
+    const integerFields = new Set(['semester', 'instituteId']);
+
     const setClauses: string[] = [];
     const params: unknown[] = [];
 
     for (const [bodyField, dbColumn] of Object.entries(fieldMapping)) {
-      if (body[bodyField] !== undefined) {
+      if (body[bodyField] !== undefined && body[bodyField] !== '') {
         setClauses.push(`${dbColumn} = ?`);
-        params.push(body[bodyField]);
+        if (integerFields.has(bodyField)) {
+          const num = Number(body[bodyField]);
+          params.push(isNaN(num) ? body[bodyField] : num);
+        } else {
+          params.push(body[bodyField]);
+        }
       }
     }
 
