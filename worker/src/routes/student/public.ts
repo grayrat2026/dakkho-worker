@@ -10,6 +10,7 @@ import type { ServerConfig } from '../../lib/types';
 import {
   getStudentAuth,
   getInstituteName,
+  getPublicUrl,
   transformConfigForStudent,
   DEFAULT_CONFIG,
   getErrorMessage,
@@ -17,6 +18,15 @@ import {
 } from './helpers';
 
 const routes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
+
+// ─── Helper: Transform R2 keys to public URLs ───
+function toPublicUrl(env: Env, url: string | null | undefined, bucket: string = 'images'): string {
+  if (!url) return '';
+  // Already a full URL (http/https) — return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // R2 key — convert to public URL
+  return getPublicUrl(env, bucket, url);
+}
 
 // ─── Config ───
 
@@ -337,9 +347,18 @@ routes.get('/courses', async (c) => {
         const vc = (vidStats as any)?.count || 0;
         const td = (vidStats as any)?.total_duration || 0;
         const avg = vc > 0 ? Math.round(td / vc * 10) / 10 : 0;
-        return { ...course, duration: avg, total_videos: vc, total_video_duration: td };
+        return {
+          ...course,
+          duration: avg,
+          total_videos: vc,
+          total_video_duration: td,
+          thumbnail_url: toPublicUrl(c.env, course.thumbnail_url, 'images'),
+        };
       } catch {
-        return course;
+        return {
+          ...course,
+          thumbnail_url: toPublicUrl(c.env, course.thumbnail_url, 'images'),
+        };
       }
     }));
 
@@ -374,7 +393,14 @@ routes.get('/instructors', async (c) => {
       `SELECT * FROM instructors ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
 
-    return c.json({ instructors: result.results, total });
+    // Transform avatar_url and cover_url to public URLs
+    const enrichedInstructors = (result.results as any[]).map((inst: any) => ({
+      ...inst,
+      avatar_url: toPublicUrl(c.env, inst.avatar_url, 'images'),
+      cover_url: toPublicUrl(c.env, inst.cover_url, 'images'),
+    }));
+
+    return c.json({ instructors: enrichedInstructors, total });
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }
@@ -421,7 +447,8 @@ routes.get('/instructors/:id', async (c) => {
     const rating = inst.rating || 0;
 
     // Get cover URL
-    const coverUrl = inst.cover_url || inst.coverUrl || '';
+    const coverUrl = toPublicUrl(c.env, inst.cover_url || inst.coverUrl, 'images');
+    const avatarUrl = toPublicUrl(c.env, inst.avatar_url || inst.avatarUrl, 'images');
 
     return c.json({
       instructor: {
@@ -430,7 +457,7 @@ routes.get('/instructors/:id', async (c) => {
         totalStudents,
         rating,
         coverUrl,
-        avatarUrl: inst.avatar_url || inst.avatarUrl || '',
+        avatarUrl,
       }
     });
   } catch (error) {
@@ -470,6 +497,248 @@ routes.get('/instructors/:id/courses', async (c) => {
     const total = (countResult as any)?.total || 0;
 
     return c.json({ courses: result.results, total });
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// ─── Exam Tips ───
+
+// GET /exam-tips — Get exam tips from app_config (admin-editable)
+routes.get('/exam-tips', async (c) => {
+  try {
+    // Try KV cache first
+    const cached = await c.env.KV_CONFIG.get('exam_tips', 'json');
+    if (cached) {
+      return c.json({ tips: cached });
+    }
+
+    // Try D1 app_config table
+    const row = await c.env.DB.prepare(
+      "SELECT value FROM app_config WHERE key = 'exam_tips'"
+    ).first<{ value: string }>();
+
+    if (row?.value) {
+      try {
+        const tips = JSON.parse(row.value);
+        // Cache in KV for 5 minutes
+        await c.env.KV_CONFIG.put('exam_tips', row.value, { expirationTtl: 300 });
+        return c.json({ tips });
+      } catch {
+        // Invalid JSON, fall through to defaults
+      }
+    }
+
+    // Return default tips if none configured
+    const defaultTips = {
+      strategies: [
+        { title: 'Active Recall Method', description: 'Instead of re-reading notes, close your book and try to recall the key concepts from memory. This strengthens neural connections and improves long-term retention.', tip: 'Try this: After each chapter, write down everything you remember without looking. Then check what you missed.' },
+        { title: 'Spaced Repetition', description: 'Review material at increasing intervals (1 day, 3 days, 7 days, 14 days). This technique leverages the spacing effect for optimal memory retention.', tip: 'Use DAKKHO\'s built-in review reminders to schedule your spaced repetition sessions automatically.' },
+        { title: 'Pomodoro Technique', description: 'Study in focused 25-minute blocks followed by 5-minute breaks. After 4 blocks, take a longer 15-30 minute break. This maintains concentration and prevents burnout.', tip: 'Set a timer on your phone. During the 25 minutes, eliminate all distractions — no phone, no social media.' },
+        { title: 'Feynman Technique', description: 'Explain the concept in simple terms as if teaching someone else. If you can\'t explain it simply, you don\'t understand it well enough.', tip: 'Try recording yourself explaining a topic. Listen back and notice where you hesitate or get confused.' },
+        { title: 'Practice Testing', description: 'Take practice exams under realistic conditions. This not only tests your knowledge but also reduces exam anxiety by making the actual exam feel familiar.', tip: 'Use DAKKHO\'s Practice Mode with timed sessions. Aim to complete practice tests faster than the actual time limit.' },
+      ],
+      timeManagement: [
+        { title: 'Create a Study Schedule', desc: 'Plan your study sessions at least 2 weeks before the exam. Allocate more time to difficult subjects.', priority: 'High' },
+        { title: 'Use the 80/20 Rule', desc: 'Focus 80% of your time on the 20% of topics most likely to appear on the exam. Analyze past papers to identify patterns.', priority: 'High' },
+        { title: 'Set Daily Goals', desc: 'Break down your syllabus into daily chunks. Complete each day\'s target before moving on.', priority: 'Medium' },
+        { title: 'Prioritize Weak Areas', desc: 'Start study sessions with your weakest topics when your mind is fresh.', priority: 'High' },
+        { title: 'Review Before Sleep', desc: 'Study the most important material right before going to sleep. Your brain consolidates memories during sleep.', priority: 'Low' },
+      ],
+      commonMistakes: [
+        { mistake: 'Cramming the night before', consequence: 'Information overload leads to confusion and anxiety.', fix: 'Start early and review regularly using spaced repetition.' },
+        { mistake: 'Skipping practice problems', consequence: 'You may struggle to apply concepts under time pressure.', fix: 'Solve at least 10 practice problems for each topic.' },
+        { mistake: 'Not reading questions carefully', consequence: 'Misunderstanding a question can cost you marks.', fix: 'Read each question twice. Underline key terms.' },
+        { mistake: 'Not managing exam time', consequence: 'Spending too long on difficult questions means easier ones go unanswered.', fix: 'Allocate time per question. Skip difficult ones and return later.' },
+      ],
+      wellness: [
+        { title: 'Sleep Well', desc: 'Aim for 7-8 hours of quality sleep. Avoid screens 30 minutes before bed.', time: 'Night' },
+        { title: 'Stay Hydrated', desc: 'Drink at least 8 glasses of water daily. Dehydration impairs concentration by up to 30%.', time: 'All Day' },
+        { title: 'Take Regular Breaks', desc: 'Follow the 50/10 rule: 50 minutes of study, 10 minutes of break.', time: 'Study Time' },
+        { title: 'Practice Mindfulness', desc: '5 minutes of deep breathing or meditation before studying can significantly improve focus.', time: 'Before Study' },
+      ],
+    };
+    return c.json({ tips: defaultTips });
+  } catch (error) {
+    return c.json({ tips: { strategies: [], timeManagement: [], commonMistakes: [], wellness: [] } });
+  }
+});
+
+// ─── AI-Powered Search ───
+
+interface SearchCourseResult {
+  id: string;
+  title: string;
+  description: string | null;
+  technology_id: string | null;
+  instructor_id: string | null;
+  level: string | null;
+  thumbnail_url: string | null;
+  tags: string | null;
+}
+
+interface SearchInstructorResult {
+  id: string;
+  name: string;
+  bio: string | null;
+  specialization: string | null;
+  avatar_url: string | null;
+}
+
+interface SearchVideoResult {
+  id: string;
+  title: string;
+  description: string | null;
+  course_id: string | null;
+  duration: number | null;
+  sort_order: number | null;
+  course_title: string | null;
+}
+
+/**
+ * Core search logic shared by GET /search and POST /ai-search.
+ * Searches courses, instructors, and videos with case-insensitive LIKE matching.
+ * If Workers AI binding is available, uses it to re-rank results by relevance.
+ */
+async function performSearch(c: any, query: string) {
+  const searchTerm = `%${query}%`;
+  const limit = 10;
+
+  // Run all three searches in parallel
+  const [coursesResult, instructorsResult, videosResult] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT id, title, description, technology_id, instructor_id, level, thumbnail_url, tags
+       FROM courses
+       WHERE is_published = 1
+         AND (title LIKE ? OR description LIKE ? OR tags LIKE ?)
+       LIMIT ?`
+    ).bind(searchTerm, searchTerm, searchTerm, limit).all() as { results: SearchCourseResult[] },
+
+    c.env.DB.prepare(
+      `SELECT id, name, bio, specialization, avatar_url
+       FROM instructors
+       WHERE is_active = 1
+         AND (name LIKE ? OR specialization LIKE ? OR bio LIKE ?)
+       LIMIT ?`
+    ).bind(searchTerm, searchTerm, searchTerm, limit).all() as { results: SearchInstructorResult[] },
+
+    c.env.DB.prepare(
+      `SELECT v.id, v.title, v.description, v.course_id, v.duration, v.sort_order,
+              c.title AS course_title
+       FROM videos v
+       LEFT JOIN courses c ON v.course_id = c.id
+       WHERE c.is_published = 1
+         AND (v.title LIKE ? OR v.description LIKE ?)
+       LIMIT ?`
+    ).bind(searchTerm, searchTerm, limit).all() as { results: SearchVideoResult[] },
+  ]);
+
+  let courses = coursesResult.results;
+  let instructors = instructorsResult.results;
+  let videos = videosResult.results;
+
+  // If Workers AI binding is available, use it to re-rank results by relevance
+  if (c.env.AI && (courses.length + instructors.length + videos.length) > 0) {
+    try {
+      const aiRanked = await aiReRank(c, query, courses, instructors, videos);
+      courses = aiRanked.courses;
+      instructors = aiRanked.instructors;
+      videos = aiRanked.videos;
+    } catch {
+      // AI ranking failed — fall back to SQL order (already good enough)
+    }
+  }
+
+  return {
+    query,
+    courses,
+    instructors,
+    videos,
+    total: courses.length + instructors.length + videos.length,
+    aiEnhanced: !!c.env.AI,
+  };
+}
+
+/**
+ * Use Workers AI to re-rank search results by semantic relevance.
+ * Sends a prompt asking the model to score each result and returns sorted arrays.
+ */
+async function aiReRank(
+  c: any,
+  query: string,
+  courses: SearchCourseResult[],
+  instructors: SearchInstructorResult[],
+  videos: SearchVideoResult[]
+): Promise<{ courses: SearchCourseResult[]; instructors: SearchInstructorResult[]; videos: SearchVideoResult[] }> {
+  const buildList = (items: { id: string; title?: string; name?: string; description?: string | null }[]) =>
+    items.map((item, i) => `${i + 1}. [id:${item.id}] ${item.title || item.name} — ${(item.description || '').slice(0, 100)}`).join('\n');
+
+  const prompt = `You are a search relevance ranker. Given the search query "${query}", assign a relevance score (0-100) to each result.
+
+COURSES:
+${buildList(courses.map(c => ({ id: c.id, title: c.title, description: c.description })))}
+
+INSTRUCTORS:
+${buildList(instructors.map(i => ({ id: i.id, name: i.name, description: i.specialization || i.bio })))}
+
+VIDEOS:
+${buildList(videos.map(v => ({ id: v.id, title: v.title, description: v.description })))}
+
+Respond ONLY with a JSON object like:
+{"courses":[{"id":"...","score":90}],"instructors":[{"id":"...","score":80}],"videos":[{"id":"...","score":70}]}`;
+
+  const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 512,
+  });
+
+  const text = (aiResponse as any)?.response || '';
+  // Extract JSON from the response (may be wrapped in markdown code blocks)
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('AI did not return valid JSON');
+
+  const scores = JSON.parse(jsonMatch[0]);
+
+  const sortByScore = <T extends { id: string }>(items: T[], scoreList: { id: string; score: number }[]): T[] => {
+    const scoreMap = new Map(scoreList.map(s => [s.id, s.score]));
+    return [...items].sort((a, b) => (scoreMap.get(b.id) || 0) - (scoreMap.get(a.id) || 0));
+  };
+
+  return {
+    courses: scores.courses ? sortByScore(courses, scores.courses) : courses,
+    instructors: scores.instructors ? sortByScore(instructors, scores.instructors) : instructors,
+    videos: scores.videos ? sortByScore(videos, scores.videos) : videos,
+  };
+}
+
+// POST /ai-search — AI-enhanced search (body: { "query": "search term" })
+routes.post('/ai-search', async (c) => {
+  try {
+    const body = await c.req.json<{ query?: string }>();
+    const query = (body.query || '').trim();
+
+    if (!query) {
+      return c.json({ error: 'Search query is required. Send { "query": "search term" }' }, 400);
+    }
+
+    const results = await performSearch(c, query);
+    return c.json(results);
+  } catch (error) {
+    return c.json({ error: getErrorMessage(error) }, 500);
+  }
+});
+
+// GET /search?q=term — Convenience GET endpoint for search
+routes.get('/search', async (c) => {
+  try {
+    const query = (c.req.query('q') || '').trim();
+
+    if (!query) {
+      return c.json({ error: 'Search query is required. Use ?q=search+term' }, 400);
+    }
+
+    const results = await performSearch(c, query);
+    return c.json(results);
   } catch (error) {
     return c.json({ error: getErrorMessage(error) }, 500);
   }

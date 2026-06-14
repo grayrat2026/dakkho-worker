@@ -47,4 +47,7 @@ export interface Env {
   // LiveKit (server-side token generation)
   LIVEKIT_API_KEY: string;
   LIVEKIT_API_SECRET: string;
+
+  // Workers AI (optional — enables AI-enhanced search ranking)
+  AI?: Ai;
 }

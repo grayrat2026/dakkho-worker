@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import type { Env } from '../../env';
 import {
   getStudentAuth,
+  getPublicUrl,
   getErrorMessage,
   type StudentAuthVariables,
 } from './helpers';
@@ -71,14 +72,34 @@ routes.get('/courses/:id', async (c) => {
     const totalDuration = videoStats?.total_duration || 0;
     const avgDuration = videoCount > 0 ? Math.round(totalDuration / videoCount * 10) / 10 : 0;
 
+    // Transform URLs to public URLs
+    const courseData = course as any;
+    const thumbnailUrl = courseData.thumbnail_url;
+    const isFullUrl = thumbnailUrl && (thumbnailUrl.startsWith('http://') || thumbnailUrl.startsWith('https://'));
+    const publicThumbnailUrl = isFullUrl ? thumbnailUrl : (thumbnailUrl ? getPublicUrl(c.env, 'images', thumbnailUrl) : '');
+
+    // Transform instructor avatar/cover URLs
+    const enrichedInstructors = (instructors as any[]).map((inst: any) => {
+      const avatarUrl = inst.avatar_url;
+      const coverUrl = inst.cover_url;
+      const avatarIsFull = avatarUrl && (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'));
+      const coverIsFull = coverUrl && (coverUrl.startsWith('http://') || coverUrl.startsWith('https://'));
+      return {
+        ...inst,
+        avatar_url: avatarIsFull ? avatarUrl : (avatarUrl ? getPublicUrl(c.env, 'images', avatarUrl) : ''),
+        cover_url: coverIsFull ? coverUrl : (coverUrl ? getPublicUrl(c.env, 'images', coverUrl) : ''),
+      };
+    });
+
     return c.json({
       course: {
-        ...(course as any),
+        ...courseData,
         duration: avgDuration,
         total_videos: videoCount,
         total_video_duration: totalDuration,
+        thumbnail_url: publicThumbnailUrl,
       },
-      instructors,
+      instructors: enrichedInstructors,
       learningPoints,
       subjects,
     });

@@ -74,4 +74,58 @@ adminRoutes.delete('/sessions', async (c) => {
   }
 });
 
+// ─── Exam Tips Admin Routes ───
+
+// GET /exam-tips — Get exam tips (admin)
+adminRoutes.get('/exam-tips', async (c) => {
+  try {
+    // Try D1 app_config table
+    const row = await c.env.DB.prepare(
+      "SELECT value FROM app_config WHERE key = 'exam_tips'"
+    ).first<{ value: string }>();
+
+    if (row?.value) {
+      try {
+        const tips = JSON.parse(row.value);
+        return c.json({ tips });
+      } catch {
+        // Invalid JSON, return empty
+      }
+    }
+
+    return c.json({ tips: { strategies: [], timeManagement: [], commonMistakes: [], wellness: [] } });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return c.json({ error: message }, 500);
+  }
+});
+
+// PUT /exam-tips — Update exam tips (admin)
+adminRoutes.put('/exam-tips', async (c) => {
+  try {
+    const user = c.get('user');
+    const tips = await c.req.json();
+
+    const value = JSON.stringify(tips);
+
+    // Upsert into app_config
+    await c.env.DB.prepare(
+      "INSERT INTO app_config (key, value, updated_at) VALUES ('exam_tips', ?, datetime('now')) ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')"
+    ).bind(value, value).run();
+
+    // Update KV cache (5 min TTL)
+    try {
+      await c.env.KV_CONFIG.put('exam_tips', value, { expirationTtl: 300 });
+    } catch {}
+
+    // Audit log
+    await logAudit(c.env, user.id, 'UPDATE_EXAM_TIPS', 'app_config', 'exam_tips', { action: 'update' });
+
+    return c.json({ success: true, message: 'Exam tips updated' });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return c.json({ error: message }, 500);
+  }
+});
+
 export default adminRoutes;
