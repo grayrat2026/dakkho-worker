@@ -455,6 +455,11 @@ The API allows requests from the following origins:
 
 ## 📋 Recent Changes (June 2026)
 
+### Watch History SQLITE_MISMATCH Fix
+- `POST /api/watch-history` no longer inserts string UUID into `INTEGER PRIMARY KEY AUTOINCREMENT` column — uses D1 auto-generated integer id instead
+- `SELECT` existing entry type changed from `{ id: string }` to `{ id: number }`
+- Removed unused `generateId` import
+
 ### Instructor Profile & Stats
 - `GET /instructors/:id` (public) now computes `totalCourses` and `totalStudents` from D1, returns `coverUrl` and `avatarUrl`
 - `GET /instructors/:id/courses` now searches both `courses.instructor_id` AND `course_instructors` junction table
