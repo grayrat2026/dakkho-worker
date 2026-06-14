@@ -12,7 +12,7 @@ import { Hono } from 'hono';
 import type { Env } from '../env';
 import type { StudentAuthVariables } from '../lib/student-auth-middleware';
 import { studentAuthMiddleware } from '../lib/student-auth-middleware';
-import { generateId, getErrorMessage } from '../lib/utils';
+import { getErrorMessage } from '../lib/utils';
 
 const watchHistoryRoutes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -107,7 +107,6 @@ watchHistoryRoutes.post('/', async (c) => {
       return c.json({ error: 'videoId is required' }, 400);
     }
 
-    const id = generateId();
     const metadata = JSON.stringify({
       progress: body.progress || 0,
       lastPosition: body.lastPosition || 0,
@@ -120,7 +119,7 @@ watchHistoryRoutes.post('/', async (c) => {
       `SELECT id FROM student_activity WHERE user_id = ? AND activity_type = 'watch' AND resource_id = ?`
     )
       .bind(userId, body.videoId)
-      .first<{ id: string }>();
+      .first<{ id: number }>();
 
     if (existing) {
       // Update existing entry — bump timestamp to top of history
@@ -134,22 +133,29 @@ watchHistoryRoutes.post('/', async (c) => {
 
       return c.json({
         success: true,
-        id: existing.id,
+        id: String(existing.id),
         action: 'updated',
       });
     }
 
-    // Insert new entry
+    // Insert new entry — id is AUTOINCREMENT, omit it
     await c.env.DB.prepare(
-      `INSERT INTO student_activity (id, user_id, activity_type, resource_type, resource_id, title, description, metadata, created_at)
-       VALUES (?, ?, 'watch', 'video', ?, ?, '', ?, datetime('now'))`
+      `INSERT INTO student_activity (user_id, activity_type, resource_type, resource_id, title, description, metadata, created_at)
+       VALUES (?, 'watch', 'video', ?, ?, '', ?, datetime('now'))`
     )
-      .bind(id, userId, body.videoId, body.videoTitle || '', metadata)
+      .bind(userId, body.videoId, body.videoTitle || '', metadata)
       .run();
+
+    // Get the auto-generated id
+    const newEntry = await c.env.DB.prepare(
+      `SELECT id FROM student_activity WHERE user_id = ? AND activity_type = 'watch' AND resource_id = ? ORDER BY created_at DESC LIMIT 1`
+    )
+      .bind(userId, body.videoId)
+      .first<{ id: number }>();
 
     return c.json({
       success: true,
-      id,
+      id: String(newEntry?.id || ''),
       action: 'created',
     });
   } catch (error) {
