@@ -16,6 +16,7 @@ import paymentRoutes from './payments';
 import videoRoutes from './video';
 import profileRoutes from './profile';
 import couponRoutes from './coupons';
+import deviceRoutes from './device';  // ← NEW: device binding + single-device login
 
 const studentApiRoutes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
@@ -30,5 +31,6 @@ studentApiRoutes.route('/', paymentRoutes);
 studentApiRoutes.route('/', videoRoutes);
 studentApiRoutes.route('/', profileRoutes);
 studentApiRoutes.route('/', couponRoutes);
+studentApiRoutes.route('/device', deviceRoutes);  // ← NEW: /api/device/bind, /verify, /status, /switch, /ack-force-logout
 
 export default studentApiRoutes;

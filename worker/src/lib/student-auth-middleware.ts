@@ -11,11 +11,12 @@ export interface StudentAuthVariables {
   studentId: string;
   studentEmail: string;
   studentName: string;
+  sessionId: string;  // ← NEW: exposes the session row ID for force-logout signaling
 }
 
 /**
  * Middleware that validates student session from Authorization header
- * Sets c.set('studentId'), c.set('studentEmail'), c.set('studentName')
+ * Sets c.set('studentId'), c.set('studentEmail'), c.set('studentName'), c.set('sessionId')
  * Also enforces email verification — unverified users get 403
  */
 export async function studentAuthMiddleware(c: Context<{ Bindings: Env; Variables: StudentAuthVariables }>, next: Next) {
@@ -39,6 +40,7 @@ export async function studentAuthMiddleware(c: Context<{ Bindings: Env; Variable
   c.set('studentId', result.userId!);
   c.set('studentEmail', result.email || '');
   c.set('studentName', result.name || '');
+  c.set('sessionId', result.sessionId!);  // ← NEW
 
   await next();
 }
