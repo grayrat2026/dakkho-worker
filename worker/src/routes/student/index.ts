@@ -16,12 +16,13 @@ import paymentRoutes from './payments';
 import videoRoutes from './video';
 import profileRoutes from './profile';
 import couponRoutes from './coupons';
-import deviceRoutes from './device';  // ← NEW: device binding + single-device login
+import deviceRoutes from './device';  // device binding + single-device login
+import streamRoutes from './stream';  // concurrent stream kill
 
 const studentApiRoutes = new Hono<{ Bindings: Env; Variables: StudentAuthVariables }>();
 
 // Mount all sub-route modules.
-// Each module defines its own path prefixes (e.g. /auth/signup, /courses/:id).
+// Each module defines their own path prefixes (e.g. /auth/signup, /courses/:id).
 // Using route('/') merges their paths into this router.
 studentApiRoutes.route('/', authRoutes);
 studentApiRoutes.route('/', publicRoutes);
@@ -31,6 +32,7 @@ studentApiRoutes.route('/', paymentRoutes);
 studentApiRoutes.route('/', videoRoutes);
 studentApiRoutes.route('/', profileRoutes);
 studentApiRoutes.route('/', couponRoutes);
-studentApiRoutes.route('/device', deviceRoutes);  // ← NEW: /api/device/bind, /verify, /status, /switch, /ack-force-logout
+studentApiRoutes.route('/device', deviceRoutes);  // /api/device/bind, /verify, /status, /switch, /ack-force-logout
+studentApiRoutes.route('/stream', streamRoutes);  // /api/stream/start, /heartbeat, /end, /token-refresh, /active
 
 export default studentApiRoutes;
